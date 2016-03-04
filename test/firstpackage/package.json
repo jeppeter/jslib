@@ -1,0 +1,12 @@
+{
+	"name" : "pf",
+	"description" : "first package to introduce",
+	"version" : "0.0.1",
+	"author" : "jeppeter <jeppeter@gmail.com>",
+	"dependencies" : {
+
+		},
+		"devDependencies":{
+			
+		}
+}
