@@ -1,0 +1,8 @@
+{
+	"version" : "0.0.1",
+	"description" : "event test functions",
+	"repository" : "github.com/jeppeter/jslib",
+	"dependencies" : {
+		"promise" : "latest"
+	}
+}
