@@ -1,8 +1,23 @@
 {
-	"version" : "0.0.1",
-	"description" : "event test functions",
-	"repository" : "github.com/jeppeter/jslib",
-	"dependencies" : {
-		"promise" : "latest"
-	}
+  "version": "0.0.1",
+  "description": "event test functions",
+  "repository": {
+    "type": "git",
+    "url": "github.com/jeppeter/jslib"
+  },
+  "dependencies": {
+    "promise": "latest"
+  },
+  "name": "tstevent",
+  "main": "tstevent.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "event",
+    "example"
+  ],
+  "author": "jeppeter",
+  "license": "MIT"
 }
