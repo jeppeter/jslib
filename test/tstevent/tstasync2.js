@@ -1,6 +1,6 @@
 var async = require('async');
 
-var handler = function()
+var handler = function(cb)
 {
   async.series([
   function(callback) {
@@ -22,9 +22,12 @@ var handler = function()
     }, 100);
   }
   ], function(error, results) {
-    return results;
+    cb(error, results)
   });
 }
 
-var result = handler();
-console.log(result);
+handler(function(err, results) {
+  if(!err) {
+    console.log(results);
+  }
+})
