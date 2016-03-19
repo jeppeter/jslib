@@ -6,7 +6,8 @@
     "url": "github.com/jeppeter/jslib"
   },
   "dependencies": {
-    "promise": "latest"
+    "promise": "latest",
+    "async" : "latest"
   },
   "name": "tstevent",
   "main": "tstevent.js",
