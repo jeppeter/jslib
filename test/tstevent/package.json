@@ -7,7 +7,8 @@
   },
   "dependencies": {
     "promise": "latest",
-    "async" : "latest"
+    "async" : "latest" ,
+    "bagpipe" : "latest"
   },
   "name": "tstevent",
   "main": "tstevent.js",
