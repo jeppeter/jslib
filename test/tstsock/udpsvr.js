@@ -6,6 +6,7 @@ var lport = 4132;
 server.on("message", function (msg, rinfo) {
     'use strict';
     var rmsg;
+    console.log("received %s from(%s:%d)", msg, rinfo.address, rinfo.port);
     rmsg = "reply : " + msg;
     server.send(rmsg, 0, rmsg.length, rinfo.port, rinfo.address, function (err, bytes) {
         if (err) {
@@ -18,6 +19,8 @@ server.on("error", function (err) {
     'use strict';
     if (err) {
         console.log("get error %s", err);
+        server.close();
+        server.bind(lport);
     }
     return;
 });
