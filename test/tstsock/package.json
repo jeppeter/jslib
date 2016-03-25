@@ -8,6 +8,7 @@
   },
   "dependencies" : {
     "net" : "latest",
+    "express" : "latest" ,
     "connect" : "latest"
     },
   "keywords": [],
