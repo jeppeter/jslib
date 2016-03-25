@@ -2,7 +2,7 @@
  * Module dependencies.
  */
 
-var express = require('../..');
+var express = require('express');
 var hash = require('./pass').hash;
 var bodyParser = require('body-parser');
 var session = require('express-session');
@@ -16,7 +16,9 @@ app.set('views', __dirname + '/views');
 
 // middleware
 
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
 app.use(session({
   resave: false, // don't save session if unmodified
   saveUninitialized: false, // don't create session until something stored
@@ -25,28 +27,38 @@ app.use(session({
 
 // Session-persisted message middleware
 
-app.use(function(req, res, next){
+app.use(function (req, res, next) {
+  'use strict';
   var err = req.session.error;
   var msg = req.session.success;
   delete req.session.error;
   delete req.session.success;
   res.locals.message = '';
-  if (err) res.locals.message = '<p class="msg error">' + err + '</p>';
-  if (msg) res.locals.message = '<p class="msg success">' + msg + '</p>';
+  if (err) {
+    res.locals.message = '<p class="msg error">' + err + '</p>';
+  }
+  if (msg) {
+    res.locals.message = '<p class="msg success">' + msg + '</p>';
+  }
   next();
 });
 
 // dummy database
 
 var users = {
-  tj: { name: 'tj' }
+  tj: {
+    name: 'tj'
+  }
 };
 
 // when you create a user, generate a salt
 // and hash the password ('foobar' is the pass here)
 
-hash('foobar', function(err, salt, hash){
-  if (err) throw err;
+hash('foobar', function (err, salt, hash) {
+  'use strict';
+  if (err) {
+    throw err;
+  }
   // store the salt & hash in the "db"
   users.tj.salt = salt;
   users.tj.hash = hash;
@@ -56,16 +68,26 @@ hash('foobar', function(err, salt, hash){
 // Authenticate using our plain-object database of doom!
 
 function authenticate(name, pass, fn) {
-  if (!module.parent) console.log('authenticating %s:%s', name, pass);
+  'use strict';
+  if (!module.parent) {
+    console.log('authenticating %s:%s', name, pass);
+  }
   var user = users[name];
   // query the db for the given username
-  if (!user) return fn(new Error('cannot find user'));
+  if (!user) {
+    return fn(new Error('cannot find user'));
+  }
   // apply the same algorithm to the POSTed password, applying
   // the hash against the pass / salt, if there is a match we
   // found the user
-  hash(pass, user.salt, function(err, hash){
-    if (err) return fn(err);
-    if (hash == user.hash) return fn(null, user);
+  hash(pass, user.salt, function (err, hash) {
+    if (err) {
+      return fn(err);
+    }
+    if (hash == user.hash) 
+      return fn(null, user);
+  
+
     fn(new Error('invalid password'));
   });
 }
@@ -79,45 +101,41 @@ function restrict(req, res, next) {
   }
 }
 
-app.get('/', function(req, res){
+app.get('/', function (req, res) {
   res.redirect('/login');
 });
 
-app.get('/restricted', restrict, function(req, res){
+app.get('/restricted', restrict, function (req, res) {
   res.send('Wahoo! restricted area, click to <a href="/logout">logout</a>');
 });
 
-app.get('/logout', function(req, res){
+app.get('/logout', function (req, res) {
   // destroy the user's session to log them out
   // will be re-created next request
-  req.session.destroy(function(){
+  req.session.destroy(function () {
     res.redirect('/');
   });
 });
 
-app.get('/login', function(req, res){
+app.get('/login', function (req, res) {
   res.render('login');
 });
 
-app.post('/login', function(req, res){
-  authenticate(req.body.username, req.body.password, function(err, user){
+app.post('/login', function (req, res) {
+  authenticate(req.body.username, req.body.password, function (err, user) {
     if (user) {
       // Regenerate session when signing in
       // to prevent fixation
-      req.session.regenerate(function(){
+      req.session.regenerate(function () {
         // Store the user's primary key
         // in the session store to be retrieved,
         // or in this case the entire user object
         req.session.user = user;
-        req.session.success = 'Authenticated as ' + user.name
-          + ' click to <a href="/logout">logout</a>. '
-          + ' You may now access <a href="/restricted">/restricted</a>.';
+        req.session.success = 'Authenticated as ' + user.name + ' click to <a href="/logout">logout</a>. ' + ' You may now access <a href="/restricted">/restricted</a>.';
         res.redirect('back');
       });
     } else {
-      req.session.error = 'Authentication failed, please check your '
-        + ' username and password.'
-        + ' (use "tj" and "foobar")';
+      req.session.error = 'Authentication failed, please check your ' + ' username and password.' + ' (use "tj" and "foobar")';
       res.redirect('/login');
     }
   });
