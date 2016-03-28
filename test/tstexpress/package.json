@@ -12,7 +12,10 @@
     "body-parser" : "latest",
     "express-session" : "latest",
     "crypto" : "latest" ,
-    "ejs" : "latest"
+    "ejs" : "latest" ,
+    "morgan" : "latest" ,
+    "jade" : "latest" ,
+    "cookie-parser" : "latest"
     },
   "keywords": [],
   "author": "",

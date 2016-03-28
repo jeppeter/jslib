@@ -1,24 +1,24 @@
-var express = require('../../');
+var express = require('express');
 var app = module.exports = express();
 var users = require('./db');
 
 // so either you can deal with different types of formatting
 // for expected response in index.js
-app.get('/', function(req, res){
+app.get('/', function (req, res) {
   res.format({
-    html: function(){
-      res.send('<ul>' + users.map(function(user){
+    html: function () {
+      res.send('<ul>' + users.map(function (user) {
         return '<li>' + user.name + '</li>';
       }).join('') + '</ul>');
     },
 
-    text: function(){
-      res.send(users.map(function(user){
+    text: function () {
+      res.send(users.map(function (user) {
         return ' - ' + user.name + '\n';
       }).join(''));
     },
 
-    json: function(){
+    json: function () {
       res.json(users);
     }
   });
@@ -30,7 +30,7 @@ app.get('/', function(req, res){
 
 function format(path) {
   var obj = require(path);
-  return function(req, res){
+  return function (req, res) {
     res.format(obj);
   };
 }
