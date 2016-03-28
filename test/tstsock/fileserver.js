@@ -26,6 +26,7 @@ http.createServer(function (req, res) {
     requrl = qs.unescape(req.url);
     outfile = directory + requrl;
     fs.stat(outfile, function (err, stats) {
+        var rstream;
         if (err) {
             console.log('read %s error %s', outfile, JSON.stringify(err));
             res.writeHead(404);
@@ -86,7 +87,7 @@ http.createServer(function (req, res) {
                                 if (stats.isDirectory()) {
                                     s += util.format('<a href="/%s">%s</a>  %s<br>', elmlink, elemstr, 'DIR');
                                 } else {
-                                    s += util.format('<a href="/%s">%s</a>  %s<br>', elmlink, elemstr, 'FILE');
+                                    s += util.format('<a href="/%s">%s</a>  %s (%d bytes)<br>', elmlink, elemstr, 'FILE', stats.size);
                                 }
                             }
 
@@ -108,7 +109,7 @@ http.createServer(function (req, res) {
                                 if (stats.isDirectory()) {
                                     s += util.format('<a href="%s">%s</a>  %s<br>', elmlink, elemstr, 'DIR');
                                 } else {
-                                    s += util.format('<a href="%s">%s</a>  %s<br>', elmlink, elemstr, 'FILE');
+                                    s += util.format('<a href="%s">%s</a>  %s (%d bytes)<br>', elmlink, elemstr, 'FILE', stats.size);
                                 }
                             }
                             if (scancnt === hascnt) {
@@ -130,17 +131,18 @@ http.createServer(function (req, res) {
             });
             return;
         }
-        fs.readFile(outfile, function (err, data) {
-            if (err) {
-                console.log('read %s error %s', outfile, JSON.stringify(err));
-                res.writeHead(404);
-                res.end(JSON.stringify(err));
-                return;
-            }
-            console.log('read %s succ', outfile);
-            res.writeHead(200);
-            res.end(data);
-            return;
+
+        rstream = fs.createReadStream(outfile);
+
+        rstream.on('open', function () {
+            rstream.pipe(res);
+        });
+
+        rstream.on('error', function () {
+            res.end();
+        });
+        rstream.on('end', function () {
+            res.end();
         });
         return;
     });
