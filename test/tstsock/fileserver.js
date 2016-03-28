@@ -14,13 +14,17 @@ var fs = require('fs');
 var path = require('path');
 var http = require('http');
 var util = require('util');
+var qs = require('querystring');
 
 directory = path.resolve(directory, '.');
 posix_dir = directory.split(path.sep).join('/');
 
 http.createServer(function (req, res) {
     'use strict';
-    var outfile = directory + req.url;
+    var requrl;
+    var outfile;
+    requrl = qs.unescape(req.url);
+    outfile = directory + requrl;
     fs.stat(outfile, function (err, stats) {
         if (err) {
             console.log('read %s error %s', outfile, JSON.stringify(err));
@@ -44,7 +48,7 @@ http.createServer(function (req, res) {
                 s = '';
                 s += '<html>';
                 s += '<body>';
-                pdir = util.format('%s%s/..', posix_dir, req.url);
+                pdir = util.format('%s%s/..', posix_dir, requrl);
                 pdir = pdir.replace(/[\/]+/g, '\\');
                 console.log('pdir %s', pdir);
 
@@ -54,6 +58,7 @@ http.createServer(function (req, res) {
                     pdir = '/';
                 } else {
                     pdir = path.relative(directory, pdir);
+                    pdir = qs.escape(pdir);
                     console.log('pdir %s', pdir);
                     pdir = '/' + pdir.split(path.sep).join('/');
                 }
@@ -62,11 +67,13 @@ http.createServer(function (req, res) {
                 hascnt = 0;
                 files.forEach(function (elem) {
                     var lfile;
+                    var elmlink, elemstr;
                     lfile = outfile + path.sep + elem;
                     lfile = lfile.split(path.sep).join('/');
                     lfile = lfile.replace(/[\/]+/g, '/');
                     lfile = lfile.split('/').join(path.sep);
-                    console.log('lfile %s', lfile);
+                    console.log('lfile %s elem %s', lfile, elem);
+                    elemstr = elem;
                     scancnt += 1;
                     if (req.url.length === 1) {
                         fs.stat(lfile, function (err, stats) {
@@ -74,11 +81,12 @@ http.createServer(function (req, res) {
                             if (err) {
                                 s += util.format('%s error (%s) <br>', elem, JSON.stringify(err));
                             } else {
+                                elmlink = qs.escape(elem);
                                 console.log('%s stats ', lfile);
                                 if (stats.isDirectory()) {
-                                    s += util.format('<a href="/%s">%s</a>  %s<br>', elem, elem, 'DIR');
+                                    s += util.format('<a href="/%s">%s</a>  %s<br>', elmlink, elemstr, 'DIR');
                                 } else {
-                                    s += util.format('<a href="/%s">%s</a>  %s<br>', elem, elem, 'FILE');
+                                    s += util.format('<a href="/%s">%s</a>  %s<br>', elmlink, elemstr, 'FILE');
                                 }
                             }
 
@@ -94,11 +102,13 @@ http.createServer(function (req, res) {
                             if (err) {
                                 s += util.format('<h4> %s error (%s) </h4><br>', elem, JSON.stringify(err));
                             } else {
+                                elmlink = requrl + '/' + elem;
+                                elmlink = qs.escape(elmlink);
                                 console.log('%s stats ', lfile);
                                 if (stats.isDirectory()) {
-                                    s += util.format('<a href="%s/%s">%s</a>  %s<br>', req.url, elem, elem, 'DIR');
+                                    s += util.format('<a href="%s">%s</a>  %s<br>', elmlink, elemstr, 'DIR');
                                 } else {
-                                    s += util.format('<a href="%s/%s">%s</a>  %s<br>', req.url, elem, elem, 'FILE');
+                                    s += util.format('<a href="%s">%s</a>  %s<br>', elmlink, elemstr, 'FILE');
                                 }
                             }
                             if (scancnt === hascnt) {
