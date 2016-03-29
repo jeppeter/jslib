@@ -1,5 +1,6 @@
 var yargs = require('yargs');
 var util = require('util');
+var tracer = require('tracer');
 
 var argv = yargs.count('verbose')
     .alias('verbose', 'v')
@@ -16,3 +17,7 @@ var argv = yargs.count('verbose')
     .argv;
 
 console.log(argv);
+
+if (argv.verbose >= 3){
+    tracer.setle
+}

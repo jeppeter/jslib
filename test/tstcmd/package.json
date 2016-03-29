@@ -8,7 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies" : {
-    "yargs" : "latest"
+    "yargs" : "latest",
+    "tracer" : "latest"
     },
   "keywords": [],
   "author": "",
