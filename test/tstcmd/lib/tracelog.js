@@ -25,6 +25,7 @@ function TraceLog(options) {
             while (_innerLogger.writeStreams.length > 0) {
                 ws = _innerLogger.writeStreams[0];
                 _innerLogger.writeStreams.slice(0, 1);
+                ws.end();
                 ws.close();
             }
         }
@@ -53,6 +54,9 @@ function TraceLog(options) {
                         break;
                     }
                 }
+            });
+            ws.on('data', function (data) {
+                console.log('data (%s) %s', data, elm);
             });
             curlog.writeStreams.push(ws);
         });
