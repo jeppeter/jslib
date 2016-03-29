@@ -17,9 +17,7 @@ function Person(name, addr) {
     };
 }
 
-var person = new Person('james', 'usa');
-
-console.log('name %s addr %s', person.GetName(), person.GetAddr());
-person.SetName('bell');
-person.SetAddr('uk');
-console.log('name %s addr %s', person.GetName(), person.GetAddr());
+module.exports.NewPerson = function (name, addr) {
+    'use strict';
+    return new Person(name, addr);
+};
