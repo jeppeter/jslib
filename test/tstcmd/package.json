@@ -1,0 +1,16 @@
+{
+  "name": "tstcmd",
+  "version": "1.0.0",
+  "description": "test command line use",
+  "main": "tstcmdline.js",
+  "repository" : "github.com/jeppeter/jslib",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies" : {
+    "yargs" : "latest"
+    },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
