@@ -1,23 +1,45 @@
 var yargs = require('yargs');
 var util = require('util');
-var tracer = require('tracer');
+var tracelog = require('./lib/tracelog');
 
 var argv = yargs.count('verbose')
     .alias('verbose', 'v')
     .usage(util.format('Usage %s [OPTIONS] file', process.argv[1]))
     .default({
-        file: __filename,
+        file: [],
         interactive: 'no'
     })
     .help('h')
     .alias('h', 'help')
-    .alias('file', 'F')
-    .demand(1)
+    .array('files')
+    .alias('files', 'F')
     .alias('i', 'interactive')
     .argv;
 
-console.log(argv);
+//console.log(argv);
 
-if (argv.verbose >= 3){
-    tracer.setle
+var logopt;
+logopt = {};
+if (argv.verbose >= 4) {
+    logopt.level = 'trace';
+} else if (argv.verbose >= 3) {
+    logopt.level = 'debug';
+} else if (argv.verbose >= 2) {
+    logopt.level = 'debug';
+} else if (argv.verbose >= 1) {
+    logopt.level = 'warn';
+} else {
+    logopt.level = 'error';
 }
+
+logopt.files = argv.files;
+tracelog.Init(logopt);
+
+tracelog.trace('print trace');
+tracelog.debug('print debug');
+tracelog.log('print log');
+tracelog.info('print info');
+tracelog.warn('print warn');
+tracelog.error('print error');
+
+tracelog.finish();
