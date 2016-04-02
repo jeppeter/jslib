@@ -19,7 +19,6 @@ function TraceLog(options) {
             ws = self.writeStreams[0];
             self.writeStreams.splice(0, 1);
             ws.end();
-            console.log('%s end', ws.path);
             //ws.close();
         }
     };
