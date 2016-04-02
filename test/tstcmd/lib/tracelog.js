@@ -4,6 +4,40 @@ var fs = require('fs');
 
 var _innerLogger;
 
+var add_write_streams = function (self, arfiles, isappend) {
+    'use strict';
+    var openflags;
+    openflags = 'w+';
+    if (isappend) {
+        openflags = 'a+';
+    }
+    arfiles.forEach(function (elm) {
+        var ws;
+        ws = fs.createWriteStream(elm, {
+            flags: openflags,
+            defaultEncoding: 'utf8',
+            autoclose: true
+        });
+        ws.on('error', function (err) {
+            var i;
+            console.error('error on %s (%s)', elm, err);
+            for (i = 0; i < self.writeStreams.length; i += 1) {
+                if (self.writeStreams[i] === ws) {
+                    self.writeStreams.slice(i, 1);
+                    break;
+                }
+            }
+        });
+        ws.on('data', function (data) {
+            console.log('data (%s) %s', data, elm);
+        });
+        ws.on('close', function () {
+            console.log('%s closed', elm);
+        });
+        self.writeStreams.push(ws);
+    });
+};
+
 function TraceLog(options) {
     'use strict';
     var self;
@@ -22,38 +56,6 @@ function TraceLog(options) {
             //ws.close();
         }
     };
-    this.add_write_streams = function (arfiles, isappend) {
-        var openflags;
-        openflags = 'w+';
-        if (isappend) {
-            openflags = 'a+';
-        }
-        arfiles.forEach(function (elm) {
-            var ws;
-            ws = fs.createWriteStream(elm, {
-                flags: openflags,
-                defaultEncoding: 'utf8',
-                autoclose: true
-            });
-            ws.on('error', function (err) {
-                var i;
-                console.error('error on %s (%s)', elm, err);
-                for (i = 0; i < self.writeStreams.length; i += 1) {
-                    if (self.writeStreams[i] === ws) {
-                        self.writeStreams.slice(i, 1);
-                        break;
-                    }
-                }
-            });
-            ws.on('data', function (data) {
-                console.log('data (%s) %s', data, elm);
-            });
-            ws.on('close', function () {
-                console.log('%s closed', elm);
-            });
-            self.writeStreams.push(ws);
-        });
-    };
     this.format = "<{{title}}>:{{file}}:{{line}} {{message}}\n";
     if (typeof options.format === 'string' && options.format.length > 0) {
         this.format = options.format;
@@ -64,11 +66,11 @@ function TraceLog(options) {
     }
 
     if (util.isArray(options.files) && options.files.length > 0) {
-        this.add_write_streams(options.files, false);
+        add_write_streams(self, options.files, false);
     }
 
     if (util.isArray(options.appendfiles)) {
-        this.add_write_streams(options.appendfiles, true);
+        add_write_streams(self, options.appendfiles, true);
     }
 
 
@@ -97,14 +99,14 @@ module.exports.Init = function (options) {
     _innerLogger = new TraceLog(inner_options);
 };
 
-function inner_init(options) {
+var inner_init = function (options) {
     'use strict';
     var inner_options = options || {};
     if (_innerLogger) {
         return;
     }
     _innerLogger = new TraceLog(inner_options);
-}
+};
 
 module.exports.log = function (data) {
     'use strict';
