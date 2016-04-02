@@ -7,11 +7,11 @@ var _innerLogger;
 function TraceLog(options) {
     'use strict';
     var self;
+    self = this;
     this.level = 'error';
     this.writeStreams = [];
     this.waitStreams = [];
     this.stackindex = 1;
-    self = this;
     this.finish = function () {
         var ws;
         //var idx;
@@ -23,7 +23,7 @@ function TraceLog(options) {
             //ws.close();
         }
     };
-    this.format = "<{{title}}>:{{file}}:{{line}} {{message}}";
+    this.format = "<{{title}}>:{{file}}:{{line}} {{message}}\n";
     if (typeof options.format === 'string' && options.format.length > 0) {
         this.format = options.format;
     }
@@ -35,32 +35,56 @@ function TraceLog(options) {
     if (util.isArray(options.files) && options.files.length > 0) {
         options.files.forEach(function (elm) {
             var ws;
-            if (true) {
-                ws = fs.createWriteStream(elm, {
-                    flags: "w+",
-                    defaultEncoding: 'utf8',
-                    autoclose: true
-                });
-                ws.on('error', function (err) {
-                    var i;
-                    console.error('error on %s (%s)', elm, err);
-                    for (i = 0; i < self.writeStreams.length; i += 1) {
-                        if (self.writeStreams[i] === ws) {
-                            self.writeStreams.slice(i, 1);
-                            break;
-                        }
+            ws = fs.createWriteStream(elm, {
+                flags: "w+",
+                defaultEncoding: 'utf8',
+                autoclose: true
+            });
+            ws.on('error', function (err) {
+                var i;
+                console.error('error on %s (%s)', elm, err);
+                for (i = 0; i < self.writeStreams.length; i += 1) {
+                    if (self.writeStreams[i] === ws) {
+                        self.writeStreams.slice(i, 1);
+                        break;
                     }
-                });
-                ws.on('data', function (data) {
-                    console.log('data (%s) %s', data, elm);
-                });
-                ws.on('close', function () {
-                    console.log('%s closed', elm);
-                });
-                self.writeStreams.push(ws);
-            } else {
-                self.writeStreams.push(elm);
-            }
+                }
+            });
+            ws.on('data', function (data) {
+                console.log('data (%s) %s', data, elm);
+            });
+            ws.on('close', function () {
+                console.log('%s closed', elm);
+            });
+            self.writeStreams.push(ws);
+        });
+    }
+
+    if (util.isArray(options.appendfiles)) {
+        options.appendfiles.forEach(function (elm) {
+            var ws;
+            ws = fs.createWriteStream(elm, {
+                flags: "a+",
+                defaultEncoding: 'utf8',
+                autoclose: true
+            });
+            ws.on('error', function (err) {
+                var i;
+                console.error('error on %s (%s)', elm, err);
+                for (i = 0; i < self.writeStreams.length; i += 1) {
+                    if (self.writeStreams[i] === ws) {
+                        self.writeStreams.slice(i, 1);
+                        break;
+                    }
+                }
+            });
+            ws.on('data', function (data) {
+                console.log('data (%s) %s', data, elm);
+            });
+            ws.on('close', function () {
+                console.log('%s closed', elm);
+            });
+            self.writeStreams.push(ws);
         });
     }
 
@@ -69,16 +93,17 @@ function TraceLog(options) {
         format: [self.format],
         stackIndex: self.stackindex,
         transport: function (data) {
-            process.stderr.write('type (%s)', data.output);
-            console.log('will write (%s)', data.output);
-            self.writeStreams.forEach(function (elm) {
-                elm.write('%s', data.output);
-                process.stdout.write('write %s (%s)', elm.path, data.output);
-            });
+            process.stderr.write(data.output);
+            if (true) {
+                self.writeStreams.forEach(function (elm) {
+                    elm.write(data.output);
+                });
+            }
         }
     });
 
     tracer.setLevel(this.level);
+    return this;
 
 }
 

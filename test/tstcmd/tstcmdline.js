@@ -12,6 +12,8 @@ var argv = yargs.count('verbose')
     .help('h')
     .alias('h', 'help')
     .array('files')
+    .array('appendfiles')
+    .alias('appendfiles', 'A')
     .alias('files', 'F')
     .alias('i', 'interactive')
     .argv;
@@ -33,6 +35,7 @@ if (argv.verbose >= 4) {
 }
 
 logopt.files = argv.files;
+logopt.appendfiles = argv.appendfiles;
 tracelog.Init(logopt);
 
 tracelog.trace('print trace');
