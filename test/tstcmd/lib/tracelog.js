@@ -3,41 +3,6 @@ var util = require('util');
 var fs = require('fs');
 
 var _innerLogger;
-var AddWriteStreams;
-
-AddWriteStreams = function (self, arfiles, isappend) {
-    'use strict';
-    var openflags;
-    openflags = 'w+';
-    if (isappend) {
-        openflags = 'a+';
-    }
-    arfiles.forEach(function (elm) {
-        var ws;
-        ws = fs.createWriteStream(elm, {
-            flags: openflags,
-            defaultEncoding: 'utf8',
-            autoclose: true
-        });
-        ws.on('error', function (err) {
-            var i;
-            console.error('error on %s (%s)', elm, err);
-            for (i = 0; i < self.writeStreams.length; i += 1) {
-                if (self.writeStreams[i] === ws) {
-                    self.writeStreams.slice(i, 1);
-                    break;
-                }
-            }
-        });
-        ws.on('data', function (data) {
-            console.log('data (%s) %s', data, elm);
-        });
-        ws.on('close', function () {
-            console.log('%s closed', elm);
-        });
-        self.writeStreams.push(ws);
-    });
-};
 
 function TraceLog(options) {
     'use strict';
@@ -58,6 +23,38 @@ function TraceLog(options) {
             //ws.close();
         }
     };
+    this.add_write_streams = function (arfiles, isappend) {
+        var openflags;
+        openflags = 'w+';
+        if (isappend) {
+            openflags = 'a+';
+        }
+        arfiles.forEach(function (elm) {
+            var ws;
+            ws = fs.createWriteStream(elm, {
+                flags: openflags,
+                defaultEncoding: 'utf8',
+                autoclose: true
+            });
+            ws.on('error', function (err) {
+                var i;
+                console.error('error on %s (%s)', elm, err);
+                for (i = 0; i < self.writeStreams.length; i += 1) {
+                    if (self.writeStreams[i] === ws) {
+                        self.writeStreams.slice(i, 1);
+                        break;
+                    }
+                }
+            });
+            ws.on('data', function (data) {
+                console.log('data (%s) %s', data, elm);
+            });
+            ws.on('close', function () {
+                console.log('%s closed', elm);
+            });
+            self.writeStreams.push(ws);
+        });
+    };
     this.format = "<{{title}}>:{{file}}:{{line}} {{message}}\n";
     if (typeof options.format === 'string' && options.format.length > 0) {
         this.format = options.format;
@@ -68,11 +65,11 @@ function TraceLog(options) {
     }
 
     if (util.isArray(options.files) && options.files.length > 0) {
-        AddWriteStreams(self, options.files, false);
+        this.add_write_streams(options.files, false);
     }
 
     if (util.isArray(options.appendfiles)) {
-        AddWriteStreams(self, options.appendfiles, true);
+        this.add_write_streams(options.appendfiles, true);
     }
 
 
