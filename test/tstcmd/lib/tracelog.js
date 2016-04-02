@@ -3,6 +3,41 @@ var util = require('util');
 var fs = require('fs');
 
 var _innerLogger;
+var AddWriteStreams;
+
+AddWriteStreams = function (self, arfiles, isappend) {
+    'use strict';
+    var openflags;
+    openflags = 'w+';
+    if (isappend) {
+        openflags = 'a+';
+    }
+    arfiles.forEach(function (elm) {
+        var ws;
+        ws = fs.createWriteStream(elm, {
+            flags: openflags,
+            defaultEncoding: 'utf8',
+            autoclose: true
+        });
+        ws.on('error', function (err) {
+            var i;
+            console.error('error on %s (%s)', elm, err);
+            for (i = 0; i < self.writeStreams.length; i += 1) {
+                if (self.writeStreams[i] === ws) {
+                    self.writeStreams.slice(i, 1);
+                    break;
+                }
+            }
+        });
+        ws.on('data', function (data) {
+            console.log('data (%s) %s', data, elm);
+        });
+        ws.on('close', function () {
+            console.log('%s closed', elm);
+        });
+        self.writeStreams.push(ws);
+    });
+};
 
 function TraceLog(options) {
     'use strict';
@@ -33,59 +68,11 @@ function TraceLog(options) {
     }
 
     if (util.isArray(options.files) && options.files.length > 0) {
-        options.files.forEach(function (elm) {
-            var ws;
-            ws = fs.createWriteStream(elm, {
-                flags: "w+",
-                defaultEncoding: 'utf8',
-                autoclose: true
-            });
-            ws.on('error', function (err) {
-                var i;
-                console.error('error on %s (%s)', elm, err);
-                for (i = 0; i < self.writeStreams.length; i += 1) {
-                    if (self.writeStreams[i] === ws) {
-                        self.writeStreams.slice(i, 1);
-                        break;
-                    }
-                }
-            });
-            ws.on('data', function (data) {
-                console.log('data (%s) %s', data, elm);
-            });
-            ws.on('close', function () {
-                console.log('%s closed', elm);
-            });
-            self.writeStreams.push(ws);
-        });
+        AddWriteStreams(self, options.files, false);
     }
 
     if (util.isArray(options.appendfiles)) {
-        options.appendfiles.forEach(function (elm) {
-            var ws;
-            ws = fs.createWriteStream(elm, {
-                flags: "a+",
-                defaultEncoding: 'utf8',
-                autoclose: true
-            });
-            ws.on('error', function (err) {
-                var i;
-                console.error('error on %s (%s)', elm, err);
-                for (i = 0; i < self.writeStreams.length; i += 1) {
-                    if (self.writeStreams[i] === ws) {
-                        self.writeStreams.slice(i, 1);
-                        break;
-                    }
-                }
-            });
-            ws.on('data', function (data) {
-                console.log('data (%s) %s', data, elm);
-            });
-            ws.on('close', function () {
-                console.log('%s closed', elm);
-            });
-            self.writeStreams.push(ws);
-        });
+        AddWriteStreams(self, options.appendfiles, true);
     }
 
 
