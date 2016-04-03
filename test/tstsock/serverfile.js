@@ -44,7 +44,7 @@ http.createServer(function (req, res) {
                 if (elm.type === 'dir') {
                     s += util.format('<a href="%s">%s</a> %s <br>', elm.href, elm.displayname, 'DIR');
                 } else {
-                    s += util.format('<a href="%s">%s</a> %s <br>', elm.href, elm.displayname, 'FILE');
+                    s += util.format('<a href="%s">%s</a> size %d %s <br>', elm.href, elm.displayname, elm.size, 'FILE');
                 }
             });
         }

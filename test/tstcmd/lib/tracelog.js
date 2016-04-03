@@ -79,11 +79,9 @@ function TraceLog(options) {
         stackIndex: self.stackindex,
         transport: function (data) {
             process.stderr.write(data.output);
-            if (true) {
-                self.writeStreams.forEach(function (elm) {
-                    elm.write(data.output);
-                });
-            }
+            self.writeStreams.forEach(function (elm) {
+                elm.write(data.output);
+            });
         }
     });
 

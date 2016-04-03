@@ -71,7 +71,6 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                 console.log('pdir %s', pdir);
 
                 pdir = path.resolve(pdir, '.');
-                console.log('pdir %s', pdir);
                 if (pdir.length < basedir.length) {
                     pdir = '/';
                 } else {
@@ -92,7 +91,6 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                     lfile = lfile.split(path.sep).join('/');
                     lfile = lfile.replace(/[\/]+/g, '/');
                     lfile = lfile.split('/').join(path.sep);
-                    console.log('lfile %s elem %s', lfile, elem);
                     elemstr = elem;
                     scancnt += 1;
                     if (req.url.length === 1) {
@@ -125,6 +123,7 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                             elmlink = requrl + '/' + elem;
                             elmlink = elmlink.split(path.sep).join('/');
                             elmlink = qs.escape(elmlink);
+                            elmlink = elmlink.replace('%2F', '/');
                             if (stats.isDirectory()) {
                                 curelm = new FileInfo(elmlink, elemstr, true, 0);
                             } else {
