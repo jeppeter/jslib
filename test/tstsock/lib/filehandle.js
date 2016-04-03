@@ -13,6 +13,21 @@ module.exports.set_dir = function (dirset) {
     return;
 };
 
+function FileInfo(link, name, isdir, size) {
+    'use strict';
+    this.href = link;
+    this.displayname = name;
+    if (isdir) {
+        this.type = 'dir';
+        this.size = 0;
+    } else {
+        this.type = 'file';
+        this.size = size;
+    }
+    console.log('link(%s) name (%s)', this.href, this.displayname);
+    return this;
+}
+
 module.exports.get_dir = function () {
     'use strict';
     return basedir;
@@ -45,15 +60,14 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
             var pdir;
             var scancnt, hascnt;
             var curelm;
-            curelm = {};
             fs.readdir(outfile, function (err, files) {
                 if (err) {
                     outerr = new Error('read (%s) error(%s)', outfile, JSON.stringify(err));
                     return callback(outerr, outputjson, req, res);
                 }
-                console.log('req %s', req.url);
+                console.log('req %s', requrl);
                 pdir = util.format('%s%s/..', posix_dir, requrl);
-                pdir = pdir.replace(/[\/]+/g, '\\');
+                pdir = pdir.replace(/[\/]+/g, path.sep);
                 console.log('pdir %s', pdir);
 
                 pdir = path.resolve(pdir, '.');
@@ -62,13 +76,12 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                     pdir = '/';
                 } else {
                     pdir = path.relative(basedir, pdir);
+                    pdir = pdir.split(path.sep).join('/');
                     pdir = qs.escape(pdir);
                     console.log('pdir %s', pdir);
-                    pdir = '/' + pdir.split(path.sep).join('/');
+                    pdir = '/' + pdir;
                 }
-                curelm.displayname = '..';
-                curelm.href = pdir;
-                curelm.type = 'dir';
+                curelm = new FileInfo(pdir, '..', true, 0);
                 outputjson.lists.push(curelm);
                 scancnt = 0;
                 hascnt = 0;
@@ -89,20 +102,15 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                                 outerr = new Error('%s error(%s)', elem, JSON.stringify(err));
                                 return callback(outerr, outputjson, req, res);
                             }
-                            elmlink = qs.escape(elem);
+                            elem = elem.split(path.sep).join('/');
+                            elmlink = '/' + qs.escape(elem);
                             console.log('%s stats ', lfile);
                             if (stats.isDirectory()) {
-                                curelm.displayname = elemstr;
-                                curelm.href = elmlink;
-                                curelm.type = 'dir';
+                                curelm = new FileInfo(elmlink, elemstr, true, 0);
                             } else {
-                                curelm.displayname = elemstr;
-                                curelm.href = elmlink;
-                                curelm.type = 'file';
-                                curelm.size = stats.size;
+                                curelm = new FileInfo(elmlink, elemstr, false, stats.size);
                             }
                             outputjson.lists.push(curelm);
-
                             if (scancnt === hascnt) {
                                 return callback(null, outputjson, req, res);
                             }
@@ -115,17 +123,12 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                                 return callback(outerr, outputjson, req, res);
                             }
                             elmlink = requrl + '/' + elem;
+                            elmlink = elmlink.split(path.sep).join('/');
                             elmlink = qs.escape(elmlink);
-                            console.log('%s stats ', lfile);
                             if (stats.isDirectory()) {
-                                curelm.displayname = elemstr;
-                                curelm.href = elmlink;
-                                curelm.type = 'dir';
+                                curelm = new FileInfo(elmlink, elemstr, true, 0);
                             } else {
-                                curelm.displayname = elemstr;
-                                curelm.href = elmlink;
-                                curelm.type = 'file';
-                                curelm.size = stats.size;
+                                curelm = new FileInfo(elmlink, elemstr, false, stats.size);
                             }
                             outputjson.lists.push(curelm);
 

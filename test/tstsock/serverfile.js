@@ -25,7 +25,7 @@ http.createServer(function (req, res) {
         var s;
         if (err) {
             res.writeHead(404);
-            res.end(err);
+            res.end(JSON.stringify(err));
             return;
         }
 
@@ -54,3 +54,4 @@ http.createServer(function (req, res) {
         res.end(s);
     });
 }).listen(lport);
+console.log('listne(%d) on (%s)', lport, directory);
