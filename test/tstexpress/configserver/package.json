@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "sqlite3": "latest",
-    "express": "latest"
+    "express": "latest",
+    "yargs" : "latest"
   },
   "keywords": [],
   "author": "",
