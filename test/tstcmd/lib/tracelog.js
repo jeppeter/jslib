@@ -23,7 +23,7 @@ var add_write_streams = function (self, arfiles, isappend) {
             console.error('error on %s (%s)', elm, err);
             for (i = 0; i < self.writeStreams.length; i += 1) {
                 if (self.writeStreams[i] === ws) {
-                    self.writeStreams.slice(i, 1);
+                    self.writeStreams.splice(i, 1);
                     break;
                 }
             }
