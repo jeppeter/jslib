@@ -32,11 +32,9 @@ var sqldb = new sqlite3.Database(databasename, sqlite3.OPEN_READWRITE | sqlite3.
         process.exit(3);
     }
 });
-
 if (argv.verbose > 0) {
     sqlite3.verbose();
 }
-
 sqldb.all(argv.S, function (err, rows) {
     'use strict';
     if (err) {
