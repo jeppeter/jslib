@@ -69,7 +69,7 @@ $(document).ready(function() {
 	</div>
 	</div>
 	<form id="upload-file" method="post" action="file-upload-1.htm" name="submit" enctype="multipart/form-data">
-	  <input  type="file" name="fileField"><br /><br />
+	  <input id="filename-sel" type="file" name="fileField"><br /><br />
 	  <input type="submit" name="submit" value="Submit">
 	</form>
 	</div>
@@ -84,7 +84,14 @@ $(document).ready(function() {
 		var uploadElement = document.getElementById("upload-file");
 		console.log('uploadElement %s',uploadElement);
 		uploadElement.onchange = function() {
-			console.log('input file %s',$("#fileField").prop('file'));
+			var element = $("#filename-sel"),
+			    attributes = {};
+
+			$.each(element.get(0).attributes, function(i, attrib){
+			    attributes[attrib.name] = attrib.value;
+			    console.log('[%d] %s = %s',i,attrib.name ,attrib.value);
+			});
+			console.log('value %s',element[0].value);
 		};
 	});
 	</script>
