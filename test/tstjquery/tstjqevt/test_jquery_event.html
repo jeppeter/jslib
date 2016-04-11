@@ -68,10 +68,25 @@ $(document).ready(function() {
       	</div>
 	</div>
 	</div>
+	<form id="upload-file" method="post" action="file-upload-1.htm" name="submit" enctype="multipart/form-data">
+	  <input  type="file" name="fileField"><br /><br />
+	  <input type="submit" name="submit" value="Submit">
+	</form>
 	</div>
 	<footer>
 		<p>JavaScript &amp; jQuery: The Missing Manual, 3rd Edition, by <a href="http://sawmac.com/">David McFarland</a>. Published by <a href="http://oreilly.com/">O'Reilly Media, Inc</a>.</p>
 	</footer>
 </div>
 </body>
+	<script>
+	
+	$(document).ready(function(){
+		var uploadElement = document.getElementById("upload-file");
+		console.log('uploadElement %s',uploadElement);
+		uploadElement.onchange = function() {
+			console.log('input file %s',$("#fileField").prop('file'));
+		};
+	});
+	</script>
+
 </html>

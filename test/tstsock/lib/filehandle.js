@@ -164,3 +164,12 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
         return;
     });
 };
+
+module.exports.put_file = function (inputjson, req, res, callback) {
+    'use strict';
+    var requrl;
+    var outfile;
+    requrl = inputjson.requrl;
+    outfile = basedir + requrl;
+    console.log('requrl (%s) outfile (%s)', requrl, outfile);
+};
