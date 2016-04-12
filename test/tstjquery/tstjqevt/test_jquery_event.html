@@ -68,9 +68,9 @@ $(document).ready(function() {
       	</div>
 	</div>
 	</div>
-	<form id="upload-file" method="post" action="file-upload-1.htm" name="submit" enctype="multipart/form-data">
+	<form id="upload-file" method="post" action="javascript:{};" name="submit" enctype="multipart/form-data">
 	  <input id="filename-sel" type="file" name="fileField"><br /><br />
-	  <input type="submit" name="submit" value="Submit">
+	  <input id="upload-submit" type="submit" name="submit" value="上传">
 	</form>
 	</div>
 	<footer>
@@ -79,20 +79,38 @@ $(document).ready(function() {
 </div>
 </body>
 	<script>
+	function basename(path) {
+		return path.replace(/\\/g,'/').replace( /.*\//, '' );
+	}
+
+	function dirname(path) {
+		return path.replace(/\\/g,'/').replace(/\/[^\/]*$/, '');
+	}
 	
 	$(document).ready(function(){
 		var uploadElement = document.getElementById("upload-file");
 		console.log('uploadElement %s',uploadElement);
 		uploadElement.onchange = function() {
+			'use strict';
 			var element = $("#filename-sel"),
 			    attributes = {};
+			var path;
 
 			$.each(element.get(0).attributes, function(i, attrib){
 			    attributes[attrib.name] = attrib.value;
 			    console.log('[%d] %s = %s',i,attrib.name ,attrib.value);
 			});
-			console.log('value %s',element[0].value);
+			path = element[0].value;
+			path = basename(path);
+			console.log('value %s',path);
 		};
+		$('form').submit(function(event){
+			'use strict';
+			var path;
+			path = $('#filename-sel')[0].value;
+			path = basename(path);
+			console.log('submit %s',path);
+		});
 	});
 	</script>
 
