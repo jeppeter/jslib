@@ -9,7 +9,9 @@
   "dependencies" : {
     "net" : "latest",
     "express" : "latest" ,
-    "connect" : "latest"
+    "connect" : "latest" ,
+    "tracer" : "latest" ,
+    "yargs" : "latest"
     },
   "keywords": [],
   "author": "",

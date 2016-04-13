@@ -2,6 +2,18 @@ var filehandle = require('./lib/filehandle');
 var qs = require('querystring');
 var util = require('util');
 var http = require('http');
+var tracelog = require('./lib/tracelog');
+var yargs = require('yargs');
+var args = yargs.count('verbose')
+    .alias('verbose', 'v')
+    .usage(util.format('Usage %s [OPTIONS] directory', process.argv[1]))
+    .help('h')
+    .alias('h', 'help')
+    .array('appendlog')
+    .alias('appendlog', 'A')
+    .array('createlog')
+    .alais('createlog', 'C');
+
 
 var directory = __dirname;
 var lport = 9000;
@@ -16,13 +28,13 @@ if (process.argv.length > 3) {
 
 filehandle.set_dir(directory);
 
-http.createServer(function (req, res) {
+http.createServer(function(req, res) {
     'use strict';
     var inputjson;
     inputjson = {};
     inputjson.requrl = qs.unescape(req.url);
     if (req.method === 'GET') {
-        filehandle.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
+        filehandle.list_dir(inputjson, req, res, function(err, outputjson, req, res) {
             var s;
             if (err) {
                 res.writeHead(404);
@@ -41,7 +53,7 @@ http.createServer(function (req, res) {
             s += '<html>';
             s += '<body>';
             if (util.isArray(outputjson.lists)) {
-                outputjson.lists.forEach(function (elm) {
+                outputjson.lists.forEach(function(elm) {
                     if (elm.type === 'dir') {
                         s += util.format('<a href="%s">%s</a> %s <br>', elm.href, elm.displayname, 'DIR');
                     } else {
@@ -59,7 +71,7 @@ http.createServer(function (req, res) {
             res.end(s);
         });
     } else if (req.method === 'PUT') {
-        filehandle.put_file(inputjson, req, res, function (err, outputjson, req, res) {
+        filehandle.put_file(inputjson, req, res, function(err, outputjson, req, res) {
             err = err;
             outputjson = outputjson;
             req = req;
