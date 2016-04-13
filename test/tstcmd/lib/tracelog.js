@@ -38,6 +38,11 @@ var add_write_streams = function (self, arfiles, isappend) {
     });
 };
 
+var format_string = function () {
+    'use strict';
+    return util.format.apply(util, arguments);
+};
+
 function TraceLog(options) {
     'use strict';
     var self;
@@ -106,41 +111,36 @@ var inner_init = function (options) {
     _innerLogger = new TraceLog(inner_options);
 };
 
-module.exports.log = function (data) {
-    'use strict';
-    inner_init();
-    _innerLogger.innerLogger.log(data);
-};
 
-module.exports.debug = function (data) {
+module.exports.debug = function () {
     'use strict';
     inner_init();
-    _innerLogger.innerLogger.debug(data);
+    _innerLogger.innerLogger.debug(format_string.apply(format_string, arguments));
 };
 
 
-module.exports.trace = function (data) {
+module.exports.trace = function () {
     'use strict';
     inner_init();
-    _innerLogger.innerLogger.trace(data);
+    _innerLogger.innerLogger.trace(format_string.apply(format_string, arguments));
 };
 
-module.exports.info = function (data) {
+module.exports.info = function () {
     'use strict';
     inner_init();
-    _innerLogger.innerLogger.info(data);
+    _innerLogger.innerLogger.info(format_string.apply(format_string, arguments));
 };
 
-module.exports.warn = function (data) {
+module.exports.warn = function () {
     'use strict';
     inner_init();
-    _innerLogger.innerLogger.warn(data);
+    _innerLogger.innerLogger.warn(format_string.apply(format_string, arguments));
 };
 
-module.exports.error = function (data) {
+module.exports.error = function () {
     'use strict';
     inner_init();
-    _innerLogger.innerLogger.error(data);
+    _innerLogger.innerLogger.error(format_string.apply(format_string, arguments));
 };
 
 module.exports.finish = function () {

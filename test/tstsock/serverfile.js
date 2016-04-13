@@ -12,29 +12,43 @@ var args = yargs.count('verbose')
     .array('appendlog')
     .alias('appendlog', 'A')
     .array('createlog')
-    .alais('createlog', 'C');
+    .alias('createlog', 'C')
+    .default('path', __dirname)
+    .alias('path', 'P')
+    .default('port', 9000)
+    .alias('port', 'p')
+    .default('format', '<{{title}}>:{{file}}:{{line}} {{message}}\n')
+    .alias('format', 'F').argv;
 
 
-var directory = __dirname;
-var lport = 9000;
+var directory = args.path;
+var lport = args.port;
+var logopt = {};
 
-if (process.argv.length > 2) {
-    directory = process.argv[2];
+if (args.verbose >= 4) {
+    logopt.level = 'trace';
+} else if (args.verbose >= 3) {
+    logopt.level = 'debug';
+} else if (args.verbose >= 2) {
+    logopt.level = 'info';
+} else if (args.verbose >= 1) {
+    logopt.level = 'warn';
+} else {
+    logopt.level = 'error';
 }
 
-if (process.argv.length > 3) {
-    lport = process.argv[3];
-}
-
+logopt.format = args.format;
+tracelog.Init(logopt);
 filehandle.set_dir(directory);
 
-http.createServer(function(req, res) {
+http.createServer(function (req, res) {
     'use strict';
     var inputjson;
     inputjson = {};
     inputjson.requrl = qs.unescape(req.url);
+    tracelog.log('req.method %s', req.method);
     if (req.method === 'GET') {
-        filehandle.list_dir(inputjson, req, res, function(err, outputjson, req, res) {
+        filehandle.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
             var s;
             if (err) {
                 res.writeHead(404);
@@ -53,7 +67,7 @@ http.createServer(function(req, res) {
             s += '<html>';
             s += '<body>';
             if (util.isArray(outputjson.lists)) {
-                outputjson.lists.forEach(function(elm) {
+                outputjson.lists.forEach(function (elm) {
                     if (elm.type === 'dir') {
                         s += util.format('<a href="%s">%s</a> %s <br>', elm.href, elm.displayname, 'DIR');
                     } else {
@@ -71,7 +85,7 @@ http.createServer(function(req, res) {
             res.end(s);
         });
     } else if (req.method === 'PUT') {
-        filehandle.put_file(inputjson, req, res, function(err, outputjson, req, res) {
+        filehandle.put_file(inputjson, req, res, function (err, outputjson, req, res) {
             err = err;
             outputjson = outputjson;
             req = req;
@@ -79,4 +93,5 @@ http.createServer(function(req, res) {
         });
     }
 }).listen(lport);
-console.log('listne(%d) on (%s)', lport, directory);
+
+tracelog.info('listne(%d) on (%s)', lport, directory);

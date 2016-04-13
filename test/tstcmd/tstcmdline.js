@@ -38,11 +38,10 @@ logopt.files = argv.files;
 logopt.appendfiles = argv.appendfiles;
 tracelog.Init(logopt);
 
-tracelog.trace('print trace');
-tracelog.debug('print debug');
-tracelog.log('print log');
-tracelog.info('print info');
-tracelog.warn('print warn');
-tracelog.error('print error');
+tracelog.trace('print trace (%d)', argv.verbose);
+tracelog.debug('print debug (%d)', argv.verbose);
+tracelog.info('print info (%d)', argv.verbose);
+tracelog.warn('print warn (%d)', argv.verbose);
+tracelog.error('print error (%d)', argv.verbose);
 
 tracelog.finish();

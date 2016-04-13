@@ -10,7 +10,8 @@
   "dependencies" : {
     "yargs" : "latest",
     "tracer" : "latest",
-    "emitter" : "latest"
+    "emitter" : "latest",
+    "variadic" : "latest"
     },
   "keywords": [],
   "author": "",
