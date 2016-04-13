@@ -46,7 +46,7 @@ http.createServer(function (req, res) {
     var inputjson;
     inputjson = {};
     inputjson.requrl = qs.unescape(req.url);
-    tracelog.log('req.method %s', req.method);
+    tracelog.debug('req.method %s', req.method);
     if (req.method === 'GET') {
         filehandle.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
             var s;
@@ -84,7 +84,7 @@ http.createServer(function (req, res) {
             s += '</html>';
             res.end(s);
         });
-    } else if (req.method === 'PUT') {
+    } else if (req.method === 'PUT' || req.method === 'POST') {
         filehandle.put_file(inputjson, req, res, function (err, outputjson, req, res) {
             err = err;
             outputjson = outputjson;
