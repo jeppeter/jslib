@@ -13,6 +13,37 @@ module.exports.set_dir = function (dirset) {
     return;
 };
 
+var string_to_bytes = function (instr) {
+    'use strict';
+    var ch, i;
+    var bytes = [];
+    for (i = 0; i < instr.length; i += 1) {
+        ch = instr.charCodeAt(i);
+        console.log('[%d] code %d (0x%s)', i, ch, ch.toString(16));
+        bytes.push((ch >> 8) & 0xff);
+        ch = ch & 0xff;
+        bytes.push(ch);
+    }
+    return bytes;
+};
+
+var bytes_debug = function (bytes) {
+    'use strict';
+    var msg;
+    var i;
+    msg = '';
+
+    for (i = 0; i < bytes.length; i += 1) {
+        if ((i % 16) === 0) {
+            msg += util.format('\n0x%s:\t', i.toString(16));
+        }
+        msg += util.format(' 0x%s', bytes[i].toString(16));
+    }
+    msg += '\n';
+
+    return msg;
+};
+
 function FileInfo(link, name, isdir, size) {
     'use strict';
     this.href = link;
@@ -169,7 +200,12 @@ module.exports.put_file = function (inputjson, req, res, callback) {
     'use strict';
     var requrl;
     var outfile;
+    var dumpmsg;
+    var bytes;
     requrl = inputjson.requrl;
     outfile = basedir + requrl;
     console.log('requrl (%s) outfile (%s)', requrl, outfile);
+    bytes = string_to_bytes(requrl);
+    dumpmsg = bytes_debug(bytes);
+    console.log(dumpmsg);
 };
