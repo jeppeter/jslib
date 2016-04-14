@@ -2,6 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var qs = require('querystring');
 var util = require('util');
+var tracelog = require('./tracelog');
 
 var basedir = __dirname;
 var posix_dir = basedir.split(path.sep).join('/');
@@ -19,7 +20,7 @@ var string_to_bytes = function (instr) {
     var bytes = [];
     for (i = 0; i < instr.length; i += 1) {
         ch = instr.charCodeAt(i);
-        console.log('[%d] code %d (0x%s)', i, ch, ch.toString(16));
+        tracelog.info('[%d] code %d (0x%s)', i, ch, ch.toString(16));
         bytes.push((ch >> 8) & 0xff);
         ch = ch & 0xff;
         bytes.push(ch);
@@ -56,7 +57,7 @@ function FileInfo(link, name, isdir, size) {
         this.type = 'file';
         this.size = size;
     }
-    //console.log('link(%s) name (%s)', this.href, this.displayname);
+    tracelog.info('link(%s) name (%s)', this.href, this.displayname);
     return this;
 }
 
@@ -97,10 +98,10 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                     outerr = new Error('read (%s) error(%s)', outfile, JSON.stringify(err));
                     return callback(outerr, outputjson, req, res);
                 }
-                console.log('req %s', requrl);
+                tracelog.info('req %s', requrl);
                 pdir = util.format('%s%s/..', posix_dir, requrl);
                 pdir = pdir.replace(/[\/]+/g, path.sep);
-                console.log('pdir %s', pdir);
+                tracelog.info('pdir %s', pdir);
 
                 pdir = path.resolve(pdir, '.');
                 if (pdir.length < basedir.length) {
@@ -109,7 +110,7 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                     pdir = path.relative(basedir, pdir);
                     pdir = pdir.split(path.sep).join('/');
                     pdir = qs.escape(pdir);
-                    console.log('pdir %s', pdir);
+                    tracelog.info('pdir %s', pdir);
                     pdir = '/' + pdir;
                 }
                 curelm = new FileInfo(pdir, '..', true, 0);
@@ -134,7 +135,7 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                             }
                             elem = elem.split(path.sep).join('/');
                             elmlink = '/' + qs.escape(elem);
-                            console.log('%s stats ', lfile);
+                            tracelog.info('%s stats ', lfile);
                             if (stats.isDirectory()) {
                                 curelm = new FileInfo(elmlink, elemstr, true, 0);
                             } else {
@@ -204,8 +205,8 @@ module.exports.put_file = function (inputjson, req, res, callback) {
     var bytes;
     requrl = inputjson.requrl;
     outfile = basedir + requrl;
-    console.log('requrl (%s) outfile (%s)', requrl, outfile);
+    tracelog.info('requrl (%s) outfile (%s)', requrl, outfile);
     bytes = string_to_bytes(requrl);
     dumpmsg = bytes_debug(bytes);
-    console.log(dumpmsg);
+    tracelog.info(dumpmsg);
 };
