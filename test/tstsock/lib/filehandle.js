@@ -46,6 +46,7 @@ var bytes_debug = function (bytes) {
 
 function FileInfo(link, name, isdir, size) {
     'use strict';
+    link = link.replace(/%2F/g,'/')
     this.href = link;
     this.displayname = name;
     if (isdir) {
@@ -55,7 +56,7 @@ function FileInfo(link, name, isdir, size) {
         this.type = 'file';
         this.size = size;
     }
-    console.log('link(%s) name (%s)', this.href, this.displayname);
+    //console.log('link(%s) name (%s)', this.href, this.displayname);
     return this;
 }
 
@@ -154,7 +155,6 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                             elmlink = requrl + '/' + elem;
                             elmlink = elmlink.split(path.sep).join('/');
                             elmlink = qs.escape(elmlink);
-                            elmlink = elmlink.replace('%2F', '/');
                             if (stats.isDirectory()) {
                                 curelm = new FileInfo(elmlink, elemstr, true, 0);
                             } else {
