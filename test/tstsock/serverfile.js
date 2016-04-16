@@ -48,6 +48,10 @@ http.createServer(function (req, res) {
     var inputjson;
     var host, hostarr;
     inputjson = {};
+    tracelog.info(util.format(req, {
+        showHidden: true,
+        depth: null
+    }));
     inputjson.requrl = qs.unescape(req.url);
     host = req.headers.host;
     hostarr = host.split(':');
@@ -90,8 +94,8 @@ http.createServer(function (req, res) {
             s += '</body>';
 
             s += '<script>';
-            s += '$(document).ready(function){\n';
-            s += '}\n';
+            s += '$(document).ready(function{\n';
+            s += '})\n';
             s += '</script>';
 
             s += '</html>';
@@ -104,6 +108,7 @@ http.createServer(function (req, res) {
             req = req;
             res = res;
         });
+    } else if (req.method === 'OPTIONS'){
     }
 }).listen(lport);
 
