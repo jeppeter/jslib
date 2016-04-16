@@ -23,23 +23,6 @@ h2.close {
 	margin-left: 25px;	
 }
 </style>
-<script src="../_js/jquery.min.js"></script>
-<script>
-$(document).ready(function() {
- $('.answer').hide();
- $('.main h2').click(function() {
- 	var $answer = $(this).next('.answer');
-	if ($answer.is(':hidden')) {
-		$answer.slideDown();
-		$(this).addClass('close');
-	} else {
-		$answer.fadeOut();
-		$(this).removeClass('close');
-	}
- }
-	); // end click
-}); // end ready
-</script>
 </head>
 <body>
 <div class="wrapper">
@@ -78,7 +61,8 @@ $(document).ready(function() {
 	</footer>
 </div>
 </body>
-	<script>
+<script src="../_js/jquery.min.js"></script>
+<script>
 	function basename(path) {
 		return path.replace(/\\/g,'/').replace( /.*\//, '' );
 	}
@@ -139,7 +123,8 @@ $(document).ready(function() {
 		'use strict';
 		var filesels;
 		var data = new FormData();
-		console.log('event (%s)',xinspect(evt,0));
+		var crossmode=true;
+		//console.log('event (%s)',xinspect(evt,0));
 		filesels = $('#filename-sel')[0];
 		if (filesels === undefined || 
 			filesels === null){
@@ -148,14 +133,13 @@ $(document).ready(function() {
 		}
 		console.log('value (%s)',filesels.value);
 		data.append('file',filesels.value);
-		$.ajax('http://127.0.0.1:9000/',{
+		$.ajax({
+			url : 'http://127.0.0.1:9000/',
+			crossDomain : crossmode,
 			type : 'POST',
 			data : data,
-			success : function (){
-				console.log('success %s', data);
-				return;
-			},
 			xhrFields : {
+				withCredentials : crossmode,
 				onprogress : function(progress){
 					console.log('progress ');
 				}
@@ -166,7 +150,7 @@ $(document).ready(function() {
 				console.log('completed');
 			},
 			error : function(xhr,status,err){
-				console.log('error');
+				console.log('status (%s)error (%s)',JSON.stringify(status),JSON.stringify(err));
 			},
 			success : function(data,status,xhr){
 				console.log('success');
@@ -175,8 +159,20 @@ $(document).ready(function() {
 		return;
 	}
 	
-	$(document).ready(function(){
+	$(document).ready(function() {
 		var uploadElement = document.getElementById("upload-file");
+	 $('.answer').hide();
+	 $('.main h2').click(function() {
+	 	var $answer = $(this).next('.answer');
+		if ($answer.is(':hidden')) {
+			$answer.slideDown();
+			$(this).addClass('close');
+		} else {
+			$answer.fadeOut();
+			$(this).removeClass('close');
+		}
+	 }
+		); // end click
 		console.log('uploadElement %s',uploadElement);
 		uploadElement.onchange = function() {
 			'use strict';
@@ -192,8 +188,9 @@ $(document).ready(function() {
 			path = basename(path);
 			console.log('value %s',path);
 		};
+		console.log('set submit combine');
 		$('form').submit(uploadfile);
-	});
+	}); // end ready
 	</script>
 
 </html>
