@@ -88,6 +88,12 @@ http.createServer(function (req, res) {
             s += '<input type="submit" name="submit" value="Submit"></form>';
 
             s += '</body>';
+
+            s += '<script>';
+            s += '$(document).ready(function){\n';
+            s += '}\n';
+            s += '</script>';
+
             s += '</html>';
             res.end(s);
         });
