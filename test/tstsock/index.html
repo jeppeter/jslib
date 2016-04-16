@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<body>
+<form id="upload-file" method="post" action="javascript:{};" name="submit" enctype="multipart/form-data">
+  <input id="filename-sel" type="file" name="fileField"><br /><br />
+  <input id="upload-submit" type="submit" name="submit" value="upload">
+</form>
+</body>
+<script src="/js/jquery.min.js"></script>
+<script>
+	function basename(path) {
+		return path.replace(/\\/g,'/').replace( /.*\//, '' );
+	}
+
+	function dirname(path) {
+		return path.replace(/\\/g,'/').replace(/\/[^\/]*$/, '');
+	}
+	var format_tabs = function (tabs) {
+	    'use strict';
+	    var i;
+	    var s;
+	    s = '';
+
+	    for (i = 0; i < tabs; i += 1) {
+	        s += '    ';
+	    }
+	    return s;
+	};
+
+	var xinspect = function (o, tabs) {
+	    'use strict';
+	    var s;
+	    var p;
+	    var t;
+	    var cnt;
+	    var keys;
+	    var i;
+
+	    s = '{';
+	    cnt = 0;
+	    keys = Object.getOwnPropertyNames(o);
+	    for (i = 0; i < keys.length; i += 1) {
+	        try {
+	            p = keys[i];
+	            t = o[p];
+	            if (cnt > 0) {
+	                s += ',\n';
+	            }
+	            if ('Object' === typeof t) {
+	                s += format_tabs(tabs);
+	                s += p + ' : "' + Object.apply('xinspect', t, tabs + 1) + '"';
+	            } else {
+	                s += format_tabs(tabs);
+	                s += p + ' : "' + t + '"';
+	            }
+	            cnt += 1;
+	        } catch (err) {
+	            console.log('%s', JSON.stringify(err));
+	        }
+	    }
+	    s += '\n';
+	    s += format_tabs(tabs);
+	    s += '}\n';
+	    return s;
+	};
+
+	function xhr_handletimeout(evt){
+		console.log ('handle timeout');
+	}
+
+	function xhr_progress(evt){
+		console.log('progress (%s)', xinspect(evt,0));
+	}
+
+	function uploadfile(evt){
+		'use strict';
+		var filesels;
+		var data = new FormData();
+		var xhr;
+		//console.log('event (%s)',xinspect(evt,0));
+		filesels = $('#filename-sel')[0];
+		if (filesels === undefined || 
+			filesels === null){
+			console.error('can not find filename-sel');
+			return;
+		}
+		console.log('value (%s)',filesels.value);
+		data.append('file',filesels.value);
+		xhr = new XMLHttpRequest();
+
+		if (xhr.withCredentials ){
+			console.log('withCredentials ');
+		}else {
+			console.log('not withCredentials ');
+		}
+		xhr.ontimeout = xhr_handletimeout;
+		xhr.addEventListener("timeout", xhr_handletimeout, false);
+		xhr.onprogress = xhr_progress;
+		xhr.onreadystatechange  = function(){
+			console.log('xhr state (%s)',xhr.readystate,xhr.status);
+		};
+		xhr.open('POST','/',true);
+		xhr.send();
+		return;
+	}
+	
+	$(document).ready(function() {
+		var uploadElement = document.getElementById("upload-file");
+	 $('.answer').hide();
+	 $('.main h2').click(function() {
+	 	var $answer = $(this).next('.answer');
+		if ($answer.is(':hidden')) {
+			$answer.slideDown();
+			$(this).addClass('close');
+		} else {
+			$answer.fadeOut();
+			$(this).removeClass('close');
+		}
+	 }
+		); // end click
+		console.log('uploadElement %s',uploadElement);
+		uploadElement.onchange = function() {
+			'use strict';
+			var element = $("#filename-sel"),
+			    attributes = {};
+			var path;
+
+			$.each(element.get(0).attributes, function(i, attrib){
+			    attributes[attrib.name] = attrib.value;
+			    console.log('[%d] %s = %s',i,attrib.name ,attrib.value);
+			});
+			path = element[0].value;
+			path = basename(path);
+			console.log('value %s',path);
+		};
+		console.log('set submit combine');
+		$('form').submit(uploadfile);
+	}); // end ready
+</script>
+</html>

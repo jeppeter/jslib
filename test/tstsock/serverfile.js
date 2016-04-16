@@ -56,7 +56,7 @@ http.createServer(function (req, res) {
     host = req.headers.host;
     hostarr = host.split(':');
     host = hostarr[0];
-    tracelog.debug('req.method %s', req.method);
+    tracelog.info('(%s)method %s', req.headers.host, req.method);
     if (req.method === 'GET') {
         filehandle.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
             var s;
@@ -129,7 +129,6 @@ http.createServer(function (req, res) {
                 res.header('Access-Control-Max-Age', 60 * 60 * 24 * 365);
             }
             res.sendStatus(200);
-
         });
     }
 }).listen(lport);
@@ -142,55 +141,72 @@ http.createServer(function (req, res) {
     var rstream;
     var host;
     var hostarr;
-    requrl = req.url;
-    host = req.headers.host;
-    hostarr = host.split(':');
-    hostarr = hostarr[0].split(':');
-    tracelog.info('host %s hostarr (%s)', host, hostarr);
-    getfile = qs.unescape(requrl);
-    getfile = jsdir + getfile;
+    tracelog.info('(%s)method %s', req.headers.host, req.method);
+    if (req.method === 'GET') {
+        requrl = req.url;
+        host = req.headers.host;
+        hostarr = host.split(':');
+        hostarr = hostarr[0].split(':');
+        getfile = qs.unescape(requrl);
+        getfile = jsdir + getfile;
 
 
-    newfile = getfile.replace(path.sep, '/');
-    while (newfile !== getfile) {
-        getfile = newfile;
         newfile = getfile.replace(path.sep, '/');
+        while (newfile !== getfile) {
+            getfile = newfile;
+            newfile = getfile.replace(path.sep, '/');
+        }
+        getfile = getfile.replace(/[\/]+/g, path.sep);
+        tracelog.info('get file %s', getfile);
+
+        fs.stat(getfile, function (err, stats) {
+            var errorinfo;
+            if (err) {
+                errorinfo = util.format('error %s', JSON.stringify(err));
+                res.write(errorinfo);
+                res.end();
+                return;
+            }
+
+            if (stats.isDirectory()) {
+                errorinfo = util.format('(%s) is directory');
+                res.write(errorinfo);
+                res.end();
+                return;
+            }
+
+            rstream = fs.createReadStream(getfile);
+            rstream.on('open', function () {
+                tracelog.info('opened (%s)', getfile);
+                rstream.pipe(res);
+            });
+            rstream.on('error', function (err) {
+                tracelog.error('read %s error(%s)', getfile, JSON.stringify(err));
+                res.end();
+            });
+
+            rstream.on('end', function () {
+                tracelog.info('ended (%s)', getfile);
+                res.end();
+            });
+
+        });
+    } else if (req.method === 'POST' || req.method === 'PUT') {
+        var buf;
+        tracelog.info('method %s', req.method);
+        buf = [];
+        req.socket.on('data', function (chunk) {
+            buf.push(chunk);
+        });
+        req.socket.on('end', function () {
+            console.log('buf %d', buf.length);
+            buf = [];
+        });
+        req.socket.on('error', function (err) {
+            console.log('error (%s)', JSON.stringify(err));
+            buf = [];
+        });
     }
-    getfile = getfile.replace(/[\/]+/g, path.sep);
-    tracelog.info('get file %s', getfile);
-
-    fs.stat(getfile, function (err, stats) {
-        var errorinfo;
-        if (err) {
-            errorinfo = util.format('error %s', JSON.stringify(err));
-            res.write(errorinfo);
-            res.end();
-            return;
-        }
-
-        if (stats.isDirectory()) {
-            errorinfo = util.format('(%s) is directory');
-            res.write(errorinfo);
-            res.end();
-            return;
-        }
-
-        rstream = fs.createReadStream(getfile);
-        rstream.on('open', function () {
-            tracelog.info('opened (%s)', getfile);
-            rstream.pipe(res);
-        });
-        rstream.on('error', function (err) {
-            tracelog.error('read %s error(%s)', getfile, JSON.stringify(err));
-            res.end();
-        });
-
-        rstream.on('end', function () {
-            tracelog.info('ended (%s)', getfile);
-            res.end();
-        });
-
-    });
 }).listen(lport + 1);
 
 tracelog.info('listne(%d) on (%s)', lport, directory);
