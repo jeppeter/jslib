@@ -15,22 +15,36 @@ var xinspect = function (o, tabs) {
     var s;
     var p;
     var t;
-    s = '{';
+    var cnt;
+    var keys;
+    var i;
 
-    for (p in o) {
-        t = o[p];
-        if (typeof (t) === 'Object') {
-            s += format_tabs(tabs);
-            s += p + ':' + xinspect.apply(xinspect, t, tabs + 1);
-        } else {
-            s += format_tabs(tabs);
-            s += p + ':' + t + '\n';
+    s = '{';
+    cnt = 0;
+    keys = Object.getOwnPropertyNames(o);
+    for (i = 0; i < keys.length; i += 1) {
+        try {
+            p = keys[i];
+            t = o[p];
+            if (cnt > 0) {
+                s += ',\n';
+            }
+            if ('Object' === typeof t) {
+                s += format_tabs(tabs);
+                s += p + ' : ' + Object.apply('xinspect', t, tabs + 1);
+            } else {
+                s += format_tabs(tabs);
+                s += p + ' : "' + t + '"';
+            }
+            cnt += 1;
+        } catch (err) {
+            console.log('%s', JSON.stringify(err));
         }
     }
-
+    s += '\n';
     s += format_tabs(tabs);
     s += '}\n';
     return s;
 };
 
-console.log(xinspect(console));
+console.log(xinspect(xinspect, 0));

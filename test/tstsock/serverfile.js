@@ -48,10 +48,10 @@ http.createServer(function (req, res) {
     var inputjson;
     var host, hostarr;
     inputjson = {};
-    tracelog.info(util.format(req, {
+    /*tracelog.info(util.inspect(req, {
         showHidden: true,
         depth: null
-    }));
+    }));*/
     inputjson.requrl = qs.unescape(req.url);
     host = req.headers.host;
     hostarr = host.split(':');
@@ -108,7 +108,29 @@ http.createServer(function (req, res) {
             req = req;
             res = res;
         });
-    } else if (req.method === 'OPTIONS'){
+    } else if (req.method === 'OPTIONS') {
+        var body = [];
+        req.on('data', function (chunk) {
+            body.push(chunk);
+        }).on('end', function () {
+            var setmaxage = false;
+            tracelog.info('body (%s)', Buffer.concat(body).toString());
+            if (req.headers['access-control-request-method']) {
+                res.headers('access-control-request-method', req.headers['access-control-request-method']);
+                setmaxage = true;
+            }
+
+            if (req.headers['access-control-request-headers']) {
+                res.headers('access-control-request-headers', req.headers['access-control-request-headers']);
+                setmaxage = true;
+            }
+
+            if (setmaxage) {
+                res.header('Access-Control-Max-Age', 60 * 60 * 24 * 365);
+            }
+            res.sendStatus(200);
+
+        });
     }
 }).listen(lport);
 
