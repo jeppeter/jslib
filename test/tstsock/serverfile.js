@@ -4,6 +4,8 @@ var util = require('util');
 var http = require('http');
 var tracelog = require('./lib/tracelog');
 var yargs = require('yargs');
+var path = require('path');
+var fs = require('fs');
 var args = yargs.count('verbose')
     .alias('verbose', 'v')
     .usage(util.format('Usage %s [OPTIONS] directory', process.argv[1]))
@@ -24,7 +26,7 @@ var args = yargs.count('verbose')
 var directory = args.path;
 var lport = args.port;
 var logopt = {};
-
+var jsdir = __dirname;
 if (args.verbose >= 4) {
     logopt.level = 'trace';
 } else if (args.verbose >= 3) {
@@ -44,8 +46,12 @@ filehandle.set_dir(directory);
 http.createServer(function (req, res) {
     'use strict';
     var inputjson;
+    var host, hostarr;
     inputjson = {};
     inputjson.requrl = qs.unescape(req.url);
+    host = req.headers.host;
+    hostarr = host.split(':');
+    host = hostarr[0];
     tracelog.debug('req.method %s', req.method);
     if (req.method === 'GET') {
         filehandle.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
@@ -76,6 +82,7 @@ http.createServer(function (req, res) {
                 });
             }
 
+            s += util.format('<script src="http://%s:%d/js/jquery.min.js"></script>', host, (lport + 1));
             s += util.format('<form method="post" action="%s" name="submit" enctype="multipart/form-data">', req.url);
             s += '<input type="file" name="fileField"><br /><br />';
             s += '<input type="submit" name="submit" value="Submit"></form>';
@@ -93,5 +100,64 @@ http.createServer(function (req, res) {
         });
     }
 }).listen(lport);
+
+http.createServer(function (req, res) {
+    'use strict';
+    var requrl;
+    var getfile;
+    var newfile;
+    var rstream;
+    var host;
+    var hostarr;
+    requrl = req.url;
+    host = req.headers.host;
+    hostarr = host.split(':');
+    hostarr = hostarr[0].split(':');
+    tracelog.info('host %s hostarr (%s)', host, hostarr);
+    getfile = qs.unescape(requrl);
+    getfile = jsdir + getfile;
+
+
+    newfile = getfile.replace(path.sep, '/');
+    while (newfile !== getfile) {
+        getfile = newfile;
+        newfile = getfile.replace(path.sep, '/');
+    }
+    getfile = getfile.replace(/[\/]+/g, path.sep);
+    tracelog.info('get file %s', getfile);
+
+    fs.stat(getfile, function (err, stats) {
+        var errorinfo;
+        if (err) {
+            errorinfo = util.format('error %s', JSON.stringify(err));
+            res.write(errorinfo);
+            res.end();
+            return;
+        }
+
+        if (stats.isDirectory()) {
+            errorinfo = util.format('(%s) is directory');
+            res.write(errorinfo);
+            res.end();
+            return;
+        }
+
+        rstream = fs.createReadStream(getfile);
+        rstream.on('open', function () {
+            tracelog.info('opened (%s)', getfile);
+            rstream.pipe(res);
+        });
+        rstream.on('error', function (err) {
+            tracelog.error('read %s error(%s)', getfile, JSON.stringify(err));
+            res.end();
+        });
+
+        rstream.on('end', function () {
+            tracelog.info('ended (%s)', getfile);
+            res.end();
+        });
+
+    });
+}).listen(lport + 1);
 
 tracelog.info('listne(%d) on (%s)', lport, directory);
