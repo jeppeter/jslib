@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 	<body>
-	<p> 
-		<input id="files-upload" type="file" multiple> 
-	</p>
-	<p id="drop-area"> 
-		<span class="drop-instructions">or drag and drop files here</span>
-		<span class="drop-over">Drop files here!</span>
-	</p>
+		<p>
+			<input id="files-upload" type="file" multiple>
+		</p>
+		<p id="drop-area">
+			<span class="drop-instructions">or drag and drop files here</span>
+			<span class="drop-over">Drop files here!</span>
+		</p>
 	</body>
 	<script>
 	(function () {
@@ -78,7 +78,7 @@
 			}
 		}else {
 			fileList.innerHTML = "No support for the File API in this web browser";
-		}  
+		}
 	}
 	filesUpload.addEventListener("change", function () {
 		traverseFiles(this.files);
@@ -105,7 +105,7 @@
 		this.className = "";
 		evt.preventDefault();
 		evt.stopPropagation();
-	}, false);                                     
-	})();  
+	}, false);
+	})();
 	</script>
 </html>

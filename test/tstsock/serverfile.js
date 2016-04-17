@@ -27,6 +27,24 @@ var directory = args.path;
 var lport = args.port;
 var logopt = {};
 var jsdir = __dirname;
+var bytes_debug = function (bytes) {
+    'use strict';
+    var msg;
+    var i;
+    msg = '';
+
+    for (i = 0; i < bytes.length; i += 1) {
+        if ((i % 16) === 0) {
+            msg += util.format('\n0x%s:\t', i.toString(16));
+        }
+        msg += util.format(' 0x%s', bytes[i].toString(16));
+    }
+    msg += '\n';
+
+    return msg;
+};
+
+
 if (args.verbose >= 4) {
     logopt.level = 'trace';
 } else if (args.verbose >= 3) {
@@ -193,10 +211,28 @@ http.createServer(function (req, res) {
         });
     } else if (req.method === 'POST' || req.method === 'PUT') {
         var buf;
-        tracelog.info('method %s', req.method);
+        var totallen;
+        var curlen;
+        /*tracelog.info(util.inspect(req, {
+            showHidden: true,
+            depth: null
+        }));*/
         buf = [];
+        totallen = 0;
+        curlen = 0;
+        if (req.headers['content-length']) {
+            totallen = req.headers['content-length'];
+        }
         req.socket.on('data', function (chunk) {
+            //tracelog.info('%s', bytes_debug(chunk));
+            curlen += chunk.length;
+            tracelog.info('%s', chunk);
+            tracelog.info('curlen (%d) totallen (%d)', curlen, totallen);
             buf.push(chunk);
+            req.resume();
+            if (curlen === totallen) {
+                res.writeHead(200);
+            }
         });
         req.socket.on('end', function () {
             console.log('buf %d', buf.length);
