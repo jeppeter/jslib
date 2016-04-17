@@ -1,12 +1,12 @@
 var http = require("http");
 var url = require("url");
 var multipart = require("./multipart-js");
-var sys = require("util");
+var util = require("util");
 var fs = require("fs");
 
 function upload_complete(res) {
     'use strict';
-    sys.debug("Request complete");
+    util.debug("Request complete");
 
     // Render response
     res.writeHead(200, {
@@ -15,7 +15,7 @@ function upload_complete(res) {
     res.write("Thanks for playing!");
     res.end();
 
-    sys.puts("\n=> Done");
+    util.puts("\n=> Done");
 }
 
 /*
@@ -41,6 +41,11 @@ function parse_multipart(req) {
     return parser;
 }
 
+function basename(path) {
+    'use strict';
+    return path.replace(/\\/g, '/').replace(/.*\//, '');
+}
+
 
 /*
  * Handle file upload
@@ -58,17 +63,21 @@ function upload_file(req, res) {
 
     // Set handler for a request part received
     stream.onPartBegin = function (part) {
-        sys.debug("Started part, name = " + part.name + ", filename = " + part.filename);
+
+        util.debug("Started part, name = " + part.name + ", filename = " + part.filename);
+        fileName = basename(part.filename);
+
 
         // Construct file name
         fileName = "./uploads/" + stream.part.filename;
+        fileName = fileName.replace(/:/g, '');
 
         // Construct stream used to write to file
         fileStream = fs.createWriteStream(fileName);
 
         // Add error handler
         fileStream.addListener("error", function (err) {
-            sys.debug("Got error while writing to file '" + fileName + "': ", err);
+            util.debug("Got error while writing to file '" + fileName + "': ", err);
         });
 
         // Add drain (all queued data written) handler to resume receiving request data
@@ -85,7 +94,7 @@ function upload_file(req, res) {
         // Write chunk to file
         // Note that it is important to write in binary mode
         // Otherwise UTF-8 characters are interpreted
-        sys.debug("Writing chunk");
+        util.debug("Writing chunk");
         fileStream.write(chunk, "binary");
     };
 
@@ -114,7 +123,7 @@ function display_form(req, res) {
     });
     res.write(
         '<form action="/upload" method="post" enctype="multipart/form-data">' +
-        '<input type="file" name="upload-file">' +
+        '<input type="file" multipart name="upload-file">' +
         '<input type="submit" value="Upload">' +
         '</form>'
     );
@@ -127,7 +136,7 @@ function display_form(req, res) {
 function show_404(req, res) {
     'use strict';
     req = req;
-    res.sendHeader(404, {
+    res.writeHead(404, {
         "Content-Type": "text/plain"
     });
     res.write("You r doing it rong!");
@@ -152,4 +161,3 @@ var server = http.createServer(function (req, res) {
 
 // Server would listen on port 8000
 server.listen(8000);
-
