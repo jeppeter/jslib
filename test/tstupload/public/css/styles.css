@@ -5,13 +5,23 @@
 html,
 body {
   height: 100%;
+  width: 100%;
   /*background-color: #4791D2;*/
   background-color: #f0f0f0;
 }
 
+
 body {
   text-align: center;
   font-family: 'Raleway', sans-serif;
+}
+
+.vertical-center {
+  height:100%;
+  width:100%;
+
+  text-align: center;  /* align the inline(-block) elements horizontally */
+  font: 0/0 a;         /* remove the gap between inline(-block) elements */
 }
 
 .row {
@@ -59,12 +69,14 @@ h2 {
 
 @media (min-width: 768px) {
   .main-container {
+    height : 100%;
     width: 100%;
   }
 }
 
 @media (min-width: 992px) {
   .container {
+    height: 100%;
     width: 450px;
   }
 }
