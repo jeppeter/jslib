@@ -58,6 +58,7 @@ http.createServer(function (req, res) {
     host = req.headers.host;
     hostarr = host.split(':');
     host = hostarr[0];
+    host = util.format('http://%s:%d', host, lport + 1);
     tracelog.info('(%s)method %s', req.headers.host, req.method);
     if (req.method === 'GET') {
         filehandle.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
@@ -76,8 +77,20 @@ http.createServer(function (req, res) {
             res.writeHead(200);
             s = req.url;
             s = '';
-            s += '<html>';
-            s += '<body>';
+            s += '<!DOCTYPE html>\n';
+            s += '<html>\n<head>\n';
+            s += '  <meta charset="utf-8">\n';
+            s += '  <meta http-equiv="X-UA-Compatible" content="IE=edge">\n';
+            s += '\n';
+            s += '  <title>File Uploader listed</title>\n';
+            s += util.format('  <link rel="stylesheet" href="%s/public/css/bootstrap.min.css">\n', host);
+            s += util.format('  <link href="%s/public/css/styles.css" rel="stylesheet">\n', host);
+            s += '</head>\n';
+            s += '<body>\n';
+            s += '    <div class="outer">\n';
+            s += '      <div class="middle">\n';
+            s += '        <div class="inner">\n';
+
             if (util.isArray(outputjson.lists)) {
                 outputjson.lists.forEach(function (elm) {
                     if (elm.type === 'dir') {
@@ -88,19 +101,62 @@ http.createServer(function (req, res) {
                 });
             }
 
-            s += util.format('<script src="http://%s:%d/js/jquery.min.js"></script>', host, (lport + 1));
-            s += util.format('<form method="post" action="%s" name="submit" enctype="multipart/form-data">', req.url);
-            s += '<input type="file" name="fileField"><br /><br />';
-            s += '<input type="submit" name="submit" value="Submit"></form>';
+            s += '            <div class="progress">\n';
+            s += '              <div class="progress-bar" role="progressbar"></div>\n';
+            s += '            </div>\n';
+            s += '            <button class="btn btn-lg upload-btn" type="button">Upload File</button>\n';
+            s += '        </div>\n';
+            s += '      </div>\n';
+            s += '    </div>\n';
+            s += '  <input id="upload-input" type="file" name="uploads[]" multiple="multiple"></br>\n';
+            s += util.format('  <script src="%s/public/javascripts/jquery-2.2.0.min.js"></script>\n', host);
+            s += util.format('  <script src="%s/public/javascripts/bootstrap.min.js"></script>', host);
+            s += '  <script>\n';
+            s += '  $(\'.upload-btn\').on(\'click\', function (){\n';
+            s += '      $(\'#upload-input\').click();\n';
+            s += '      $(\'.progress-bar\').text(\'0%\');\n';
+            s += '      $(\'.progress-bar\').width(\'0%\');\n';
+            s += '  });\n';
+            s += '\n';
 
-            s += '</body>';
-
-            s += '<script>';
-            s += '$(document).ready(function{\n';
-            s += '})\n';
-            s += '</script>';
-
-            s += '</html>';
+            s += '  $(\'#upload-input\').on(\'change\', function(){\n';
+            s += '    var files = $(this).get(0).files;\n';
+            s += '    if (files.length > 0){\n';
+            s += '      var formData = new FormData();\n';
+            s += '      for (var i = 0; i < files.length; i++) {\n';
+            s += '        var file = files[i];\n';
+            s += '        formData.append(\'uploads[]\', file, file.name);\n';
+            s += '    }\n';
+            s += '      $.ajax({\n';
+            s += util.format('        url: \'%s\',', req.url);
+            s += '        type: \'POST\',\n';
+            s += '        data: formData,\n';
+            s += '        processData: false,\n';
+            s += '        contentType: false,\n';
+            s += '        success: function(data){\n';
+            s += '            console.log(\'upload successful!\\n\' + data);\n';
+            s += '        },\n';
+            s += '        xhr: function() {\n';
+            s += '          var xhr = new XMLHttpRequest();\n';
+            s += '          xhr.upload.addEventListener(\'progress\', function(evt) {\n';
+            s += '            if (evt.lengthComputable) {\n';
+            s += '              var percentComplete = evt.loaded / evt.total;\n';
+            s += '              percentComplete = parseInt(percentComplete * 100);\n';
+            s += '              $(\'.progress-bar\').text(percentComplete + \'%\');\n';
+            s += '              $(\'.progress-bar\').width(percentComplete + \'%\');\n';
+            s += '              if (percentComplete === 100) {\n';
+            s += '                $(\'.progress-bar\').html(\'Done\');\n';
+            s += '              }\n';
+            s += '            }\n';
+            s += '          }, false);\n';
+            s += '          return xhr;\n';
+            s += '        }\n';
+            s += '      });\n';
+            s += '    }\n';
+            s += '  });\n';
+            s += '  </script>\n';
+            s += '</body>\n';
+            s += '</html>\n';
             res.end(s);
         });
     } else if (req.method === 'PUT' || req.method === 'POST') {
@@ -204,38 +260,8 @@ http.createServer(function (req, res) {
 
         });
     } else if (req.method === 'POST' || req.method === 'PUT') {
-        var buf;
-        var totallen;
-        var curlen;
-        /*tracelog.info(util.inspect(req, {
-            showHidden: true,
-            depth: null
-        }));*/
-        buf = [];
-        totallen = 0;
-        curlen = 0;
-        if (req.headers['content-length']) {
-            totallen = req.headers['content-length'];
-        }
-        req.socket.on('data', function (chunk) {
-            //tracelog.info('%s', bytes_debug(chunk));
-            curlen += chunk.length;
-            tracelog.info('%s', chunk);
-            tracelog.info('curlen (%d) totallen (%d)', curlen, totallen);
-            buf.push(chunk);
-            req.resume();
-            if (curlen === totallen) {
-                res.writeHead(200);
-            }
-        });
-        req.socket.on('end', function () {
-            console.log('buf %d', buf.length);
-            buf = [];
-        });
-        req.socket.on('error', function (err) {
-            console.log('error (%s)', JSON.stringify(err));
-            buf = [];
-        });
+        res.writeHead(501);
+        res.end();
     }
 }).listen(lport + 1);
 
