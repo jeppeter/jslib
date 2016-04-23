@@ -3,6 +3,7 @@ var path = require('path');
 var qs = require('querystring');
 var util = require('util');
 var tracelog = require('./tracelog');
+var formidable = require('formidable');
 
 var basedir = __dirname;
 var posix_dir = basedir.split(path.sep).join('/');
@@ -13,7 +14,7 @@ module.exports.set_dir = function (dirset) {
     posix_dir = basedir.split(path.sep).join('/');
     return;
 };
-
+/*
 var string_to_bytes = function (instr) {
     'use strict';
     var ch, i;
@@ -44,10 +45,11 @@ var bytes_debug = function (bytes) {
 
     return msg;
 };
+*/
 
 function FileInfo(link, name, isdir, size) {
     'use strict';
-    link = link.replace(/%2F/g,'/')
+    link = link.replace(/%2F/g, '/');
     this.href = link;
     this.displayname = name;
     if (isdir) {
@@ -200,13 +202,37 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
 module.exports.put_file = function (inputjson, req, res, callback) {
     'use strict';
     var requrl;
-    var outfile;
-    var dumpmsg;
-    var bytes;
+    var outdir;
+    var form;
+    var outputjson;
     requrl = inputjson.requrl;
-    outfile = basedir + requrl;
-    tracelog.info('requrl (%s) outfile (%s)', requrl, outfile);
-    bytes = string_to_bytes(requrl);
-    dumpmsg = bytes_debug(bytes);
-    tracelog.info(dumpmsg);
+    outputjson = {};
+    outdir = basedir + requrl;
+    outdir = outdir.replace(/\\/g, '/');
+    outdir = outdir.replace(/[\/]+/g, path.sep);
+    tracelog.info('requrl (%s) outfile (%s)', requrl, outdir);
+    form = new formidable.IncomingForm();
+    form.multiples = true;
+    form.uploadDir = outdir;
+    outputjson.outdir = outdir;
+    //form.uploadDir = ;
+    form.on('file', function (field, file) {
+        field = field;
+        tracelog.info('create file (%s)', file.name);
+        outputjson.file = file.name;
+        fs.rename(file.path, path.join(form.uploadDir, file.name));
+    });
+
+    form.on('error', function (err) {
+        tracelog.error('An error has occured: \n' + err);
+        callback(err, outputjson, req, res);
+    });
+
+    // once all the files have been uploaded, send a response to the client
+    form.on('end', function () {
+        tracelog.info('end');
+        callback(null, outputjson, req, res);
+    });
+
+    form.parse(req);
 };

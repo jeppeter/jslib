@@ -27,22 +27,6 @@ var directory = args.path;
 var lport = args.port;
 var logopt = {};
 var jsdir = __dirname;
-var bytes_debug = function (bytes) {
-    'use strict';
-    var msg;
-    var i;
-    msg = '';
-
-    for (i = 0; i < bytes.length; i += 1) {
-        if ((i % 16) === 0) {
-            msg += util.format('\n0x%s:\t', i.toString(16));
-        }
-        msg += util.format(' 0x%s', bytes[i].toString(16));
-    }
-    msg += '\n';
-
-    return msg;
-};
 
 
 if (args.verbose >= 4) {
@@ -79,7 +63,7 @@ http.createServer(function (req, res) {
         filehandle.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
             var s;
             if (err) {
-                res.writeHead(404);
+                res.writeHead(500);
                 res.end(JSON.stringify(err));
                 return;
             }
@@ -121,10 +105,19 @@ http.createServer(function (req, res) {
         });
     } else if (req.method === 'PUT' || req.method === 'POST') {
         filehandle.put_file(inputjson, req, res, function (err, outputjson, req, res) {
-            err = err;
+            if (err) {
+                res.writeHead(500);
+                res.write(JSON.stringify(err));
+                res.end();
+                return;
+            }
             outputjson = outputjson;
             req = req;
-            res = res;
+
+            res.writeHead(200);
+            res.write('success');
+            return;
+
         });
     } else if (req.method === 'OPTIONS') {
         var body = [];
