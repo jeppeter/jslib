@@ -12,7 +12,8 @@
     "connect": "latest",
     "tracer": "latest",
     "yargs": "latest",
-    "formidable": "latest"
+    "formidable": "latest",
+    "ejs" : "latest"
   },
   "keywords": [],
   "author": "",

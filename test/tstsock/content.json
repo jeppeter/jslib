@@ -1,0 +1,16 @@
+{
+    "outputjson": {
+        "host": "http://127.0.0.1:9001",
+        "lists": [{
+            "href": "/",
+            "displayname": "..",
+            "type": "dir"
+        }, {
+            "href": "/hello.txt",
+            "displayname": "hello.txt",
+            "size": 1000,
+            "type": "file"
+        }],
+        "url": "/"
+    }
+}

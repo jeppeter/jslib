@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>File Uploader</title>
+  <link rel="stylesheet" href="<%= outputjson.host %>/public/css/bootstrap.min.css">
+  <link href="<%= outputjson.host %>/public/css/styles.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="outer">
+      <div class="middle">
+        <div class="inner">
+             <%   outputjson.lists.forEach(function (elm) { %>
+             <%       if (elm.type === 'dir') { %>
+                        <a href="<%= elm.href %>"><%= elm.displayname %></a> DIR <br>
+             <%        } else {  %>
+                        <a href="<%= elm.href %>"><%= elm.displayname %></a> size <%= elm.size %> FILE <br>
+             <%       } %>
+             <% }); %>
+			<div class="progress">
+              <div class="progress-bar" role="progressbar"></div>
+            </div>
+            <button class="btn btn-lg upload-btn" type="button">Upload File</button>
+        </div>
+      </div>      
+    </div>
+
+  <input id="upload-input" type="file" name="uploads[]" multiple="multiple"></br>
+
+  <script src="<%= outputjson.host %>/public/javascripts/jquery-2.2.0.min.js"></script>
+  <script src="<%= outputjson.host %>/public/javascripts/bootstrap.min.js"></script>
+  <script>
+  $('.upload-btn').on('click', function (){
+      $('#upload-input').click();
+      $('.progress-bar').text('0%');
+      $('.progress-bar').width('0%');
+  });
+
+  $('#upload-input').on('change', function(){
+    var files = $(this).get(0).files;
+    if (files.length > 0){
+      var formData = new FormData();
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        formData.append('uploads[]', file, file.name);
+      }
+
+      $.ajax({
+        url: '<%= outputjson.url %>',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(data){
+            console.log('upload successful!\n' + data);
+        },
+        xhr: function() {
+          var xhr = new XMLHttpRequest();
+          xhr.upload.addEventListener('progress', function(evt) {
+
+            if (evt.lengthComputable) {
+              var percentComplete = evt.loaded / evt.total;
+              percentComplete = parseInt(percentComplete * 100);
+
+              $('.progress-bar').text(percentComplete + '%');
+              $('.progress-bar').width(percentComplete + '%');
+
+              if (percentComplete === 100) {
+                $('.progress-bar').html('Done');
+              }
+            }
+
+          }, false);
+          return xhr;
+        }
+      });
+    }
+  });
+  </script>
+</body>
+</html>

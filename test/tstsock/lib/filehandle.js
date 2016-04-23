@@ -59,7 +59,7 @@ function FileInfo(link, name, isdir, size) {
         this.type = 'file';
         this.size = size;
     }
-    tracelog.info('link(%s) name (%s)', this.href, this.displayname);
+    //tracelog.info('link(%s) name (%s)', this.href, this.displayname);
     return this;
 }
 
@@ -100,10 +100,10 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                     outerr = new Error('read (%s) error(%s)', outfile, JSON.stringify(err));
                     return callback(outerr, outputjson, req, res);
                 }
-                tracelog.info('req %s', requrl);
+                //tracelog.info('req %s', requrl);
                 pdir = util.format('%s%s/..', posix_dir, requrl);
                 pdir = pdir.replace(/[\/]+/g, path.sep);
-                tracelog.info('pdir %s', pdir);
+                //tracelog.info('pdir %s', pdir);
 
                 pdir = path.resolve(pdir, '.');
                 if (pdir.length < basedir.length) {

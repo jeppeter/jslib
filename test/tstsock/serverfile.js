@@ -6,6 +6,7 @@ var tracelog = require('./lib/tracelog');
 var yargs = require('yargs');
 var path = require('path');
 var fs = require('fs');
+var ejs = require('ejs');
 var args = yargs.count('verbose')
     .alias('verbose', 'v')
     .usage(util.format('Usage %s [OPTIONS] directory', process.argv[1]))
@@ -27,6 +28,7 @@ var directory = args.path;
 var lport = args.port;
 var logopt = {};
 var jsdir = __dirname;
+var indexejs = jsdir + path.sep + 'index.ejs';
 
 
 if (args.verbose >= 4) {
@@ -74,6 +76,31 @@ http.createServer(function (req, res) {
                 return;
             }
 
+            /*fs.readFile(indexejs, 'utf-8', function (err, ejsdata) {
+                var getout;
+                if (err) {
+                    res.writeHead(500);
+                    res.end(JSON.stringify(err));
+                    return;
+                }
+                getout = {};
+                outputjson.url = req.url;
+                outputjson.host = host;
+                getout.outputjson = outputjson;
+                try {
+                    s = ejs.render(ejsdata, getout);
+                    tracelog.info('html (%s)', s);
+                    res.writeHead(200);
+                    res.end(s);
+                    return;
+                } catch (e) {
+                    res.writeHead(500);
+                    tracelog.error('error (%s)', JSON.stringify(e));
+                    res.end(JSON.stringify(e));
+                    return;
+                }
+            });*/
+
             res.writeHead(200);
             s = req.url;
             s = '';
@@ -93,10 +120,14 @@ http.createServer(function (req, res) {
 
             if (util.isArray(outputjson.lists)) {
                 outputjson.lists.forEach(function (elm) {
+                    var tabcnt;
+                    for (tabcnt = 0; tabcnt < 12; tabcnt += 1) {
+                        s += ' ';
+                    }
                     if (elm.type === 'dir') {
-                        s += util.format('<a href="%s">%s</a> %s <br>', elm.href, elm.displayname, 'DIR');
+                        s += util.format('<a href="%s">%s</a> %s <br>\n', elm.href, elm.displayname, 'DIR');
                     } else {
-                        s += util.format('<a href="%s">%s</a> size %d %s <br>', elm.href, elm.displayname, elm.size, 'FILE');
+                        s += util.format('<a href="%s">%s</a> size %d %s <br>\n', elm.href, elm.displayname, elm.size, 'FILE');
                     }
                 });
             }
@@ -157,6 +188,9 @@ http.createServer(function (req, res) {
             s += '  </script>\n';
             s += '</body>\n';
             s += '</html>\n';
+            ejs = ejs;
+            indexejs = indexejs;
+            tracelog.info('html (%s)', s);
             res.end(s);
         });
     } else if (req.method === 'PUT' || req.method === 'POST') {
