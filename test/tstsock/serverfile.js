@@ -7,12 +7,18 @@ var yargs = require('yargs');
 var path = require('path');
 var fs = require('fs');
 var ejs = require('ejs');
-var args = yargs.usage(util.format('Usage %s [OPTIONS] directory', process.argv[1]))
+var args = yargs.usage(util.format('Usage %s [OPTIONS]', process.argv[1]))
     .option('verbose', {
         count: true,
         description: 'log level 0 for error 1 for warn 2 for info 3 for debug 4 for trace',
-        default: 0,
+        default: -1,
         alias: 'v'
+    })
+    .option('noconsole', {
+        boolean: true,
+        description: 'set no console output for log',
+        default: false,
+        alias: 'N'
     })
     .help('h')
     .alias('h', 'help')
@@ -74,6 +80,10 @@ if (args.C.length > 0) {
 
 if (args.A.length > 0) {
     logopt.appendfiles = args.A;
+}
+
+if (args.noconsole) {
+    logopt.noconsole = true;
 }
 
 logopt.format = args.format;

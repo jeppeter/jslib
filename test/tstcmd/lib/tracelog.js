@@ -29,10 +29,14 @@ var add_write_streams = function (self, arfiles, isappend) {
             }
         });
         ws.on('data', function (data) {
-            console.log('data (%s) %s', data, elm);
+            if (!self.noconsole) {
+                console.log('data (%s) %s', data, elm);
+            }
         });
         ws.on('close', function () {
-            console.log('%s closed', elm);
+            if (!self.noconsole) {
+                console.log('%s closed', elm);
+            }
         });
         self.writeStreams.push(ws);
     });
@@ -51,37 +55,37 @@ function TraceLog(options) {
     this.writeStreams = [];
     this.waitStreams = [];
     this.stackindex = 1;
-    this.needcounts = 0;
-    this.addcounts = 0;
-    this.inner_end_callback = null;
-    this.inner_callback = function (err) {
+    this.noconsole = false;
+    this.finish_need_counts = 0;
+    this.finish_counts = 0;
+    this.real_finish_callback = null;
+    this.finish_callback = function (err) {
+        self.finish_counts += 1;
         if (err) {
-            if (self.inner_end_callback !== null) {
-                self.inner_end_callback(err);
+            if (self.real_finish_callback !== null) {
+                self.real_finish_callback(err);
             }
-            return;
         }
-        self.addcounts += 1;
-        if (self.addcounts === self.needcounts) {
-            if (self.inner_end_callback !== null) {
-                self.inner_end_callback(null);
+        if (self.finish_counts === self.finish_need_counts) {
+            if (self.real_finish_callback !== null) {
+                self.real_finish_callback(null);
             }
         }
         return;
     };
     this.finish = function (callback) {
         var ws;
-        self.needcounts = self.writeStreams.length;
-        self.addcounts = 0;
-        self.inner_end_callback = callback;
+        self.finish_need_counts = self.writeStreams.length;
+        self.finish_counts = 0;
+        self.real_finish_callback = callback;
         //var idx;
         while (self.writeStreams.length > 0) {
             ws = self.writeStreams[0];
             self.writeStreams.splice(0, 1);
-            ws.end('', self.inner_callback);
+            ws.end('', self.finish_callback);
         }
 
-        if (self.needcounts === self.addcounts) {
+        if (self.finish_need_counts === 0) {
             /*nothing to wait*/
             callback(null);
         }
@@ -103,12 +107,18 @@ function TraceLog(options) {
         add_write_streams(self, options.appendfiles, true);
     }
 
+    if (options.noconsole) {
+        this.noconsole = true;
+    }
+
 
     this.innerLogger = tracer.console({
         format: [self.format],
         stackIndex: self.stackindex,
         transport: function (data) {
-            process.stderr.write(data.output);
+            if (!self.noconsole) {
+                process.stderr.write(data.output);
+            }
             self.writeStreams.forEach(function (elm) {
                 elm.write(data.output);
             });

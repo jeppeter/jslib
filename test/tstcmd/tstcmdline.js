@@ -3,9 +3,21 @@ var util = require('util');
 var tracelog = require('./lib/tracelog');
 var http = require('http');
 
-var argv = yargs.count('verbose')
-    .alias('verbose', 'v')
-    .usage(util.format('Usage %s [OPTIONS] file', process.argv[1]))
+var argv = yargs.usage(util.format('Usage %s [OPTIONS] file', process.argv[1]))
+    .option('verbose', {
+        count: true,
+        description: 'log level 0 for error 1 for warn 2 for info 3 for debug 4 for trace',
+        default: -1,
+        alias: 'v'
+    })
+    .help('h')
+    .alias('h', 'help')
+    .option('noconsole', {
+        boolean: true,
+        description: 'set no console output for log',
+        default: false,
+        alias: 'N'
+    })
     .default({
         file: [],
         interactive: 'no'
@@ -28,11 +40,15 @@ if (argv.verbose >= 4) {
 } else if (argv.verbose >= 3) {
     logopt.level = 'debug';
 } else if (argv.verbose >= 2) {
-    logopt.level = 'debug';
+    logopt.level = 'info';
 } else if (argv.verbose >= 1) {
     logopt.level = 'warn';
 } else {
     logopt.level = 'error';
+}
+
+if (argv.noconsole) {
+    logopt.noconsole = true;
 }
 
 logopt.files = argv.files;
