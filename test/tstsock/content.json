@@ -1,16 +1,46 @@
 {
-    "outputjson": {
-        "host": "http://127.0.0.1:9001",
-        "lists": [{
-            "href": "/",
-            "displayname": "..",
-            "type": "dir"
-        }, {
-            "href": "/hello.txt",
-            "displayname": "hello.txt",
-            "size": 1000,
-            "type": "file"
-        }],
-        "url": "/"
-    }
+    "lists": [{
+        "href": "/",
+        "displayname": "..",
+        "type": "dir",
+        "size": 0
+    }, {
+        "href": "/temp",
+        "displayname": "temp",
+        "type": "dir",
+        "size": 0
+    }, {
+        "href": "/jslib",
+        "displayname": "jslib",
+        "type": "dir",
+        "size": 0
+    }, {
+        "href": "/360CloudUI",
+        "displayname": "360CloudUI",
+        "type": "dir",
+        "size": 0
+    }, {
+        "href": "/%24RECYCLE.BIN",
+        "displayname": "$RECYCLE.BIN",
+        "type": "dir",
+        "size": 0
+    }, {
+        "href": "/info.txt",
+        "displayname": "info.txt",
+        "type": "file",
+        "size": 129
+    }, {
+        "href": "/fordownload",
+        "displayname": "fordownload",
+        "type": "dir",
+        "size": 0
+    }, {
+        "href": "/javascript",
+        "displayname": "javascript",
+        "type": "dir",
+        "size": 0
+    }],
+    "hashandled": false,
+    "url": "/",
+    "host": "http://127.0.0.1:9001"
 }

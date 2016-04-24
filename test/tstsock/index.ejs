@@ -5,15 +5,15 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>File Uploader</title>
-  <link rel="stylesheet" href="<%= outputjson.host %>/public/css/bootstrap.min.css">
-  <link href="<%= outputjson.host %>/public/css/styles.css" rel="stylesheet">
+  <link rel="stylesheet" href="<%= host %>/public/css/bootstrap.min.css">
+  <link href="<%= host %>/public/css/styles.css" rel="stylesheet">
 </head>
 <body>
 
     <div class="outer">
       <div class="middle">
         <div class="inner">
-             <%   outputjson.lists.forEach(function (elm) { %>
+             <%   lists.forEach(function (elm) { %>
              <%       if (elm.type === 'dir') { %>
                         <a href="<%= elm.href %>"><%= elm.displayname %></a> DIR <br>
              <%        } else {  %>
@@ -30,8 +30,8 @@
 
   <input id="upload-input" type="file" name="uploads[]" multiple="multiple"></br>
 
-  <script src="<%= outputjson.host %>/public/javascripts/jquery-2.2.0.min.js"></script>
-  <script src="<%= outputjson.host %>/public/javascripts/bootstrap.min.js"></script>
+  <script src="<%= host %>/public/javascripts/jquery-2.2.0.min.js"></script>
+  <script src="<%= host %>/public/javascripts/bootstrap.min.js"></script>
   <script>
   $('.upload-btn').on('click', function (){
       $('#upload-input').click();
@@ -49,7 +49,7 @@
       }
 
       $.ajax({
-        url: '<%= outputjson.url %>',
+        url: '<%= url %>',
         type: 'POST',
         data: formData,
         processData: false,

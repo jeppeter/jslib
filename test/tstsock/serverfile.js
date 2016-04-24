@@ -12,9 +12,9 @@ var args = yargs.count('verbose')
     .usage(util.format('Usage %s [OPTIONS] directory', process.argv[1]))
     .help('h')
     .alias('h', 'help')
-    .array('appendlog')
+    .default('appendlog', [])
     .alias('appendlog', 'A')
-    .array('createlog')
+    .default('createlog', [])
     .alias('createlog', 'C')
     .default('path', __dirname)
     .alias('path', 'P')
@@ -29,6 +29,9 @@ var lport = args.port;
 var logopt = {};
 var jsdir = __dirname;
 var indexejs = jsdir + path.sep + 'index.ejs';
+var ejsdata = fs.readFileSync(indexejs, {
+    encoding: 'utf-8'
+});
 
 
 if (args.verbose >= 4) {
@@ -41,6 +44,14 @@ if (args.verbose >= 4) {
     logopt.level = 'warn';
 } else {
     logopt.level = 'error';
+}
+
+if (args.C.length > 0) {
+    logopt.files = args.C;
+}
+
+if (args.A.length > 0) {
+    logopt.appendfiles = args.A;
 }
 
 logopt.format = args.format;
@@ -76,32 +87,27 @@ http.createServer(function (req, res) {
                 return;
             }
 
-            /*fs.readFile(indexejs, 'utf-8', function (err, ejsdata) {
-                var getout;
-                if (err) {
-                    res.writeHead(500);
-                    res.end(JSON.stringify(err));
-                    return;
+            outputjson.url = req.url;
+            outputjson.host = host;
+            try {
+                tracelog.info('%s', JSON.stringify(outputjson));
+                s = ejs.render(ejsdata, outputjson);
+                tracelog.info('html (%s)', s);
+                res.writeHead(200);
+                res.end(s);
+                return;
+            } catch (e) {
+                res.writeHead(500);
+                if (typeof e === 'object') {
+                    tracelog.error('error (%s) (stack %s)', err.message, err.stack);
+                } else {
+                    tracelog.error('error %s', err);
                 }
-                getout = {};
-                outputjson.url = req.url;
-                outputjson.host = host;
-                getout.outputjson = outputjson;
-                try {
-                    s = ejs.render(ejsdata, getout);
-                    tracelog.info('html (%s)', s);
-                    res.writeHead(200);
-                    res.end(s);
-                    return;
-                } catch (e) {
-                    res.writeHead(500);
-                    tracelog.error('error (%s)', JSON.stringify(e));
-                    res.end(JSON.stringify(e));
-                    return;
-                }
-            });*/
+                res.end(JSON.stringify(e));
+                return;
+            }
 
-            res.writeHead(200);
+            /*res.writeHead(200);
             s = req.url;
             s = '';
             s += '<!DOCTYPE html>\n';
@@ -191,7 +197,7 @@ http.createServer(function (req, res) {
             ejs = ejs;
             indexejs = indexejs;
             tracelog.info('html (%s)', s);
-            res.end(s);
+            res.end(s);*/
         });
     } else if (req.method === 'PUT' || req.method === 'POST') {
         filehandle.put_file(inputjson, req, res, function (err, outputjson, req, res) {
