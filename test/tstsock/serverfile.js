@@ -29,9 +29,7 @@ var lport = args.port;
 var logopt = {};
 var jsdir = __dirname;
 var indexejs = jsdir + path.sep + 'index.ejs';
-var ejsdata = fs.readFileSync(indexejs, {
-    encoding: 'utf-8'
-});
+var ejsdata = null;
 
 
 if (args.verbose >= 4) {
@@ -57,6 +55,25 @@ if (args.A.length > 0) {
 logopt.format = args.format;
 tracelog.Init(logopt);
 filehandle.set_dir(directory);
+
+var handle_ejsdata = function (ejsfile, callback) {
+    'use strict';
+    if (ejsdata !== null) {
+        callback(null, ejsdata);
+        return;
+    }
+
+    fs.readFile(ejsfile, 'utf-8', function (err, data1) {
+        if (err) {
+            callback(err, ejsdata);
+            return;
+        }
+        ejsdata = data1;
+        callback(null, ejsdata);
+        return;
+    });
+    return;
+};
 
 http.createServer(function (req, res) {
     'use strict';
@@ -89,23 +106,36 @@ http.createServer(function (req, res) {
 
             outputjson.url = req.url;
             outputjson.host = host;
-            try {
-                tracelog.info('%s', JSON.stringify(outputjson));
-                s = ejs.render(ejsdata, outputjson);
-                tracelog.info('html (%s)', s);
-                res.writeHead(200);
-                res.end(s);
-                return;
-            } catch (e) {
-                res.writeHead(500);
-                if (typeof e === 'object') {
-                    tracelog.error('error (%s) (stack %s)', err.message, err.stack);
-                } else {
-                    tracelog.error('error %s', err);
+            handle_ejsdata(indexejs, function (err, data2) {
+                if (err) {
+                    res.writeHead(500);
+                    res.end(JSON.stringify(err));
+                    return;
                 }
-                res.end(JSON.stringify(e));
-                return;
-            }
+                req = req;
+                try {
+                    s = ejs.render(data2, outputjson);
+                    res.writeHead(200);
+                    res.end(s);
+                    return;
+                } catch (e) {
+                    res.writeHead(500);
+                    if (typeof e === 'object') {
+                        if (err.message) {
+                            tracelog.error('error (%s)', err.message);
+                        }
+                        if (err.stack) {
+                            tracelog.error('stack (%s)', err.stack);
+                        }
+                        tracelog.error('%s', JSON.stringify(err));
+                    } else {
+                        tracelog.error('error %s', err);
+                    }
+                    res.end(JSON.stringify(e));
+                    return;
+                }
+            });
+            return;
 
             /*res.writeHead(200);
             s = req.url;
