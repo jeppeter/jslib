@@ -1,6 +1,7 @@
 var yargs = require('yargs');
 var util = require('util');
 var tracelog = require('./lib/tracelog');
+var http = require('http');
 
 var argv = yargs.count('verbose')
     .alias('verbose', 'v')
@@ -11,9 +12,9 @@ var argv = yargs.count('verbose')
     })
     .help('h')
     .alias('h', 'help')
-    .array('files')
     .array('appendfiles')
     .alias('appendfiles', 'A')
+    .array('files')
     .alias('files', 'F')
     .alias('i', 'interactive')
     .argv;
@@ -44,4 +45,37 @@ tracelog.info('print info (%d)', argv.verbose);
 tracelog.warn('print warn (%d)', argv.verbose);
 tracelog.error('print error (%d)', argv.verbose);
 
-tracelog.finish();
+process.on('SIGINT', function () {
+    'use strict';
+    tracelog.warn('caught sig int');
+    tracelog.finish(function (err) {
+        if (err) {
+            console.log('error on (%s)', err);
+            return;
+        }
+        process.exit(0);
+        return;
+
+    });
+});
+
+process.on('uncaughtException', function (err) {
+    'use struct';
+    tracelog.error('error (%s)', err);
+    tracelog.finish(function (err) {
+        if (err) {
+            console.log('error on (%s)', err);
+            return;
+        }
+        process.exit(4);
+    });
+});
+
+
+http.createServer(function (req, res) {
+    'use strict';
+    req = req;
+    res.set_handle_version();
+    res.write('end');
+    res.end();
+}).listen(3000);

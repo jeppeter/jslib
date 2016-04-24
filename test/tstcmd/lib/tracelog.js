@@ -51,14 +51,39 @@ function TraceLog(options) {
     this.writeStreams = [];
     this.waitStreams = [];
     this.stackindex = 1;
-    this.finish = function () {
+    this.needcounts = 0;
+    this.addcounts = 0;
+    this.inner_end_callback = null;
+    this.inner_callback = function (err) {
+        if (err) {
+            if (self.inner_end_callback !== null) {
+                self.inner_end_callback(err);
+            }
+            return;
+        }
+        self.addcounts += 1;
+        if (self.addcounts === self.needcounts) {
+            if (self.inner_end_callback !== null) {
+                self.inner_end_callback(null);
+            }
+        }
+        return;
+    };
+    this.finish = function (callback) {
         var ws;
+        self.needcounts = self.writeStreams.length;
+        self.addcounts = 0;
+        self.inner_end_callback = callback;
         //var idx;
-        while (self.writeStreams.length - 1 >= 0) {
+        while (self.writeStreams.length > 0) {
             ws = self.writeStreams[0];
             self.writeStreams.splice(0, 1);
-            ws.end();
-            //ws.close();
+            ws.end('', self.inner_callback);
+        }
+
+        if (self.needcounts === self.addcounts) {
+            /*nothing to wait*/
+            callback(null);
         }
     };
     this.format = "<{{title}}>:{{file}}:{{line}} {{message}}\n";
@@ -70,7 +95,7 @@ function TraceLog(options) {
         this.level = options.level;
     }
 
-    if (util.isArray(options.files) && options.files.length > 0) {
+    if (util.isArray(options.files)) {
         add_write_streams(self, options.files, false);
     }
 
@@ -143,10 +168,10 @@ module.exports.error = function () {
     _innerLogger.innerLogger.error(format_string.apply(format_string, arguments));
 };
 
-module.exports.finish = function () {
+module.exports.finish = function (callback) {
     'use strict';
     if (_innerLogger !== null) {
-        _innerLogger.finish();
+        _innerLogger.finish(callback);
     }
     _innerLogger = null;
 };

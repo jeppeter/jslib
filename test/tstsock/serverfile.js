@@ -7,21 +7,45 @@ var yargs = require('yargs');
 var path = require('path');
 var fs = require('fs');
 var ejs = require('ejs');
-var args = yargs.count('verbose')
-    .alias('verbose', 'v')
-    .usage(util.format('Usage %s [OPTIONS] directory', process.argv[1]))
+var args = yargs.usage(util.format('Usage %s [OPTIONS] directory', process.argv[1]))
+    .option('verbose', {
+        count: true,
+        description: 'log level 0 for error 1 for warn 2 for info 3 for debug 4 for trace',
+        default: 0,
+        alias: 'v'
+    })
     .help('h')
     .alias('h', 'help')
-    .default('appendlog', [])
-    .alias('appendlog', 'A')
-    .default('createlog', [])
-    .alias('createlog', 'C')
-    .default('path', __dirname)
-    .alias('path', 'P')
-    .default('port', 9000)
-    .alias('port', 'p')
-    .default('format', '<{{title}}>:{{file}}:{{line}} {{message}}\n')
-    .alias('format', 'F').argv;
+    .option('appendlog', {
+        array: true,
+        description: 'log file that append',
+        default: [],
+        alias: 'A'
+    })
+    .option('createlog', {
+        array: true,
+        description: 'log file that created',
+        default: [],
+        alias: 'C'
+    })
+    .option('path', {
+        string: true,
+        description: 'path that map into server root',
+        default: __dirname,
+        alias: 'P'
+    })
+    .option('port', {
+        number: true,
+        description: 'port to listen one',
+        default: 9000,
+        alias: 'p'
+    })
+    .option('format', {
+        string: true,
+        description: 'log format',
+        default: '<{{title}}>:{{file}}:{{line}} {{message}}\n',
+        alias: 'F'
+    }).argv;
 
 
 var directory = args.path;
@@ -55,6 +79,30 @@ if (args.A.length > 0) {
 logopt.format = args.format;
 tracelog.Init(logopt);
 filehandle.set_dir(directory);
+process.on('SIGINT', function () {
+    'use strict';
+    tracelog.warn('caught sig int');
+    tracelog.finish(function (err) {
+        if (err) {
+            console.error('on finish error (%s)', err);
+            return;
+        }
+        process.exit(0);
+    });
+});
+
+process.on('uncaughtException', function (err) {
+    'use struct';
+    tracelog.error('error (%s)', err);
+    tracelog.finish(function (err) {
+        if (err) {
+            console.log('error on (%s)', err);
+            return;
+        }
+        process.exit(4);
+    });
+});
+
 
 var handle_ejsdata = function (ejsfile, callback) {
     'use strict';
