@@ -59,7 +59,30 @@ var lport = args.port;
 var logopt = {};
 var jsdir = __dirname;
 var indexejs = jsdir + path.sep + 'index.ejs';
-var ejsdata = null;
+var __handle_ejsdata_func = function () {
+    'use strict';
+    var ejsdata;
+
+    return function (file, callback) {
+        tracelog.trace('call test ejsdata');
+        if (ejsdata) {
+            tracelog.trace('will put ejsdata (%s)', ejsdata);
+            callback(null, ejsdata);
+            return ejsdata;
+        }
+        tracelog.trace('fs read %s', file);
+        fs.readFile(file, 'utf-8', function (err, data1) {
+            if (err) {
+                callback(err, null);
+                return;
+            }
+            ejsdata = data1;
+            callback(null, ejsdata);
+            return ejsdata;
+        });
+        return null;
+    };
+};
 
 
 if (args.verbose >= 4) {
@@ -73,7 +96,7 @@ if (args.verbose >= 4) {
 } else {
     logopt.level = 'error';
 }
-
+console.log('log level (%s)', logopt.level);
 if (args.C.length > 0) {
     logopt.files = args.C;
 }
@@ -114,24 +137,7 @@ process.on('uncaughtException', function (err) {
 });
 
 
-var handle_ejsdata = function (ejsfile, callback) {
-    'use strict';
-    if (ejsdata !== null) {
-        callback(null, ejsdata);
-        return;
-    }
-
-    fs.readFile(ejsfile, 'utf-8', function (err, data1) {
-        if (err) {
-            callback(err, ejsdata);
-            return;
-        }
-        ejsdata = data1;
-        callback(null, ejsdata);
-        return;
-    });
-    return;
-};
+var handle_ejsdata = __handle_ejsdata_func();
 
 http.createServer(function (req, res) {
     'use strict';
