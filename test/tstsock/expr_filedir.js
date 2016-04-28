@@ -13,7 +13,6 @@ var __handle_ejsdata_func = function () {
     return function (file, callback) {
         tracelog.trace('call test ejsdata');
         if (ejsdata[file]) {
-            tracelog.trace('will put ejsdata (%s)', ejsdata[file]);
             callback(null, ejsdata[file]);
             return ejsdata;
         }
