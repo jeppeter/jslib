@@ -118,18 +118,12 @@ var init_file_handle = function (req, res, next) {
     res = res;
     next();
 };
-var init_base_handle = function (req, res, next) {
-    'use strict';
-    req = filehdl.init_get_file(jsdir, req, lport, indexejs);
-    res = res;
-    next();
-};
 
 app.use(init_file_handle);
-app.use(filehdl.get_request);
-app.use(filehdl.put_file);
-newapp.use(init_base_handle);
-newapp.use(filehdl.get_request);
+app.get('*', filehdl.get_request);
+app.post('*', filehdl.put_file);
+app.put('*', filehdl.put_file);
+newapp.use(express.static(jsdir));
 
 
 app.listen(lport);
