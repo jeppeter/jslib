@@ -2,13 +2,11 @@ var express = require('express');
 var yargs = require('yargs');
 var util = require('util');
 var tracelog = require('./lib/tracelog');
-var http = require('http');
-var fs = require('fs');
 var path = require('path');
-var qs = require('querystring');
 var filehdl = require('./expr_filedir');
 module.exports = express();
 var app = module.exports;
+var newapp = express();
 var args = yargs.usage(util.format('Usage %s [OPTIONS]', process.argv[1]))
     .option('verbose', {
         count: true,
@@ -113,82 +111,27 @@ process.on('uncaughtException', function (err) {
 });
 
 
-http.createServer(function (req, res) {
+
+var init_file_handle = function (req, res, next) {
     'use strict';
-    var requrl;
-    var getfile;
-    var newfile;
-    var rstream;
-    var host;
-    var hostarr;
-    tracelog.info('(%s)method %s', req.headers.host, req.method);
-    if (req.method === 'GET') {
-        requrl = req.url;
-        host = req.headers.host;
-        hostarr = host.split(':');
-        hostarr = hostarr[0].split(':');
-        getfile = qs.unescape(requrl);
-        getfile = jsdir + getfile;
-
-
-        newfile = getfile.replace(path.sep, '/');
-        while (newfile !== getfile) {
-            getfile = newfile;
-            newfile = getfile.replace(path.sep, '/');
-        }
-        getfile = getfile.replace(/[\/]+/g, path.sep);
-        tracelog.info('get file %s', getfile);
-
-        fs.stat(getfile, function (err, stats) {
-            var errorinfo;
-            if (err) {
-                errorinfo = util.format('error %s', JSON.stringify(err));
-                res.write(errorinfo);
-                res.end();
-                return;
-            }
-
-            if (stats.isDirectory()) {
-                errorinfo = util.format('(%s) is directory');
-                res.write(errorinfo);
-                res.end();
-                return;
-            }
-
-            rstream = fs.createReadStream(getfile);
-            rstream.on('open', function () {
-                tracelog.info('opened (%s)', getfile);
-                rstream.pipe(res);
-            });
-            rstream.on('error', function (err) {
-                tracelog.error('read %s error(%s)', getfile, JSON.stringify(err));
-                res.end();
-            });
-
-            rstream.on('end', function () {
-                tracelog.info('ended (%s)', getfile);
-                res.end();
-            });
-
-        });
-    } else if (req.method === 'POST' || req.method === 'PUT') {
-        res.writeHead(501);
-        res.end();
-    }
-}).listen(lport + 1);
-
-app.
-
-app.get('*', function (req, res, next) {
-    'use strict';
-    req = req;
+    req = filehdl.init_get_file(directory, req, lport, indexejs);
     res = res;
-    tracelog.trace('req.url (%s)', req.url);
-    res.write('hello world');
-    res.end();
-    next = next;
-//    next();
-});
+    next();
+};
+var init_base_handle = function (req, res, next) {
+    'use strict';
+    req = filehdl.init_get_file(jsdir, req, lport, indexejs);
+    res = res;
+    next();
+};
+
+app.use(init_file_handle);
+app.use(filehdl.get_request);
+app.use(filehdl.put_file);
+newapp.use(init_base_handle);
+newapp.use(filehdl.get_request);
+
 
 app.listen(lport);
+newapp.listen(lport + 1);
 tracelog.trace('listen (%s) on (%d) with indexejs (%s)', directory, lport, indexejs);

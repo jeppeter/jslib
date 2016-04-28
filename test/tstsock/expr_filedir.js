@@ -1,4 +1,4 @@
-var filehandle = require('./lib/filehandle');
+var fileop = require('./lib/filehandle');
 var tracelog = require('./lib/tracelog');
 var ejs = require('ejs');
 var fs = require('fs');
@@ -33,70 +33,83 @@ var __handle_ejsdata_func = function () {
 
 var handle_ejsdata = __handle_ejsdata_func();
 
-module.exports.init_filehandle = function (directory, req, port, indexejs) {
+
+module.exports.init_get_file = function (directory, req, port, indexejs) {
     'use strict';
     var host, hostarr;
-    req.filehandle = {};
-    req.filehandle.basedir = directory;
-    req.filehandle.url = req.url;
-    host = req.headers.host;
-    hostarr = host.split(':');
-    host = hostarr[0];
-    host = util.format('http://%s:%d', host, port + 1);
-    req.filehandle.host = host;
-    req.filehandle.indexejs = indexejs;
-    return req;
+    var method = req.method;
+    method = method.toLowerCase();
+    if (method === 'get') {
+        req.get_file = {};
+        req.get_file.basedir = directory;
+        req.get_file.url = req.url;
+        host = req.headers.host;
+        hostarr = host.split(':');
+        host = hostarr[0];
+        host = util.format('http://%s:%d', host, port + 1);
+        req.get_file.host = host;
+        req.get_file.indexejs = indexejs;
+    } else if (method === 'put' || method === 'post') {
+        req.put_file = {};
+        req.put_file.basedir = directory;
+        req.put_file.url = req.url;
+    }
+    return;
 };
 
-module.exports.get_function = function (req, res, next) {
+module.exports.get_request = function (req, res, next) {
     'use strict';
     var inputjson;
     var host;
     var indexejs;
-    if (req.filehandle === undefined || req.filehandle === null) {
+    if (req.get_file === undefined || req.get_file === null) {
+        tracelog.trace('');
         next();
         return;
     }
 
-    if (req.filehandle.basedir === undefined || req.filehandle.basedir === '') {
+    if (req.get_file.basedir === undefined || req.get_file.basedir === '') {
+        tracelog.trace('');
         next();
         return;
     }
 
-    if (req.filehandle.url === undefined || req.filehandle.url === '') {
+    if (req.get_file.url === undefined || req.get_file.url === '') {
+        tracelog.trace('');
         next();
         return;
     }
 
-    if (req.filehandle.ejsfile === undefined || req.filehandle.ejsfile === '') {
+
+    if (req.get_file.host === undefined || req.get_file.host === '') {
+        tracelog.trace('');
         next();
         return;
     }
 
-    if (req.filehandle.host === undefined || req.filehandle.host === '') {
-        next();
-        return;
-    }
-
-    if (req.filehandle.indexejs === undefined || req.filehandle.indexejs === '') {
+    if (req.get_file.indexejs === undefined || req.get_file.indexejs === '') {
+        tracelog.trace('');
         next();
         return;
     }
 
     inputjson = {};
-    host = req.filehandle.host;
-    indexejs = req.filehandle.indexejs;
-    inputjson.basedir = req.filehandle.basedir;
-    filehandle.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
+    host = req.get_file.host;
+    indexejs = req.get_file.indexejs;
+    inputjson.basedir = req.get_file.basedir;
+    inputjson.requrl = req.get_file.url;
+    fileop.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
         var s;
         if (err) {
             res.writeHead(500);
             res.end(JSON.stringify(err));
+            tracelog.error(JSON.stringify(err));
             return;
         }
 
         if (outputjson.hashandled) {
             /*to no handle this*/
+            tracelog.trace('');
             return;
         }
 
@@ -106,6 +119,7 @@ module.exports.get_function = function (req, res, next) {
             if (err) {
                 res.writeHead(500);
                 res.end(JSON.stringify(err));
+                tracelog.error(JSON.stringify(err));
                 return;
             }
             req = req;
@@ -132,6 +146,48 @@ module.exports.get_function = function (req, res, next) {
             }
         });
         return;
+    });
+    return;
+};
+
+module.exports.put_file = function (req, res, next) {
+    'use strict';
+    var inputjson = {};
+    if (req.put_file === undefined || req.put_file === null) {
+        tracelog.trace('');
+        next();
+        return;
+    }
+
+    if (req.put_file.basedir === undefined || req.put_file.basedir === '') {
+        tracelog.trace('');
+        next();
+        return;
+    }
+
+    if (req.put_file.url === undefined || req.put_file.url === '') {
+        tracelog.trace('');
+        next();
+        return;
+    }
+
+    inputjson.basedir = req.put_file.basedir;
+    inputjson.requrl = req.put_file.url;
+    fileop.put_file(inputjson, req, res, function (err, outputjson, req, res) {
+        if (err) {
+            res.writeHead(500);
+            res.write(JSON.stringify(err));
+            res.end();
+            return;
+        }
+        outputjson = outputjson;
+        req = req;
+
+        res.writeHead(200);
+        res.write('success');
+        res.end();
+        return;
+
     });
     return;
 };
