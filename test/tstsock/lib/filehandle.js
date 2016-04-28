@@ -5,47 +5,7 @@ var util = require('util');
 var tracelog = require('./tracelog');
 var formidable = require('formidable');
 
-var basedir = __dirname;
-var posix_dir = basedir.split(path.sep).join('/');
 
-module.exports.set_dir = function (dirset) {
-    'use strict';
-    basedir = dirset;
-    posix_dir = basedir.split(path.sep).join('/');
-    return;
-};
-/*
-var string_to_bytes = function (instr) {
-    'use strict';
-    var ch, i;
-    var bytes = [];
-    for (i = 0; i < instr.length; i += 1) {
-        ch = instr.charCodeAt(i);
-        tracelog.info('[%d] code %d (0x%s)', i, ch, ch.toString(16));
-        bytes.push((ch >> 8) & 0xff);
-        ch = ch & 0xff;
-        bytes.push(ch);
-    }
-    return bytes;
-};
-
-var bytes_debug = function (bytes) {
-    'use strict';
-    var msg;
-    var i;
-    msg = '';
-
-    for (i = 0; i < bytes.length; i += 1) {
-        if ((i % 16) === 0) {
-            msg += util.format('\n0x%s:\t', i.toString(16));
-        }
-        msg += util.format(' 0x%s', bytes[i].toString(16));
-    }
-    msg += '\n';
-
-    return msg;
-};
-*/
 
 function FileInfo(link, name, isdir, size) {
     'use strict';
@@ -63,10 +23,6 @@ function FileInfo(link, name, isdir, size) {
     return this;
 }
 
-module.exports.get_dir = function () {
-    'use strict';
-    return basedir;
-};
 
 module.exports.list_dir = function (inputjson, req, res, callback) {
     'use strict';
@@ -74,6 +30,10 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
     var outerr;
     var outfile;
     var requrl;
+    var basedir;
+    var posix_dir;
+    basedir = inputjson.basedir;
+    posix_dir = basedir.split(path.sep).join('/');
     outputjson = {};
     outputjson.lists = [];
     outputjson.hashandled = false;
@@ -205,6 +165,8 @@ module.exports.put_file = function (inputjson, req, res, callback) {
     var outdir;
     var form;
     var outputjson;
+    var basedir;
+    basedir = inputjson.basedir;
     requrl = inputjson.requrl;
     outputjson = {};
     outdir = basedir + requrl;

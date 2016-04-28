@@ -111,7 +111,6 @@ if (args.noconsole) {
 
 logopt.format = args.format;
 tracelog.Init(logopt);
-filehandle.set_dir(directory);
 process.on('SIGINT', function () {
     'use strict';
     tracelog.warn('caught sig int');
@@ -155,6 +154,7 @@ http.createServer(function (req, res) {
     host = util.format('http://%s:%d', host, lport + 1);
     tracelog.info('(%s)method %s', req.headers.host, req.method);
     if (req.method === 'GET') {
+        inputjson.basedir = directory;
         filehandle.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
             var s;
             if (err) {
@@ -294,6 +294,7 @@ http.createServer(function (req, res) {
             res.end(s);*/
         });
     } else if (req.method === 'PUT' || req.method === 'POST') {
+        inputjson.basedir = directory;
         filehandle.put_file(inputjson, req, res, function (err, outputjson, req, res) {
             if (err) {
                 res.writeHead(500);
