@@ -1,0 +1,16 @@
+{
+  "name": "tstgrunt",
+  "version": "1.0.0",
+  "description": "grunt task test",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm install && grunt test"
+  },
+  "devDependencies": {
+    "grunt": "latest",
+    "grunt-cli": "latest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
