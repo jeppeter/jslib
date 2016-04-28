@@ -96,7 +96,7 @@ if (args.verbose >= 4) {
 } else {
     logopt.level = 'error';
 }
-console.log('log level (%s)', logopt.level);
+
 if (args.C.length > 0) {
     logopt.files = args.C;
 }
@@ -201,97 +201,6 @@ http.createServer(function (req, res) {
             });
             return;
 
-            /*res.writeHead(200);
-            s = req.url;
-            s = '';
-            s += '<!DOCTYPE html>\n';
-            s += '<html>\n<head>\n';
-            s += '  <meta charset="utf-8">\n';
-            s += '  <meta http-equiv="X-UA-Compatible" content="IE=edge">\n';
-            s += '\n';
-            s += '  <title>File Uploader listed</title>\n';
-            s += util.format('  <link rel="stylesheet" href="%s/public/css/bootstrap.min.css">\n', host);
-            s += util.format('  <link href="%s/public/css/styles.css" rel="stylesheet">\n', host);
-            s += '</head>\n';
-            s += '<body>\n';
-            s += '    <div class="outer">\n';
-            s += '      <div class="middle">\n';
-            s += '        <div class="inner">\n';
-
-            if (util.isArray(outputjson.lists)) {
-                outputjson.lists.forEach(function (elm) {
-                    var tabcnt;
-                    for (tabcnt = 0; tabcnt < 12; tabcnt += 1) {
-                        s += ' ';
-                    }
-                    if (elm.type === 'dir') {
-                        s += util.format('<a href="%s">%s</a> %s <br>\n', elm.href, elm.displayname, 'DIR');
-                    } else {
-                        s += util.format('<a href="%s">%s</a> size %d %s <br>\n', elm.href, elm.displayname, elm.size, 'FILE');
-                    }
-                });
-            }
-
-            s += '            <div class="progress">\n';
-            s += '              <div class="progress-bar" role="progressbar"></div>\n';
-            s += '            </div>\n';
-            s += '            <button class="btn btn-lg upload-btn" type="button">Upload File</button>\n';
-            s += '        </div>\n';
-            s += '      </div>\n';
-            s += '    </div>\n';
-            s += '  <input id="upload-input" type="file" name="uploads[]" multiple="multiple"></br>\n';
-            s += util.format('  <script src="%s/public/javascripts/jquery-2.2.0.min.js"></script>\n', host);
-            s += util.format('  <script src="%s/public/javascripts/bootstrap.min.js"></script>', host);
-            s += '  <script>\n';
-            s += '  $(\'.upload-btn\').on(\'click\', function (){\n';
-            s += '      $(\'#upload-input\').click();\n';
-            s += '      $(\'.progress-bar\').text(\'0%\');\n';
-            s += '      $(\'.progress-bar\').width(\'0%\');\n';
-            s += '  });\n';
-            s += '\n';
-
-            s += '  $(\'#upload-input\').on(\'change\', function(){\n';
-            s += '    var files = $(this).get(0).files;\n';
-            s += '    if (files.length > 0){\n';
-            s += '      var formData = new FormData();\n';
-            s += '      for (var i = 0; i < files.length; i++) {\n';
-            s += '        var file = files[i];\n';
-            s += '        formData.append(\'uploads[]\', file, file.name);\n';
-            s += '    }\n';
-            s += '      $.ajax({\n';
-            s += util.format('        url: \'%s\',', req.url);
-            s += '        type: \'POST\',\n';
-            s += '        data: formData,\n';
-            s += '        processData: false,\n';
-            s += '        contentType: false,\n';
-            s += '        success: function(data){\n';
-            s += '            console.log(\'upload successful!\\n\' + data);\n';
-            s += '        },\n';
-            s += '        xhr: function() {\n';
-            s += '          var xhr = new XMLHttpRequest();\n';
-            s += '          xhr.upload.addEventListener(\'progress\', function(evt) {\n';
-            s += '            if (evt.lengthComputable) {\n';
-            s += '              var percentComplete = evt.loaded / evt.total;\n';
-            s += '              percentComplete = parseInt(percentComplete * 100);\n';
-            s += '              $(\'.progress-bar\').text(percentComplete + \'%\');\n';
-            s += '              $(\'.progress-bar\').width(percentComplete + \'%\');\n';
-            s += '              if (percentComplete === 100) {\n';
-            s += '                $(\'.progress-bar\').html(\'Done\');\n';
-            s += '              }\n';
-            s += '            }\n';
-            s += '          }, false);\n';
-            s += '          return xhr;\n';
-            s += '        }\n';
-            s += '      });\n';
-            s += '    }\n';
-            s += '  });\n';
-            s += '  </script>\n';
-            s += '</body>\n';
-            s += '</html>\n';
-            ejs = ejs;
-            indexejs = indexejs;
-            tracelog.info('html (%s)', s);
-            res.end(s);*/
         });
     } else if (req.method === 'PUT' || req.method === 'POST') {
         inputjson.basedir = directory;
