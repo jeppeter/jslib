@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <style type='text/css'>
+    .center{
+    /*background-color: #336699;*/
+    width: 200px;
+    height: 200px;
+    display: table;
+    }
+    .sub{
+    display: table-cell ;
+    vertical-align: middle;
+    text-align: center;
+    }
+    </style>
+    <!--[if IE 7]>
+    <style type='text/css'>
+    .sub {
+    display: block;
+    margin: 70px auto;
+    </style>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="center">
+      <span class="sub">
+        Some text text...<br />
+        An some more text...
+      </span>
+    </div>
+  </body>
+  <script src="./jquery.min.js" >
+  </script>
+  <script>
+  $(document).ready(function(){
+    console.log('height %d width %d ',$(window).height(),$(window).width());
+    $('.center').css({'height':$(window).height(),'width':$(window).width()});
+  });
+  </script>
+</html>
