@@ -1,0 +1,53 @@
+<html>
+    <head>
+        <style>
+        progress,          /* All HTML5 progress enabled browsers */
+        progress[role]     /* polyfill */
+        {
+        /* Turns off styling - not usually needed, but good to know. */
+        appearance: none;
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        /* gets rid of default border in Firefox and Opera. */
+        border: none;
+        /* Needs to be in here for Safari polyfill so background images work as expected. */
+        background-size: auto;
+        
+        /* Dimensions */
+        width: 400px;
+        height: 10px;
+        
+        }
+        /* Polyfill */
+        progress[role]:after {
+        background-image: none; /* removes default background from polyfill */
+        }
+        /* Ensure fallback text doesn't appear in polyfill */
+        progress[role] strong {
+        display: none;
+        }
+        .middle-type{
+        text-align: center;
+        }
+        </style>
+    </head>
+    <body>
+        <progress id="progress_menu" max="100" value="60">
+            <strong>Progress: 60% done.</strong>
+        </progress><br>
+        <button id="start_button" type="button" class="middle-type">
+        Start
+        </button>
+    </body>
+    <script src="./js/jquery.min.js">
+    </script>
+    <script>
+    $(document).ready(function(){
+    console.log('load ready');
+    $('#start_button').click(function(evt){
+    console.log('button click value %d',$('#progress_menu').attr('value'));
+    $('#progress_menu').attr('value',10);
+    });
+    });
+    </script>
+</html>
