@@ -42,12 +42,31 @@
     <script src="./js/jquery.min.js">
     </script>
     <script>
+    var timer_progress=null;
+    var progress_value=0;
+
+    function set_progress(){
+        progress_value += 2;
+        if (progress_value >= 100){
+            clearInterval(timer_progress);
+            timer_progress = null;
+            progress_value = 100;
+        }
+        $('#progress_menu').attr('value',progress_value);
+    }
+
     $(document).ready(function(){
-    console.log('load ready');
-    $('#start_button').click(function(evt){
-    console.log('button click value %d',$('#progress_menu').attr('value'));
-    $('#progress_menu').attr('value',10);
-    });
+        console.log('load ready');
+        $('#start_button').click(function(evt){
+            console.log('button click value %d',$('#progress_menu').attr('value'));
+            if (timer_progress !== null || timer_progress !== undefined){
+                clearInterval(timer_progress);
+                timer_progress = null;
+            }
+            progress_value = 0;
+            $('#progress_menu').attr('value',progress_value);
+            timer_progress=setInterval('set_progress()',200);
+        });
     });
     </script>
 </html>
