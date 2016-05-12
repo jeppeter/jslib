@@ -1,6 +1,6 @@
 var request = require('request');
 var tracelog = require('../tracelog');
-var util = require('util');
+//var util = require('util');
 
 function createWorker(parent, meth, url, reqopt) {
     'use strict';
@@ -33,14 +33,6 @@ function createWorker(parent, meth, url, reqopt) {
                 idx = worker.preidx;
                 worker.preidx += 1;
                 handler = parent.pre_handlers[idx];
-                tracelog.trace('parent (%s) idx(%d)', util.inspect(parent.pre_handlers, {
-                    showHidden: true,
-                    depth: null
-                }), idx);
-                tracelog.trace('handler %s', util.inspect(handler, {
-                    showHidden: true,
-                    depth: null
-                }));
                 handler.pre_handler(err, worker, worker.pre_next);
                 return;
             }
@@ -93,8 +85,8 @@ function createGrabwork() {
         reqopt.method = meth;
         request(reqopt, function (err, resp, body) {
             if (err === null) {
-                worker.reqopt.response = resp;
-                worker.reqopt.htmldata = body;
+                worker.response = resp;
+                worker.htmldata = body;
             }
             worker.post_next(true, err);
         });
@@ -125,10 +117,6 @@ function createGrabwork() {
             tracelog.warn('handler (%s) already in', handler);
             return;
         }
-        tracelog.trace('handler %s', util.inspect(handler, {
-            showHidden: true,
-            depth: null
-        }));
         self.pre_handlers.push(handler);
         return;
     };

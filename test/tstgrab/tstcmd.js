@@ -5,6 +5,7 @@ var util = require('util');
 var grab = grabwork();
 var hkexnewsmain_post = require('./hkexnewsmain_post');
 var hkexnewspaper_post = require('./hkexnewspaper_post');
+var random_delay = require('./random_delay');
 
 var argv = yargs.usage(util.format('Usage %s [OPTIONS] file', process.argv[1]))
     .option('verbose', {
@@ -51,6 +52,7 @@ logopt.files = argv.files;
 logopt.appendfiles = argv.appendfiles;
 tracelog.Init(logopt);
 
+grab.add_pre(random_delay());
 grab.add_post(hkexnewsmain_post());
 grab.add_post(hkexnewspaper_post());
 

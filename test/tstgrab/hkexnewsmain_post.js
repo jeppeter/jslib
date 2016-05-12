@@ -1,11 +1,13 @@
 var tracelog = require('../../tracelog');
+var cheerio = require('cheerio');
 
 function createHkexNewsMainPost() {
     'use strict';
     var hknews = {};
 
     hknews.post_handler = function (err, worker, next) {
-        tracelog.trace('newsmain');
+        var parser;
+        var inputs;
         if (err) {
             /*if we have nothing to do*/
             next(true, err);
@@ -19,7 +21,11 @@ function createHkexNewsMainPost() {
         }
 
         /*now it is time ,we handle ,so we should no more to handle out*/
-        tracelog.trace('request main');
+        //tracelog.info('htmldata (%s)', worker.htmldata);
+        parser = cheerio.load(worker.htmldata);
+        inputs = parser('input');
+        tracelog.info('inputs (%d)',inputs.length);
+
         next(false, null);
     };
 
