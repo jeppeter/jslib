@@ -1,6 +1,6 @@
 var yargs = require('yargs');
 var util = require('util');
-var tracelog = require('./lib/tracelog');
+var tracelog = require('../../tracelog');
 var http = require('http');
 
 var argv = yargs.usage(util.format('Usage %s [OPTIONS] file', process.argv[1]))
@@ -18,17 +18,27 @@ var argv = yargs.usage(util.format('Usage %s [OPTIONS] file', process.argv[1]))
         default: false,
         alias: 'N'
     })
-    .default({
-        file: [],
-        interactive: 'no'
-    })
     .help('h')
     .alias('h', 'help')
-    .array('appendfiles')
-    .alias('appendfiles', 'A')
-    .array('files')
-    .alias('files', 'F')
-    .alias('i', 'interactive')
+    .option('files', {
+        alias: 'F',
+        default: [],
+        description: 'set File to record opened by truncate',
+        type: 'array'
+    })
+    .option('appendfiles', {
+        alias: 'A',
+        default: [],
+        description: 'set File to record opened by append',
+        type: 'array'
+
+    })
+    .option('interactive', {
+        alias: 'i',
+        default: false,
+        description: 'set not exit mode',
+        type: 'boolean'
+    })
     .argv;
 
 //console.log(argv);
@@ -87,11 +97,21 @@ process.on('uncaughtException', function (err) {
     });
 });
 
-
-http.createServer(function (req, res) {
-    'use strict';
-    req = req;
-    res.set_handle_version();
-    res.write('end');
-    res.end();
-}).listen(3000);
+if (argv.i) {
+    http.createServer(function (req, res) {
+        'use strict';
+        req = req;
+        res.set_handle_version();
+        res.write('end');
+        res.end();
+    }).listen(3000);
+} else {
+    tracelog.finish(function (err) {
+        'use strict';
+        if (err) {
+            console.log('error on (%s)', err);
+            return;
+        }
+        process.exit(0);
+    });
+}
