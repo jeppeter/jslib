@@ -1,0 +1,16 @@
+{
+  "name": "tstgrab",
+  "version": "1.0.0",
+  "description": "test grabwork",
+  "main": "hkexnewsmain_post.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cheerio": "latest",
+    "yargs": "latest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
