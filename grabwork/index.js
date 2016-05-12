@@ -1,9 +1,11 @@
 var request = require('request');
-var tracelog = require('tracelog');
+var tracelog = require('../tracelog');
+var util = require('util');
 
 function createWorker(parent, meth, url, reqopt) {
     'use strict';
     var worker = {};
+    var handler = null;
     worker.reqopt = reqopt || {};
     worker.meth = meth;
     worker.url = url;
@@ -30,7 +32,16 @@ function createWorker(parent, meth, url, reqopt) {
                 /*we inc for it will call when*/
                 idx = worker.preidx;
                 worker.preidx += 1;
-                parent.pre_handlers[idx](err, worker, worker.pre_next);
+                handler = parent.pre_handlers[idx];
+                tracelog.trace('parent (%s) idx(%d)', util.inspect(parent.pre_handlers, {
+                    showHidden: true,
+                    depth: null
+                }), idx);
+                tracelog.trace('handler %s', util.inspect(handler, {
+                    showHidden: true,
+                    depth: null
+                }));
+                handler.pre_handler(err, worker, worker.pre_next);
                 return;
             }
         }
@@ -40,11 +51,12 @@ function createWorker(parent, meth, url, reqopt) {
 
     worker.post_next = function (cont, err) {
         if (cont) {
+            var idx;
             if (worker.postidx < parent.post_handlers.length) {
-                var idx;
-                idx = worker.postidx.idx;
+                idx = worker.postidx;
                 worker.postidx += 1;
-                parent.post_handlers[idx](err, worker, worker.post_next);
+                handler = parent.post_handlers[idx];
+                handler.post_handler(err, worker, worker.post_next);
                 return;
             }
         }
@@ -65,9 +77,10 @@ function createGrabwork() {
     self.workers = [];
     self.pre_handlers = [];
     self.post_handlers = [];
+    self.domain_request = {};
 
     self.request_work = function (worker) {
-        var reqopt = worker.reqopt.request || {};
+        var reqopt = worker.reqopt.reqopt || {};
         var url = worker.url;
         var meth = worker.meth.toUpperCase();
 
@@ -102,31 +115,35 @@ function createGrabwork() {
         return self;
     };
 
-    self.add_pre = function (callback) {
-        if (typeof callback !== 'function') {
-            tracelog.error('callback (%s) not functions', callback);
+    self.add_pre = function (handler) {
+        if (handler.pre_handler === null || handler.pre_handler === undefined || typeof handler.pre_handler !== 'function') {
+            tracelog.error('handler (%s) not functions', handler);
             return;
         }
 
-        if (self.pre_handlers.indexOf(callback) >= 0) {
-            tracelog.warn('callback (%s) already in', callback);
+        if (self.pre_handlers.indexOf(handler) >= 0) {
+            tracelog.warn('handler (%s) already in', handler);
             return;
         }
-        self.pre_handlers.push(callback);
+        tracelog.trace('handler %s', util.inspect(handler, {
+            showHidden: true,
+            depth: null
+        }));
+        self.pre_handlers.push(handler);
         return;
     };
 
-    self.add_post = function (callback) {
-        if (typeof callback !== 'function') {
-            tracelog.error('callback (%s) not functions', callback);
+    self.add_post = function (handler) {
+        if (handler.post_handler === null || handler.post_handler === undefined || typeof handler.post_handler !== 'function') {
+            tracelog.error('handler (%s) not valid', handler);
             return;
         }
 
-        if (self.post_handlers.indexOf(callback) >= 0) {
-            tracelog.warn('callback (%s) already in', callback);
+        if (self.post_handlers.indexOf(handler) >= 0) {
+            tracelog.warn('handler (%s) already in', handler);
             return;
         }
-        self.post_handlers.push(callback);
+        self.post_handlers.push(handler);
         return;
     };
     return self;
