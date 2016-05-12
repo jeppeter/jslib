@@ -18,8 +18,6 @@ var argv = yargs.usage(util.format('Usage %s [OPTIONS] file', process.argv[1]))
         default: false,
         alias: 'N'
     })
-    .help('h')
-    .alias('h', 'help')
     .option('files', {
         alias: 'F',
         default: [],

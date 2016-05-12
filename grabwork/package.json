@@ -1,0 +1,16 @@
+{
+  "name": "grabwork",
+  "version": "1.0.0",
+  "description": "nodejs web scrawler in extension mode",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "request": "latest",
+    "cheerio": "latest"
+  },
+  "keywords": ["scrawler", "web"],
+  "author": "",
+  "license": "ISC"
+}
