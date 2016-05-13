@@ -12,8 +12,18 @@ function createWorker(parent, meth, url, reqopt) {
     worker.parent = parent;
     worker.preidx = 0;
     worker.postidx = 0;
-    worker.finish = function () {
+    worker.finish_callbacks = [];
+    worker.finishidx = 0;
+
+    worker.next_finish = function (err) {
+        var idx;
         var p;
+        idx = worker.finishidx;
+        if (idx < worker.finish_callbacks.length) {
+            worker.finishidx += 1;
+            worker.finish_callbacks[idx](worker, err, worker.next_finish);
+            return;
+        }
         if (worker.parent !== null) {
             p = worker.parent;
             if (p.workers.indexOf(worker) >= 0) {
@@ -23,6 +33,23 @@ function createWorker(parent, meth, url, reqopt) {
             }
             worker.parent = null;
         }
+    };
+    worker.finish = function (err) {
+        worker.next_finish(err);
+    };
+
+    worker.add_finish = function (finish_func) {
+        if (typeof finish_func !== 'function') {
+            tracelog.error('%s not function', finish_func);
+            return;
+        }
+
+        if (worker.finish_callbacks.indexOf(finish_func) >= 0) {
+            tracelog.warn('%s already in', finish_func);
+            return;
+        }
+        worker.finish_callbacks.push(finish_func);
+        return;
     };
 
     worker.pre_next = function (cont, err) {
@@ -54,7 +81,7 @@ function createWorker(parent, meth, url, reqopt) {
         }
         worker.postidx = parent.post_handlers.length;
         /*we finish work*/
-        worker.finish();
+        worker.finish(null);
         return;
     };
 
@@ -78,18 +105,30 @@ function createGrabwork() {
 
         if (url.length === 0) {
             /*we should not handle any more if no url request*/
-            worker.finish();
+            worker.finish(null);
             return;
         }
         reqopt.url = url;
         reqopt.method = meth;
-        request(reqopt, function (err, resp, body) {
-            if (err === null) {
-                worker.response = resp;
-                worker.htmldata = body;
-            }
-            worker.post_next(true, err);
-        });
+        if (worker.pipe !== null) {
+            /*we should on end to finish the */
+            worker.pipe.on('close', function () {
+                worker.finish(null);
+            });
+            worker.pipe.on('error', function (err) {
+                worker.finish(err);
+            });
+
+            request(reqopt).pipe(worker.pipe);
+        } else {
+            request(reqopt, function (err, resp, body) {
+                if (err === null) {
+                    worker.response = resp;
+                    worker.htmldata = body;
+                }
+                worker.post_next(true, err);
+            });
+        }
     };
 
     self.queue = function (url, reqopt) {

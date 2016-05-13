@@ -5,6 +5,7 @@ var util = require('util');
 var grab = grabwork();
 var hkexnewsmain_post = require('./hkexnewsmain_post');
 var hkexnewspaper_post = require('./hkexnewspaper_post');
+var hkexnewsdownload_pre = require('./hkexnewsdownload_pre');
 var random_delay = require('./random_delay');
 
 var argv = yargs.usage(util.format('Usage %s [OPTIONS] file', process.argv[1]))
@@ -19,6 +20,19 @@ var argv = yargs.usage(util.format('Usage %s [OPTIONS] file', process.argv[1]))
         description: 'set no console output for log',
         default: false,
         alias: 'N'
+    })
+    .option('files', {
+        alias: 'F',
+        default: [],
+        description: 'set File to record opened by truncate',
+        type: 'array'
+    })
+    .option('appendfiles', {
+        alias: 'A',
+        default: [],
+        description: 'set File to record opened by append',
+        type: 'array'
+
     })
     .help('h')
     .alias('h', 'help')
@@ -52,7 +66,9 @@ logopt.files = argv.files;
 logopt.appendfiles = argv.appendfiles;
 tracelog.Init(logopt);
 
+
 grab.add_pre(random_delay());
+grab.add_pre(hkexnewsdownload_pre());
 grab.add_post(hkexnewsmain_post());
 grab.add_post(hkexnewspaper_post());
 

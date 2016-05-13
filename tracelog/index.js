@@ -1,3 +1,4 @@
+/*jshint -W059 */
 var tracer = require('tracer');
 var util = require('util');
 var fs = require('fs');

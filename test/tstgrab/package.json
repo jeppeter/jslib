@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "cheerio": "latest",
-    "yargs": "latest"
+    "yargs": "latest" ,
+    "request": "latest"
   },
   "keywords": [],
   "author": "",
