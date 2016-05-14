@@ -38,20 +38,41 @@ var init_tracelog = function (opt) {
     return;
 };
 
-var trace_exit = function (next) {
+
+var trace_exit = function (ec) {
     'use strict';
     tracelog.finish(function (err) {
         if (err) {
             return;
         }
-        next();
+        process.exit(ec);
     });
+    return;
 };
 
-var readfile_cheerio = function (fname, callback) {
+process.on('uncaughtException', function (err) {
+    'use struct';
+    tracelog.error('error (%s) stack(%s)', err, err.stack);
+    trace_exit(3);
+});
+
+var call_cheerparser = function (fname, selector, callback) {
     'use strict';
     fs.readFile(fname, function (err, data) {
-        callback(err, data);
+        var parser;
+        var content;
+        if (err) {
+            tracelog.error('get (%s) error (%s)', fname, JSON.stringify(err));
+            trace_exit(4);
+            return;
+        }
+
+        parser = cheerio.load(data);
+        content = parser(selector);
+        callback(parser, content, function (ec) {
+            trace_exit(ec);
+        });
+        return;
     });
 };
 
@@ -81,64 +102,54 @@ commander
 
 
 commander
-    .command('select <str>')
+    .command('text <str>')
     .action(function (args, options) {
         'use strict';
         init_tracelog(options);
         options = options;
-        if (args.length < 1) {
-            process.stderr.write('need instr restr\n');
-            process.exit(3);
+        commander.subname = 'text';
+        if (args === null || args === undefined || args.length < 1) {
+            tracelog.error('need instr restr\n');
+            trace_exit(3);
+            return;
         }
 
         if (options.parent.selector.length === 0) {
-            process.stderr.write('need selector set\n');
-            process.exit(3);
+            tracelog.error('need selector set\n');
+            trace_exit(3);
+            return;
         }
 
         tracelog.info('args %s', args);
-        readfile_cheerio(args[0], function (err, data) {
-            var parser;
-            var content;
-            if (err) {
-                tracelog.error('can not read (%s) (%s)', args[0], JSON.stringify(err));
-                trace_exit(function () {
-                    process.exit(4);
-                });
-            }
-            parser = cheerio.load(data);
+
+        call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
             tracelog.trace('parser (%s)', util.inspect(parser, {
                 showHidden: true,
-                depth: null
+                depth: 3
             }));
-            content = parser(options.parent.selector);
             if (content === null || content === undefined) {
-                console.log('can not find(%s) in (%s)', options.parent.selector, args[0]);
+                console.log('can not find(%s) in (%s)', options.parent.selector, args);
+                exit_fn(4);
             } else {
                 //console.log('<%s> (%s)', options.parent.selector, content.text());
                 if (Array.isArray(content)) {
                     content.forEach(function (elm, idx) {
-                        console.log('<%s>[%d] (%s)', options.parent.selector, idx, elm.html());
+                        console.log('<%s>[%d] (%s)', options.parent.selector, idx, elm.text());
                         tracelog.trace('<%s>[%d] (%s)', options.parent.selector, idx, util.inspect(elm, {
                             showHidden: true,
-                            depth: null
+                            depth: 3
                         }));
                     });
                 } else {
-                    console.log('<%s> (%s)', options.parent.selector, content.html());
+                    console.log('<%s> (%s)', options.parent.selector, content.text());
                     tracelog.trace('<%s> (%s)', options.parent.selector, util.inspect(content, {
                         showHidden: true,
-                        depth: null
+                        depth: 3
                     }));
                 }
             }
-
-            trace_exit(function () {
-                process.exit(0);
-            });
-
+            exit_fn(0);
         });
-        commander.subname = 'selector';
     });
 
 commander
@@ -147,58 +158,165 @@ commander
         'use strict';
         init_tracelog(options);
         options = options;
-        if (args.length < 1) {
-            process.stderr.write('need instr restr\n');
-            process.exit(3);
+        commander.subname = 'parent';
+        if (args === null || args === undefined || args.length < 1) {
+            tracelog.error('need instr restr\n');
+            trace_exit(3);
+            return;
         }
 
         if (options.parent.selector.length === 0) {
-            process.stderr.write('need selector set\n');
-            process.exit(3);
+            tracelog.error('need selector set\n');
+            trace_exit(3);
+            return;
         }
 
         tracelog.info('args %s', args);
-        readfile_cheerio(args[0], function (err, data) {
-            var parser;
-            var content;
-            if (err) {
-                tracelog.error('load (%s) error(%s)', args[0], JSON.stringify(err));
-                trace_exit(function () {
-                    process.exit(4);
-                });
-                return;
-            }
-            parser = cheerio.load(data);
+        call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
             tracelog.trace('parser (%s)', util.inspect(parser, {
                 showHidden: true,
-                depth: null
+                depth: 3
             }));
-            content = parser(options.parent.selector);
             if (content === null || content === undefined) {
-                console.log('can not find(%s) in (%s)', options.parent.selector, args[0]);
+                console.log('can not find(%s) in (%s)', options.parent.selector, args);
+                exit_fn(4);
             } else {
                 if (Array.isArray(content)) {
                     content.forEach(function (elm, idx) {
-                        console.log('<%s>[%d] (%s)', options.parent.selector, idx, elm.parent().html());
+                        console.log('<%s>[%d] (%s)', options.parent.selector, idx, elm.parent().text());
                         tracelog.trace('<%s>[%d] (%s)', options.parent.selector, idx, util.inspect(elm.parent(), {
                             showHidden: true,
-                            depth: null
+                            depth: 3
                         }));
                     });
                 } else {
-                    console.log('<%s> (%s)', options.parent.selector, content.parent().html());
+                    console.log('<%s> (%s)', options.parent.selector, content.parent().text());
                     tracelog.trace('<%s> (%s)', options.parent.selector, util.inspect(content.parent(), {
                         showHidden: true,
-                        depth: null
+                        depth: 3
                     }));
                 }
             }
-
-            trace_exit(function () {
-                process.exit(0);
-            });
+            exit_fn(0);
         });
-        commander.subname = 'parent';
+    });
+
+commander
+    .command('each <str>')
+    .option('--children <children>', 'children to specify for each', function (v, t) {
+        'use strict';
+        t = t;
+        return v;
+    }, '')
+    .action(function (args, options) {
+        'use strict';
+        init_tracelog(options);
+        options = options;
+        commander.subname = 'each';
+        if (args.length < 1) {
+            tracelog.error('need instr restr\n');
+            trace_exit(3);
+            return;
+        }
+
+        if (options.parent.selector.length === 0) {
+            tracelog.error('need selector set\n');
+            trace_exit(3);
+            return;
+        }
+        tracelog.trace('parent (%s)', util.inspect(options.parent, {
+            showHidden: true,
+            depth: 3
+        }));
+
+        if (options.children === '' || options.children === undefined || options.children === null) {
+            tracelog.error('need a --children set\n');
+            trace_exit(3);
+            return;
+        }
+
+        tracelog.info('args %s', args);
+        call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
+            var children;
+            tracelog.trace('parser (%s)', util.inspect(parser, {
+                showHidden: true,
+                depth: 3
+            }));
+            if (content === null || content === undefined) {
+                tracelog.error('can not find(%s) in (%s)', options.parent.selector, args);
+                exit_fn(4);
+            } else {
+                children = content.children(options.children);
+                if (children === null || children === undefined) {
+                    tracelog.error('can not find (%s) in (%s)', options.children, options.parent.selector);
+                    exit_fn(4);
+                }
+                tracelog.trace('{%s->%s}children (%s)', options.parent.selector, options.children, util.inspect(children, {
+                    showHidden: true,
+                    depth: 3
+                }));
+            }
+            exit_fn(0);
+        });
+    });
+
+commander
+    .command('find <str>')
+    .option('--children <children>', 'children to specify for find', function (v, t) {
+        'use strict';
+        t = t;
+        return v;
+    }, '')
+    .action(function (args, options) {
+        'use strict';
+        init_tracelog(options);
+        options = options;
+        commander.subname = 'each';
+        if (args.length < 1) {
+            tracelog.error('need instr restr\n');
+            trace_exit(3);
+            return;
+        }
+
+        if (options.parent.selector.length === 0) {
+            tracelog.error('need selector set\n');
+            trace_exit(3);
+            return;
+        }
+        tracelog.trace('parent (%s)', util.inspect(options.parent, {
+            showHidden: true,
+            depth: 3
+        }));
+
+        if (options.children === '' || options.children === undefined || options.children === null) {
+            tracelog.error('need a --children set\n');
+            trace_exit(3);
+            return;
+        }
+
+        tracelog.info('args %s', args);
+        call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
+            var children;
+            tracelog.trace('parser (%s)', util.inspect(parser, {
+                showHidden: true,
+                depth: 3
+            }));
+            if (content === null || content === undefined) {
+                tracelog.error('can not find(%s) in (%s)', options.parent.selector, args);
+                exit_fn(4);
+            } else {
+                children = content.find(options.children);
+                if (children === null || children === undefined) {
+                    tracelog.error('can not find (%s) in (%s)', options.children, options.parent.selector);
+                    exit_fn(4);
+                }
+                tracelog.trace('{%s->%s}children (%s)', options.parent.selector, options.children, util.inspect(children, {
+                    showHidden: true,
+                    depth: 3
+                }));
+            }
+            exit_fn(0);
+        });
     });
 
 
