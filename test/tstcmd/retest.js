@@ -1,12 +1,14 @@
 var commander = require('commander');
 var tracelog = require('../../tracelog');
+var util = require('util');
 commander.subname = '';
 commander.subopt = {};
 commander.subargs = [];
 
-var init_tracelog = function (options) {
+var init_tracelog = function (opt) {
     'use strict';
     var logopt = {};
+    var options = opt.parent;
     if (options.verbose >= 4) {
         logopt.level = 'trace';
     } else if (options.verbose >= 3) {
@@ -23,16 +25,40 @@ var init_tracelog = function (options) {
         logopt.appendfiles = options.logappends;
     }
 
-    if (options.logfiles !== null && options.logfiles !== undefined && options.logfiles >= 0) {
+    if (options.logfiles !== null && options.logfiles !== undefined && options.logfiles.length >= 0) {
         logopt.files = options.logfiles;
     }
+    console.log('logopt (%s)', util.inspect(logopt, {
+        showHidden: true,
+        depth: null
+    }));
     tracelog.Init(logopt);
     return;
+};
+
+var trace_exit = function (next) {
+    'use strict';
+    tracelog.finish(function (err) {
+        if (err) {
+            return;
+        }
+        next();
+    });
 };
 
 
 commander
     .version('0.2.0')
+    .option('--logappends <appends>', 'log append files', function (v, t) {
+        'use strict';
+        t.push(v);
+        return t;
+    }, [])
+    .option('--logfiles <files>', 'log files truncated', function (v, t) {
+        'use strict';
+        t.push(v);
+        return t;
+    }, [])
     .option('-v --verbose', 'verbose mode', function (v, t) {
         'use strict';
         v = v;
@@ -50,6 +76,7 @@ commander
             process.stderr.write('need instr restr\n');
             process.exit(3);
         }
+        tracelog.info('args %s', args);
 
         reg = new RegExp(args[1]);
         if (reg.test(args[0])) {
@@ -57,7 +84,10 @@ commander
         } else {
             console.log('%s not match (%s)', args[0], args[1]);
         }
-        process.exit(0);
+        commander.subname = 'match';
+        trace_exit(function () {
+            process.exit(0);
+        });
     });
 
 commander
@@ -70,14 +100,18 @@ commander
             process.stderr.write('need instr restr\n');
             process.exit(3);
         }
+        tracelog.info('args %s', args);
 
         reg = new RegExp(args[1], 'i');
         if (reg.test(args[0])) {
-            console.log('%s match (%s)', args[0], args[1]);
+            console.log('%s imatch (%s)', args[0], args[1]);
         } else {
-            console.log('%s not match (%s)', args[0], args[1]);
+            console.log('%s not imatch (%s)', args[0], args[1]);
         }
-        process.exit(0);
+        commander.subname = 'imatch';
+        trace_exit(function () {
+            process.exit(0);
+        });
 
     });
 
@@ -92,6 +126,7 @@ commander
             process.stderr.write('need instr restr\n');
             process.exit(3);
         }
+        tracelog.info('args %s', args);
 
         reg = new RegExp(args[1]);
         m = reg.exec(args[0]);
@@ -103,7 +138,10 @@ commander
         } else {
             console.log('%s not find (%s)', args[0], args[1]);
         }
-        process.exit(0);
+        commander.subname = 'find';
+        trace_exit(function () {
+            process.exit(0);
+        });
     });
 
 commander
@@ -117,6 +155,7 @@ commander
             process.stderr.write('need instr restr\n');
             process.exit(3);
         }
+        tracelog.info('args %s', args);
 
         reg = new RegExp(args[1], 'i');
         m = reg.exec(args[0]);
@@ -128,7 +167,10 @@ commander
         } else {
             console.log('%s not find (%s)', args[0], args[1]);
         }
-        process.exit(0);
+        commander.subname = 'ifind';
+        trace_exit(function () {
+            process.exit(0);
+        });
     });
 
 
