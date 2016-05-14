@@ -2,6 +2,7 @@ var cheerio = require('cheerio');
 var commander = require('commander');
 var tracelog = require('../../tracelog');
 var util = require('util');
+var fs = require('fs');
 commander.subname = '';
 commander.subopt = {};
 commander.subargs = [];
@@ -47,6 +48,13 @@ var trace_exit = function (next) {
     });
 };
 
+var readfile_cheerio = function (fname, callback) {
+    'use strict';
+    fs.readFile(fname, function (err, data) {
+        callback(err, data);
+    });
+};
+
 
 commander
     .version('0.2.0')
@@ -76,8 +84,6 @@ commander
     .command('select <str>')
     .action(function (args, options) {
         'use strict';
-        var parser;
-        var content;
         init_tracelog(options);
         options = options;
         if (args.length < 1) {
@@ -91,45 +97,54 @@ commander
         }
 
         tracelog.info('args %s', args);
-        parser = cheerio.load(args[0]);
-        tracelog.trace('parser (%s)', util.inspect(parser, {
-            showHidden: true,
-            depth: null
-        }));
-        content = parser(options.parent.selector);
-        if (content === null || content === undefined) {
-            console.log('can not find(%s) in (%s)', options.parent.selector, args[0]);
-        } else {
-            //console.log('<%s> (%s)', options.parent.selector, content.text());
-            if (Array.isArray(content)) {
-                content.forEach(function (elm, idx) {
-                    console.log('<%s>[%d] (%s)', options.parent.selector, idx, elm.html());
-                    tracelog.trace('<%s>[%d] (%s)', options.parent.selector, idx, util.inspect(elm, {
+        readfile_cheerio(args[0], function (err, data) {
+            var parser;
+            var content;
+            if (err) {
+                tracelog.error('can not read (%s) (%s)', args[0], JSON.stringify(err));
+                trace_exit(function () {
+                    process.exit(4);
+                });
+            }
+            parser = cheerio.load(data);
+            tracelog.trace('parser (%s)', util.inspect(parser, {
+                showHidden: true,
+                depth: null
+            }));
+            content = parser(options.parent.selector);
+            if (content === null || content === undefined) {
+                console.log('can not find(%s) in (%s)', options.parent.selector, args[0]);
+            } else {
+                //console.log('<%s> (%s)', options.parent.selector, content.text());
+                if (Array.isArray(content)) {
+                    content.forEach(function (elm, idx) {
+                        console.log('<%s>[%d] (%s)', options.parent.selector, idx, elm.html());
+                        tracelog.trace('<%s>[%d] (%s)', options.parent.selector, idx, util.inspect(elm, {
+                            showHidden: true,
+                            depth: null
+                        }));
+                    });
+                } else {
+                    console.log('<%s> (%s)', options.parent.selector, content.html());
+                    tracelog.trace('<%s> (%s)', options.parent.selector, util.inspect(content, {
                         showHidden: true,
                         depth: null
                     }));
-                });
-            } else {
-                console.log('<%s> (%s)', options.parent.selector, content.html());
-                tracelog.trace('<%s> (%s)', options.parent.selector, util.inspect(content, {
-                    showHidden: true,
-                    depth: null
-                }));
+                }
             }
-        }
 
-        commander.subname = 'selector';
-        trace_exit(function () {
-            process.exit(0);
+            trace_exit(function () {
+                process.exit(0);
+            });
+
         });
+        commander.subname = 'selector';
     });
 
 commander
     .command('parent <str>')
     .action(function (args, options) {
         'use strict';
-        var parser;
-        var content;
         init_tracelog(options);
         options = options;
         if (args.length < 1) {
@@ -143,36 +158,47 @@ commander
         }
 
         tracelog.info('args %s', args);
-        parser = cheerio.load(args[0]);
-        tracelog.trace('parser (%s)', util.inspect(parser, {
-            showHidden: true,
-            depth: null
-        }));
-        content = parser(options.parent.selector);
-        if (content === null || content === undefined) {
-            console.log('can not find(%s) in (%s)', options.parent.selector, args[0]);
-        } else {
-            if (Array.isArray(content)) {
-                content.forEach(function (elm, idx) {
-                    console.log('<%s>[%d] (%s)', options.parent.selector, idx, elm.parent().html());
-                    tracelog.trace('<%s>[%d] (%s)', options.parent.selector, idx, util.inspect(elm.parent(), {
+        readfile_cheerio(args[0], function (err, data) {
+            var parser;
+            var content;
+            if (err) {
+                tracelog.error('load (%s) error(%s)', args[0], JSON.stringify(err));
+                trace_exit(function () {
+                    process.exit(4);
+                });
+                return;
+            }
+            parser = cheerio.load(data);
+            tracelog.trace('parser (%s)', util.inspect(parser, {
+                showHidden: true,
+                depth: null
+            }));
+            content = parser(options.parent.selector);
+            if (content === null || content === undefined) {
+                console.log('can not find(%s) in (%s)', options.parent.selector, args[0]);
+            } else {
+                if (Array.isArray(content)) {
+                    content.forEach(function (elm, idx) {
+                        console.log('<%s>[%d] (%s)', options.parent.selector, idx, elm.parent().html());
+                        tracelog.trace('<%s>[%d] (%s)', options.parent.selector, idx, util.inspect(elm.parent(), {
+                            showHidden: true,
+                            depth: null
+                        }));
+                    });
+                } else {
+                    console.log('<%s> (%s)', options.parent.selector, content.parent().html());
+                    tracelog.trace('<%s> (%s)', options.parent.selector, util.inspect(content.parent(), {
                         showHidden: true,
                         depth: null
                     }));
-                });
-            } else {
-                console.log('<%s> (%s)', options.parent.selector, content.parent().html());
-                tracelog.trace('<%s> (%s)', options.parent.selector, util.inspect(content.parent(), {
-                    showHidden: true,
-                    depth: null
-                }));
+                }
             }
-        }
 
-        commander.subname = 'parent';
-        trace_exit(function () {
-            process.exit(0);
+            trace_exit(function () {
+                process.exit(0);
+            });
         });
+        commander.subname = 'parent';
     });
 
 
