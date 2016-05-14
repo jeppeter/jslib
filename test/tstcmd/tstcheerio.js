@@ -130,23 +130,23 @@ commander
             if (content === null || content === undefined) {
                 console.log('can not find(%s) in (%s)', options.parent.selector, args);
                 exit_fn(4);
-            } else {
-                //console.log('<%s> (%s)', options.parent.selector, content.text());
-                if (Array.isArray(content)) {
-                    content.forEach(function (elm, idx) {
-                        console.log('<%s>[%d] (%s)', options.parent.selector, idx, elm.text());
-                        tracelog.trace('<%s>[%d] (%s)', options.parent.selector, idx, util.inspect(elm, {
-                            showHidden: true,
-                            depth: 3
-                        }));
-                    });
-                } else {
-                    console.log('<%s> (%s)', options.parent.selector, content.text());
-                    tracelog.trace('<%s> (%s)', options.parent.selector, util.inspect(content, {
+                return;
+            }
+            //console.log('<%s> (%s)', options.parent.selector, content.text());
+            if (Array.isArray(content)) {
+                content.forEach(function (elm, idx) {
+                    console.log('<%s>[%d] (%s)', options.parent.selector, idx, elm.text());
+                    tracelog.trace('<%s>[%d] (%s)', options.parent.selector, idx, util.inspect(elm, {
                         showHidden: true,
                         depth: 3
                     }));
-                }
+                });
+            } else {
+                console.log('<%s> (%s)', options.parent.selector, content.text());
+                tracelog.trace('<%s> (%s)', options.parent.selector, util.inspect(content, {
+                    showHidden: true,
+                    depth: 3
+                }));
             }
             exit_fn(0);
         });
@@ -180,9 +180,9 @@ commander
             if (content === null || content === undefined) {
                 console.log('can not find(%s) in (%s)', options.parent.selector, args);
                 exit_fn(4);
-            } else {
-                console.log('{%s} parent(%s)', content.parent().text());
+                return;
             }
+            console.log('{%s} parent(%s)', content.parent().text());
             exit_fn(0);
         });
     });
@@ -219,14 +219,14 @@ commander
             if (content === null || content === undefined) {
                 tracelog.error('can not find(%s) in (%s)', options.parent.selector, args);
                 exit_fn(4);
-            } else {
-                var idx;
-                idx = 0;
-                content.each(function () {
-                    console.log('{%s}[%d]children (%s)', options.parent.selector, idx, parser(this).text());
-                    idx += 1;
-                });
+                return;
             }
+            var idx;
+            idx = 0;
+            content.each(function () {
+                console.log('{%s}[%d]children (%s)', options.parent.selector, idx, parser(this).text());
+                idx += 1;
+            });
             exit_fn(0);
         });
     });
@@ -275,18 +275,18 @@ commander
             if (content === null || content === undefined) {
                 tracelog.error('can not find(%s) in (%s)', options.parent.selector, args);
                 exit_fn(4);
-            } else {
-                children = content.find(options.children);
-                if (children === null || children === undefined) {
-                    tracelog.error('can not find (%s) in (%s)', options.children, options.parent.selector);
-                    exit_fn(4);
-                }
-                tracelog.trace('{%s->%s}children (%s)', options.parent.selector, options.children, util.inspect(children, {
-                    showHidden: true,
-                    depth: 3
-                }));
-                console.log('{[%s]->[%s]}children (%d)', options.parent.selector, options.children, children.length);
+                return;
             }
+            children = content.find(options.children);
+            if (children === null || children === undefined) {
+                tracelog.error('can not find (%s) in (%s)', options.children, options.parent.selector);
+                exit_fn(4);
+            }
+            tracelog.trace('{%s->%s}children (%s)', options.parent.selector, options.children, util.inspect(children, {
+                showHidden: true,
+                depth: 3
+            }));
+            console.log('{[%s]->[%s]}children (%d)', options.parent.selector, options.children, children.length);
             exit_fn(0);
         });
     });
@@ -335,27 +335,27 @@ commander
             if (content === null || content === undefined) {
                 tracelog.error('can not find(%s) in (%s)', options.parent.selector, args);
                 exit_fn(4);
+                return;
+            }
+            var idx;
+            if (options.attr === '') {
+                idx = 0;
+                content.each(function () {
+                    var keys;
+                    var self;
+                    self = this;
+                    keys = Object.keys(self.attribs);
+                    keys.forEach(function (elm) {
+                        console.log('{%s}[%d] (%s = %s)', options.parent.selector, idx, elm, self.attribs[elm]);
+                    });
+                    idx += 1;
+                });
             } else {
-                var idx;
-                if (options.attr === '') {
-                    idx = 0;
-                    content.each(function () {
-                        var keys;
-                        var self;
-                        self = this;
-                        keys = Object.keys(self.attribs);
-                        keys.forEach(function (elm) {
-                            console.log('{%s}[%d] (%s = %s)', options.parent.selector, idx, elm, self.attribs[elm]);
-                        });
-                        idx += 1;
-                    });
-                } else {
-                    idx = 0;
-                    content.each(function () {
-                        console.log('{%s}[%d] (%s = %s)', options.parent.selector, idx, options.attr, parser(this).attr(options.attr));
-                        idx += 1;
-                    });
-                }
+                idx = 0;
+                content.each(function () {
+                    console.log('{%s}[%d] (%s = %s)', options.parent.selector, idx, options.attr, parser(this).attr(options.attr));
+                    idx += 1;
+                });
             }
             exit_fn(0);
         });
