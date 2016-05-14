@@ -1,0 +1,33 @@
+{
+  "name": "jslib",
+  "version": "1.0.0",
+  "description": "jslib to compile for work",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "dependencies": {
+    "yargs":"latest",
+    "request":"latest",
+    "tracer":"latest",
+    "cheerio":"latest",
+    "express":"latest",
+    "formidable":"latest",
+    "ejs":"latest",
+    "commander":"latest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jeppeter/jslib/issues"
+  },
+  "homepage": ""
+}
