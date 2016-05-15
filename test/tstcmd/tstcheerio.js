@@ -30,6 +30,10 @@ var init_tracelog = function (opt) {
     if (options.logfiles !== null && options.logfiles !== undefined && options.logfiles.length >= 0) {
         logopt.files = options.logfiles;
     }
+
+    if (options.lognoconsole !== null && options.lognoconsole !== undefined && options.lognoconsole) {
+        logopt.noconsole = true;
+    }
     console.log('logopt (%s)', util.inspect(logopt, {
         showHidden: true,
         depth: null
@@ -83,35 +87,41 @@ var call_cheerparser = function (fname, selector, callback) {
     });
 };
 
-var traverse_next = function (parser, tabs, pathname, cont, allchidrens, callback, next) {
+var traverse_next = function (parser, tabs, pathname, cont, allchidrens, travers_state) {
     'use strict';
     var idx;
     var curchild;
     if (cont) {
         idx = allchidrens.idx;
-        if (idx < allchidrens.children.length) {
+        while (idx < allchidrens.children.length) {
             curchild = allchidrens.children[idx];
             allchidrens.idx += 1;
-            callback(parser, tabs, pathname, allchidrens, idx, curchild, next);
-            return;
+            travers_state.callback_fn(parser, tabs, pathname, allchidrens, idx, curchild, travers_state);
+            idx = allchidrens.idx;
         }
     }
     return;
 };
 
 
-var traverse_get = function (parser, tabs, pathname, content, callback) {
+var traverse_get = function (parser, tabs, pathname, content, travers_state) {
     'use strict';
     var children;
     var siblings;
     var idx, cursib;
     var allchidrens = {};
 
+    if (content === null || content === undefined) {
+        return;
+    }
     if (pathname.length > 0) {
         pathname += '.';
     }
-    pathname += content.name();
-
+    if (content[0] === null || content[0] === undefined || content[0].name === null || content[0].name === undefined) {
+        //pathname += 'undefined';
+        return;
+    }
+    pathname += content[0].name;
     children = content.children();
     allchidrens.idx = 0;
     allchidrens.children = [children];
@@ -121,23 +131,37 @@ var traverse_get = function (parser, tabs, pathname, content, callback) {
         allchidrens.children.push(cursib);
     }
 
-    traverse_next(parser, tabs + 1, pathname, true, allchidrens, callback, traverse_next);
+    travers_state.next_fn(parser, tabs + 1, pathname, true, allchidrens, travers_state);
     return;
 };
 
-function call_output_format(parser, tabs, pathname, allchidrens, idx, curchild, next) {
+var output_traverse = function (parser, tabs, pathname, allchidrens, idx, curchild, travers_state) {
+    'use strict';
     var s;
     var i;
-    parser = parser;
+    allchidrens = allchidrens;
+    if (curchild === null || curchild === undefined || curchild[0] === undefined || curchild[0] === null || curchild[0].name === undefined || curchild[0].name === null) {
+        return;
+    }
+
+    if (curchild.length === null || curchild.length === undefined || curchild.length === 0) {
+        return;
+    }
+
+    tracelog.info('curchild (%s)', util.inspect(curchild, {
+        showHidden: true,
+        depth: 3
+    }));
     s = '';
     for (i = 0; i < tabs; i += 1) {
         s += '    ';
     }
-    s += util.format('[%d]{%s.%s} (%s)', idx, pathname, curchild.name(), curchild.text());
+    s += util.format('[%d]{%s.%s} (%s)', idx, pathname, curchild[0].name, curchild.text());
     console.log('%s', s);
-    traverse_get(parser, tabs,pathname,curchild, call_output_format);
-    tra
-}
+    travers_state.travers_fn(parser, tabs, pathname, curchild, travers_state);
+    return;
+};
+
 
 
 commander
@@ -157,6 +181,12 @@ commander
         t = t;
         return v;
     }, '')
+    .option('--lognoconsole', 'set no console for output as log', function (v, t) {
+        'use strict';
+        v = v;
+        t = t;
+        return true;
+    }, false)
     .option('-v --verbose', 'verbose mode', function (v, t) {
         'use strict';
         v = v;
@@ -443,31 +473,20 @@ commander
             trace_exit(3);
             return;
         }
-        tracelog.trace('parent (%s)', util.inspect(options.parent, {
-            showHidden: true,
-            depth: 3
-        }));
-
-        if (options.attr === undefined || options.attr === null) {
-            tracelog.error('need a --children set\n');
-            trace_exit(3);
-            return;
-        }
 
         tracelog.info('args %s', args);
         call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
-            tracelog.trace('parser (%s)', util.inspect(parser, {
-                showHidden: true,
-                depth: 3
-            }));
+            var travers_state;
             if (content === null || content === undefined) {
                 tracelog.error('can not find(%s) in (%s)', options.parent.selector, args);
                 exit_fn(4);
                 return;
             }
-            traverse_get(parser, 0, content, function (parser, tabs, pathname, allchidrens, idx, curchild, next) {
-
-            }, traverse_next);
+            travers_state = {};
+            travers_state.callback_fn = output_traverse;
+            travers_state.next_fn = traverse_next;
+            travers_state.travers_fn = traverse_get;
+            traverse_get(parser, 0, '', content, travers_state);
             exit_fn(0);
         });
     });
