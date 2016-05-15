@@ -11,6 +11,10 @@ var init_tracelog = function (opt) {
     'use strict';
     var logopt = {};
     var options = opt.parent;
+    console.log('(%s)', util.inspect(options, {
+        showHidden: true,
+        depth: 3
+    }));
     if (options.verbose >= 4) {
         logopt.level = 'trace';
     } else if (options.verbose >= 3) {
@@ -491,6 +495,48 @@ commander
         });
     });
 
+commander
+    .command('childrens <str>')
+    .action(function (args, options) {
+        'use strict';
+        init_tracelog(options);
+        commander.subname = 'childrens';
+        if (args.length < 1) {
+            tracelog.error('need instr restr\n');
+            trace_exit(3);
+            return;
+        }
+
+        if (options.parent.selector.length === 0) {
+            tracelog.error('need selector set\n');
+            trace_exit(3);
+            return;
+        }
+
+        tracelog.info('args %s', args);
+        call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
+            var children, last;
+            var idx;
+            parser = parser;
+            children = content.children();
+            last = children;
+            children = last.next();
+            idx = 0;
+            while (true) {
+                if (children === null || children === undefined || children === last || idx > 100) {
+                    break;
+                }
+
+                tracelog.info('[%d] (%s)', idx, util.inspect(children, {
+                    showHidden: true,
+                    depth: 4
+                }));
+                children = children.next();
+                idx += 1;
+            }
+            exit_fn(0);
+        });
+    });
 
 commander.parse(process.argv);
 
