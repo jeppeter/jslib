@@ -50,10 +50,17 @@ var trace_exit = function (ec) {
     return;
 };
 
+
+
 process.on('uncaughtException', function (err) {
     'use struct';
     tracelog.error('error (%s) stack(%s)', err, err.stack);
     trace_exit(3);
+});
+
+process.on('SIGINT', function () {
+    'use strict';
+    trace_exit(0);
 });
 
 var call_cheerparser = function (fname, selector, callback) {
@@ -75,6 +82,62 @@ var call_cheerparser = function (fname, selector, callback) {
         return;
     });
 };
+
+var traverse_next = function (parser, tabs, pathname, cont, allchidrens, callback, next) {
+    'use strict';
+    var idx;
+    var curchild;
+    if (cont) {
+        idx = allchidrens.idx;
+        if (idx < allchidrens.children.length) {
+            curchild = allchidrens.children[idx];
+            allchidrens.idx += 1;
+            callback(parser, tabs, pathname, allchidrens, idx, curchild, next);
+            return;
+        }
+    }
+    return;
+};
+
+
+var traverse_get = function (parser, tabs, pathname, content, callback) {
+    'use strict';
+    var children;
+    var siblings;
+    var idx, cursib;
+    var allchidrens = {};
+
+    if (pathname.length > 0) {
+        pathname += '.';
+    }
+    pathname += content.name();
+
+    children = content.children();
+    allchidrens.idx = 0;
+    allchidrens.children = [children];
+    siblings = children.siblings();
+    for (idx = 0; idx < siblings.length; idx += 1) {
+        cursib = siblings[idx];
+        allchidrens.children.push(cursib);
+    }
+
+    traverse_next(parser, tabs + 1, pathname, true, allchidrens, callback, traverse_next);
+    return;
+};
+
+function call_output_format(parser, tabs, pathname, allchidrens, idx, curchild, next) {
+    var s;
+    var i;
+    parser = parser;
+    s = '';
+    for (i = 0; i < tabs; i += 1) {
+        s += '    ';
+    }
+    s += util.format('[%d]{%s.%s} (%s)', idx, pathname, curchild.name(), curchild.text());
+    console.log('%s', s);
+    traverse_get(parser, tabs,pathname,curchild, call_output_format);
+    tra
+}
 
 
 commander
@@ -357,6 +420,54 @@ commander
                     idx += 1;
                 });
             }
+            exit_fn(0);
+        });
+    });
+
+
+commander
+    .command('traverse <str>')
+    .action(function (args, options) {
+        'use strict';
+        init_tracelog(options);
+        options = options;
+        commander.subname = 'traverse';
+        if (args.length < 1) {
+            tracelog.error('need instr restr\n');
+            trace_exit(3);
+            return;
+        }
+
+        if (options.parent.selector.length === 0) {
+            tracelog.error('need selector set\n');
+            trace_exit(3);
+            return;
+        }
+        tracelog.trace('parent (%s)', util.inspect(options.parent, {
+            showHidden: true,
+            depth: 3
+        }));
+
+        if (options.attr === undefined || options.attr === null) {
+            tracelog.error('need a --children set\n');
+            trace_exit(3);
+            return;
+        }
+
+        tracelog.info('args %s', args);
+        call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
+            tracelog.trace('parser (%s)', util.inspect(parser, {
+                showHidden: true,
+                depth: 3
+            }));
+            if (content === null || content === undefined) {
+                tracelog.error('can not find(%s) in (%s)', options.parent.selector, args);
+                exit_fn(4);
+                return;
+            }
+            traverse_get(parser, 0, content, function (parser, tabs, pathname, allchidrens, idx, curchild, next) {
+
+            }, traverse_next);
             exit_fn(0);
         });
     });
