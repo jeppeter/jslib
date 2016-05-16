@@ -11,10 +11,12 @@ var init_tracelog = function (opt) {
     'use strict';
     var logopt = {};
     var options = opt.parent;
-    console.log('(%s)', util.inspect(options, {
-        showHidden: true,
-        depth: 3
-    }));
+    if (false) {
+        console.log('(%s)', util.inspect(options, {
+            showHidden: true,
+            depth: 3
+        }));
+    }
     if (options.verbose >= 4) {
         logopt.level = 'trace';
     } else if (options.verbose >= 3) {
@@ -82,7 +84,9 @@ var call_cheerparser = function (fname, selector, callback) {
             return;
         }
 
-        parser = cheerio.load(data);
+        parser = cheerio.load(data, {
+            xmlMode: true
+        });
         content = parser(selector);
         callback(parser, content, function (ec) {
             trace_exit(ec);
@@ -515,26 +519,57 @@ commander
 
         tracelog.info('args %s', args);
         call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
-            var children, last;
-            var idx;
+            var children;
+            var m;
+            var idx, jdx, mlast, f, l;
+
+            var curchild; //, siblings;
             parser = parser;
-            children = content.children();
-            last = children;
-            children = last.next();
-            idx = 0;
+            if (content.length === 0) {
+                tracelog.info('length %d', content.length);
+                exit_fn(0);
+                return;
+            }
+
+            tracelog.info('length %d', content.length);
+            tracelog.info('content (%s)', util.inspect(content, {
+                showHidden: true,
+                depth: 2
+            }));
+            jdx = 0;
+            mlast = content.last();
+            m = content.first();
             while (true) {
-                if (children === null || children === undefined || children === last || idx > 100) {
+                children = m.children();
+                idx = 0;
+                tracelog.info('children %d', children.length);
+                f = children.first();
+                l = children.last();
+                while (true) {
+                    curchild = f;
+                    if (true) {
+                        tracelog.info('[%d] (%s)', idx, util.inspect(curchild, {
+                            showHidden: true,
+                            depth: 2
+                        }));
+                    } else {
+                        tracelog.info('[%d] type (%s) name(%s)', idx, curchild.type(), curchild.name());
+                    }
+                    if (f === l || idx > 10) {
+                        break;
+                    }
+                    f = f.next();
+                    idx += 1;
+                }
+                if (m === mlast || jdx > 10) {
+                    tracelog.info('jdx %d', jdx);
                     break;
                 }
-
-                tracelog.info('[%d] (%s)', idx, util.inspect(children, {
-                    showHidden: true,
-                    depth: 4
-                }));
-                children = children.next();
-                idx += 1;
+                m = m.next();
+                jdx += 1;
             }
             exit_fn(0);
+            return;
         });
     });
 
