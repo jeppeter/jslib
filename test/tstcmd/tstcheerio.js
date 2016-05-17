@@ -60,6 +60,52 @@ var trace_exit = function (ec) {
     return;
 };
 
+var get_data_name = function (elm, selector, idx, jdx) {
+    'use strict';
+    var s;
+    s = '';
+    if (jdx === undefined || jdx === null) {
+        s += util.format('[%d](%s)', idx, selector);
+    } else {
+        s += util.format('[%d.%d](%s)', idx, jdx, selector);
+    }
+    s += '(';
+    if (typeof elm.data === 'function') {
+        s += elm.data();
+    } else if (typeof elm.data === 'string') {
+        s += elm.data;
+    } else {
+        s += 'undefined';
+    }
+
+    s += ')=(';
+
+    if (typeof elm.text === 'function') {
+        s += elm.text();
+    } else if (typeof elm.text === 'string') {
+        s += elm.text;
+    } else {
+        s += 'undefined';
+    }
+    s += ')';
+    return s;
+};
+
+var get_child_name = function (elm, parser) {
+    'use strict';
+    var s;
+    parser = parser;
+    s = '';
+    if (typeof elm.name === 'function') {
+        s += elm.name();
+    } else if (typeof elm.name === 'string') {
+        s += elm.name;
+    } else {
+        s += 'undefined';
+    }
+    return s;
+};
+
 
 
 process.on('uncaughtException', function (err) {
@@ -95,51 +141,92 @@ var call_cheerparser = function (fname, selector, callback) {
     });
 };
 
-var traverse_next = function (parser, tabs, pathname, cont, allchidrens, travers_state) {
+var traverse_next = function (parser, tabs, cont, travers_state) {
     'use strict';
     var idx;
     var curchild;
-    if (cont) {
+    var allchidrens;
+    var pathname;
+    allchidrens = travers_state.allchidrens;
+    if (cont && allchidrens !== null) {
         idx = allchidrens.idx;
-        while (idx < allchidrens.children.length) {
-            curchild = allchidrens.children[idx];
+        if (idx < allchidrens.children.length) {
+            curchild = allchidrens.children.eq(idx);
             allchidrens.idx += 1;
-            travers_state.callback_fn(parser, tabs, pathname, allchidrens, idx, curchild, travers_state);
-            idx = allchidrens.idx;
+            pathname = allchidrens.pathname;
+            travers_state.callback_fn(parser, tabs, pathname, idx, curchild, travers_state);
+            allchidrens = null;
+            return;
         }
     }
+
+    if (allchidrens === null) {
+        travers_state.last_children = null;
+        travers_state.allchidrens = null;
+        allchidrens = null;
+        return;
+    }
+    /*now it will for call*/
+    if (allchidrens.prev_children === null) {
+        /*we get all trasversed ,so we do this ok*/
+        travers_state.last_children = null;
+        travers_state.allchidrens = null;
+        allchidrens = null;
+        return;
+    }
+
+    /*we pop the last*/
+    travers_state.allchidrens = allchidrens.prev_children;
+    pathname = travers_state.allchidrens.pathname;
+    travers_state.travers_fn(parser, tabs - 1, pathname, travers_state);
     return;
 };
 
 
-var traverse_get = function (parser, tabs, pathname, content, travers_state) {
+var traverse_get = function (parser, tabs, travers_state) {
     'use strict';
-    var children;
-    var siblings;
-    var idx, cursib;
+    var idx;
     var allchidrens = {};
+    var curallchilrens = null;
+    var curchild;
+    var pathname;
 
-    if (content === null || content === undefined) {
+    curallchilrens = travers_state.allchidrens;
+    if (curallchilrens === null || curallchilrens === undefined) {
         return;
     }
-    if (pathname.length > 0) {
-        pathname += '.';
-    }
-    if (content[0] === null || content[0] === undefined || content[0].name === null || content[0].name === undefined) {
-        //pathname += 'undefined';
+
+    if (curallchilrens.mainidx < curallchilrens.children.length) {
+        idx = curallchilrens.mainidx;
+        curallchilrens.mainidx += 1;
+        curchild = curallchilrens.children.eq(idx);
+        allchidrens = {};
+        allchidrens.idx = 0;
+        /*we search for 1st ok*/
+        allchidrens.mainidx = 1;
+        allchidrens.children = curchild.children();
+        allchidrens.prev_children = curallchilrens;
+        pathname = curallchilrens.pathname;
+        if (pathname.length > 0) {
+            pathname += ".";
+        }
+        pathname += get_child_name(curchild, parser);
+        allchidrens.pathname = pathname;
+        travers_state.allchidrens = allchidrens;
+        travers_state.next_fn(parser, tabs + 1, true, travers_state);
         return;
     }
-    pathname += content[0].name;
-    children = content.children();
-    allchidrens.idx = 0;
-    allchidrens.children = [children];
-    siblings = children.siblings();
-    for (idx = 0; idx < siblings.length; idx += 1) {
-        cursib = siblings[idx];
-        allchidrens.children.push(cursib);
+
+    /*ok we should make the upper calling*/
+    if (curallchilrens.prev_children === null) {
+        travers_state.allchidrens = null;
+        return;
     }
 
-    travers_state.next_fn(parser, tabs + 1, pathname, true, allchidrens, travers_state);
+    /*to go to the upper*/
+    /*we pop the last*/
+    travers_state.allchidrens = allchidrens.prev_children;
+    travers_state.travers_fn(parser, tabs - 1, travers_state);
     return;
 };
 
@@ -520,9 +607,9 @@ commander
         tracelog.info('args %s', args);
         call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
             var children;
-            var m;
-            var idx, jdx, mlast, f, l;
-
+            var curelm;
+            var idx, jdx;
+            var s;
             var curchild; //, siblings;
             parser = parser;
             if (content.length === 0) {
@@ -532,21 +619,18 @@ commander
             }
 
             tracelog.info('length %d', content.length);
-            tracelog.info('content (%s)', util.inspect(content, {
-                showHidden: true,
-                depth: 2
-            }));
             jdx = 0;
-            mlast = content.last();
-            m = content.first();
-            while (true) {
-                children = m.children();
+            for (jdx = 0; jdx < content.length; jdx += 1) {
+                curelm = content.eq(jdx);
+                children = curelm.children();
+                s = get_data_name(curelm, options.parent.selector, jdx, null);
+                console.log(s);
                 idx = 0;
-                tracelog.info('children %d', children.length);
-                f = children.first();
-                l = children.last();
-                while (true) {
-                    curchild = f;
+                //tracelog.info('children %d', children.length);
+                for (idx = 0; idx < children.length; idx += 1) {
+                    curchild = children.eq(idx);
+                    s = get_data_name(curchild, options.parent.selector, jdx, idx);
+                    console.log(s);
                     if (true) {
                         tracelog.info('[%d] (%s)', idx, util.inspect(curchild, {
                             showHidden: true,
@@ -555,18 +639,7 @@ commander
                     } else {
                         tracelog.info('[%d] type (%s) name(%s)', idx, curchild.type(), curchild.name());
                     }
-                    if (f === l || idx > 10) {
-                        break;
-                    }
-                    f = f.next();
-                    idx += 1;
                 }
-                if (m === mlast || jdx > 10) {
-                    tracelog.info('jdx %d', jdx);
-                    break;
-                }
-                m = m.next();
-                jdx += 1;
             }
             exit_fn(0);
             return;
