@@ -63,6 +63,7 @@ var trace_exit = function (ec) {
 var get_data_name = function (elm, selector, idx, jdx) {
     'use strict';
     var s;
+    var valuename = 'html';
     s = '';
     if (jdx === undefined || jdx === null) {
         s += util.format('[%d](%s)', idx, selector);
@@ -70,20 +71,20 @@ var get_data_name = function (elm, selector, idx, jdx) {
         s += util.format('[%d.%d](%s)', idx, jdx, selector);
     }
     s += '(';
-    if (typeof elm.data === 'function') {
-        s += elm.data();
-    } else if (typeof elm.data === 'string') {
-        s += elm.data;
+    if (typeof elm[0].name === 'function') {
+        s += elm[0].name();
+    } else if (typeof elm[0].name === 'string') {
+        s += elm[0].name;
     } else {
         s += 'undefined';
     }
 
     s += ')=(';
 
-    if (typeof elm.text === 'function') {
-        s += elm.text();
-    } else if (typeof elm.text === 'string') {
-        s += elm.text;
+    if (typeof elm[valuename] === 'function') {
+        s += elm[valuename]();
+    } else if (typeof elm[valuename] === 'string') {
+        s += elm[valuename];
     } else {
         s += 'undefined';
     }
@@ -96,10 +97,10 @@ var get_child_name = function (elm, parser) {
     var s;
     parser = parser;
     s = '';
-    if (typeof elm.name === 'function') {
-        s += elm.name();
-    } else if (typeof elm.name === 'string') {
-        s += elm.name;
+    if (typeof elm[0].name === 'function') {
+        s += elm[0].name();
+    } else if (typeof elm[0].name === 'string') {
+        s += elm[0].name;
     } else {
         s += 'undefined';
     }
@@ -131,7 +132,8 @@ var call_cheerparser = function (fname, selector, callback) {
         }
 
         parser = cheerio.load(data, {
-            xmlMode: true
+            xmlMode: true,
+            ignoreWhitespace: true
         });
         content = parser(selector);
         callback(parser, content, function (ec) {
@@ -145,39 +147,41 @@ var traverse_next = function (parser, tabs, cont, travers_state) {
     'use strict';
     var idx;
     var curchild;
-    var allchidrens;
+    var allchildrens;
     var pathname;
-    allchidrens = travers_state.allchidrens;
-    if (cont && allchidrens !== null) {
-        idx = allchidrens.idx;
-        if (idx < allchidrens.children.length) {
-            curchild = allchidrens.children.eq(idx);
-            allchidrens.idx += 1;
-            pathname = allchidrens.pathname;
+    allchildrens = travers_state.allchildrens;
+    if (cont && allchildrens !== null) {
+        idx = allchildrens.idx;
+        if (idx < allchildrens.children.length) {
+            curchild = allchildrens.children.eq(idx);
+            allchildrens.idx += 1;
+            pathname = allchildrens.pathname;
+            tracelog.info('pathname (%s)', pathname);
             travers_state.callback_fn(parser, tabs, pathname, idx, curchild, travers_state);
-            allchidrens = null;
+            allchildrens = null;
             return;
         }
     }
 
-    if (allchidrens === null) {
+    if (allchildrens === null) {
         travers_state.last_children = null;
-        travers_state.allchidrens = null;
-        allchidrens = null;
+        travers_state.allchildrens = null;
+        allchildrens = null;
+        tracelog.info('');
         return;
     }
     /*now it will for call*/
-    if (allchidrens.prev_children === null) {
+    if (allchildrens.prev_children === null) {
         /*we get all trasversed ,so we do this ok*/
-        travers_state.last_children = null;
-        travers_state.allchidrens = null;
-        allchidrens = null;
+        travers_state.allchildrens = null;
+        allchildrens = null;
+        tracelog.info('');
         return;
     }
 
     /*we pop the last*/
-    travers_state.allchidrens = allchidrens.prev_children;
-    pathname = travers_state.allchidrens.pathname;
+    travers_state.allchildrens = allchildrens.prev_children;
+    pathname = travers_state.allchildrens.pathname;
     travers_state.travers_fn(parser, tabs - 1, pathname, travers_state);
     return;
 };
@@ -186,74 +190,78 @@ var traverse_next = function (parser, tabs, cont, travers_state) {
 var traverse_get = function (parser, tabs, travers_state) {
     'use strict';
     var idx;
-    var allchidrens = {};
-    var curallchilrens = null;
+    var allchildrens = {};
+    var curallchildrens = null;
     var curchild;
     var pathname;
 
-    curallchilrens = travers_state.allchidrens;
-    if (curallchilrens === null || curallchilrens === undefined) {
+    curallchildrens = travers_state.allchildrens;
+    if (curallchildrens === null || curallchildrens === undefined) {
+        tracelog.info('');
         return;
     }
 
-    if (curallchilrens.mainidx < curallchilrens.children.length) {
-        idx = curallchilrens.mainidx;
-        curallchilrens.mainidx += 1;
-        curchild = curallchilrens.children.eq(idx);
-        allchidrens = {};
-        allchidrens.idx = 0;
+    tracelog.info('{%s} (%d) (%d)', curallchildrens.pathname, curallchildrens.mainidx, curallchildrens.children.length);
+    while (curallchildrens.mainidx < curallchildrens.children.length) {
+        idx = curallchildrens.mainidx;
+        curallchildrens.mainidx += 1;
+        curchild = curallchildrens.children.eq(idx);
+        allchildrens = {};
+        allchildrens.idx = 0;
         /*we search for 1st ok*/
-        allchidrens.mainidx = 1;
-        allchidrens.children = curchild.children();
-        allchidrens.prev_children = curallchilrens;
-        pathname = curallchilrens.pathname;
-        if (pathname.length > 0) {
-            pathname += ".";
+        allchildrens.mainidx = 0;
+        allchildrens.children = curchild.children();
+        if (allchildrens.children.length > 0) {
+            allchildrens.prev_children = curallchildrens;
+            pathname = curallchildrens.pathname;
+            if (pathname.length > 0) {
+                pathname += ".";
+            }
+            pathname += get_child_name(curchild, parser);
+            allchildrens.pathname = pathname;
+            travers_state.allchildrens = allchildrens;
+            travers_state.next_fn(parser, tabs + 1, true, travers_state);
+            return;
         }
-        pathname += get_child_name(curchild, parser);
-        allchidrens.pathname = pathname;
-        travers_state.allchidrens = allchidrens;
-        travers_state.next_fn(parser, tabs + 1, true, travers_state);
-        return;
+        tracelog.info('[%d]{%s} child 0', idx, curallchildrens.pathname);
     }
 
     /*ok we should make the upper calling*/
-    if (curallchilrens.prev_children === null) {
-        travers_state.allchidrens = null;
+    if (curallchildrens.prev_children === null) {
+        travers_state.allchildrens = null;
+        tracelog.info('');
         return;
     }
 
     /*to go to the upper*/
     /*we pop the last*/
-    travers_state.allchidrens = allchidrens.prev_children;
+    travers_state.allchildrens = curallchildrens.prev_children;
+    curallchildrens = travers_state.allchildrens;
+    /*tracelog.info('[%d] (%s)', tabs - 1, util.inspect(travers_state, {
+        showHidden: true,
+        depth: 3
+    }));*/
     travers_state.travers_fn(parser, tabs - 1, travers_state);
     return;
 };
 
-var output_traverse = function (parser, tabs, pathname, allchidrens, idx, curchild, travers_state) {
+var output_traverse = function (parser, tabs, pathname, idx, curchild, travers_state) {
     'use strict';
     var s;
     var i;
-    allchidrens = allchidrens;
-    if (curchild === null || curchild === undefined || curchild[0] === undefined || curchild[0] === null || curchild[0].name === undefined || curchild[0].name === null) {
-        return;
-    }
 
-    if (curchild.length === null || curchild.length === undefined || curchild.length === 0) {
-        return;
-    }
-
-    tracelog.info('curchild (%s)', util.inspect(curchild, {
+    /*tracelog.info('curchild (%s)', util.inspect(curchild, {
         showHidden: true,
         depth: 3
-    }));
+    }));*/
     s = '';
     for (i = 0; i < tabs; i += 1) {
         s += '    ';
     }
-    s += util.format('[%d]{%s.%s} (%s)', idx, pathname, curchild[0].name, curchild.text());
-    console.log('%s', s);
-    travers_state.travers_fn(parser, tabs, pathname, curchild, travers_state);
+    s += get_data_name(curchild, pathname, idx, null);
+    console.log(s);
+    /*deep first search*/
+    travers_state.travers_fn(parser, tabs, travers_state);
     return;
 };
 
@@ -581,7 +589,14 @@ commander
             travers_state.callback_fn = output_traverse;
             travers_state.next_fn = traverse_next;
             travers_state.travers_fn = traverse_get;
-            traverse_get(parser, 0, '', content, travers_state);
+            travers_state.allchildrens = {};
+            travers_state.allchildrens.children = content;
+            /*we find first*/
+            travers_state.allchildrens.mainidx = 0;
+            travers_state.allchildrens.prev_children = null;
+            travers_state.allchildrens.idx = 0;
+            travers_state.allchildrens.pathname = '';
+            traverse_get(parser, 0, travers_state);
             exit_fn(0);
         });
     });
