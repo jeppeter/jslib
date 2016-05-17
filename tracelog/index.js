@@ -186,3 +186,60 @@ module.exports.finish = function (callback) {
     }
     _innerLogger = null;
 };
+
+module.exports.init_commander = function (commander) {
+    'use strict';
+    commander
+        .option('--logappends <appends>', 'log append files', function (v, t) {
+            t.push(v);
+            return t;
+        }, [])
+        .option('--logfiles <files>', 'log files truncated', function (v, t) {
+            t.push(v);
+            return t;
+        }, [])
+        .option('--lognoconsole', 'set no console for output as log', function (v, t) {
+            v = v;
+            t = t;
+            return true;
+        }, false)
+        .option('-v --verbose', 'verbose mode', function (v, t) {
+            v = v;
+            return t + 1;
+        }, 0);
+    return commander;
+};
+
+module.exports.set_commander = function (options) {
+    'use strict';
+    var logopt = {};
+    if (options.verbose >= 4) {
+        logopt.level = 'trace';
+    } else if (options.verbose >= 3) {
+        logopt.level = 'debug';
+    } else if (options.verbose >= 2) {
+        logopt.level = 'info';
+    } else if (options.verbose >= 1) {
+        logopt.level = 'warn';
+    } else {
+        logopt.level = 'error';
+    }
+
+    if (options.logappends !== null && options.logappends !== undefined && options.logappends.length > 0) {
+        logopt.appendfiles = options.logappends;
+    }
+
+    if (options.logfiles !== null && options.logfiles !== undefined && options.logfiles.length >= 0) {
+        logopt.files = options.logfiles;
+    }
+
+    if (options.lognoconsole !== null && options.lognoconsole !== undefined && options.lognoconsole) {
+        logopt.noconsole = true;
+    }
+    console.log('logopt (%s)', util.inspect(logopt, {
+        showHidden: true,
+        depth: null
+    }));
+    module.exports.Init(logopt);
+    return;
+};

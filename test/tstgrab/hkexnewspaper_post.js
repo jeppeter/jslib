@@ -75,27 +75,6 @@ var get_post_data = function (viewstate) {
     return postdata;
 };
 
-var paper_notice = function (err, worker, next) {
-    'use strict';
-    if (err === null) {
-        worker.paper_timer = setTimeout(function () {
-            var newerr;
-            newerr = new Error(util.format('connect (%s) timeout', worker.url));
-            tracelog.error('%s', JSON.stringify(newerr));
-            worker.finish(newerr);
-        }, 5000);
-    }
-    next(true, err);
-};
-
-var paper_finish = function (err, worker, next) {
-    'use strict';
-    if (worker.paper_timer !== undefined && worker.paper_timer !== null) {
-        clearTimeout(worker.paper_timer);
-        worker.paper_timer = null;
-    }
-    next(err);
-};
 
 
 function createHkexNewsPaperPost() {
@@ -208,10 +187,9 @@ function createHkexNewsPaperPost() {
         worker.parent.post_queue(worker.url, {
             hkexnewspaper: true,
             reuse: true,
-            notice_callback: paper_notice,
-            finish_callback: paper_finish,
             reqopt: {
-                body: postdata
+                body: postdata,
+                timeout: 5000
             }
         });
         next(false, null);

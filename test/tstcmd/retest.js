@@ -1,50 +1,10 @@
 var commander = require('commander');
 var tracelog = require('../../tracelog');
-var util = require('util');
+//var util = require('util');
 commander.subname = '';
 commander.subopt = {};
 commander.subargs = [];
 
-var init_tracelog = function (opt) {
-    'use strict';
-    var logopt = {};
-    var options = opt.parent;
-    if (false) {
-        console.log('(%s)', util.inspect(options, {
-            showHidden: true,
-            depth: 3
-        }));
-    }
-    if (options.verbose >= 4) {
-        logopt.level = 'trace';
-    } else if (options.verbose >= 3) {
-        logopt.level = 'debug';
-    } else if (options.verbose >= 2) {
-        logopt.level = 'info';
-    } else if (options.verbose >= 1) {
-        logopt.level = 'warn';
-    } else {
-        logopt.level = 'error';
-    }
-
-    if (options.logappends !== null && options.logappends !== undefined && options.logappends.length > 0) {
-        logopt.appendfiles = options.logappends;
-    }
-
-    if (options.logfiles !== null && options.logfiles !== undefined && options.logfiles.length >= 0) {
-        logopt.files = options.logfiles;
-    }
-
-    if (options.lognoconsole !== null && options.lognoconsole !== undefined && options.lognoconsole) {
-        logopt.noconsole = true;
-    }
-    console.log('logopt (%s)', util.inspect(logopt, {
-        showHidden: true,
-        depth: null
-    }));
-    tracelog.Init(logopt);
-    return;
-};
 
 var trace_exit = function (ec) {
     'use strict';
@@ -59,28 +19,9 @@ var trace_exit = function (ec) {
 
 
 commander
-    .version('0.2.0')
-    .option('--logappends <appends>', 'log append files', function (v, t) {
-        'use strict';
-        t.push(v);
-        return t;
-    }, [])
-    .option('--logfiles <files>', 'log files truncated', function (v, t) {
-        'use strict';
-        t.push(v);
-        return t;
-    }, [])
-    .option('--lognoconsole', 'set no console for output as log', function (v, t) {
-        'use strict';
-        v = v;
-        t = t;
-        return true;
-    }, false)
-    .option('-v --verbose', 'verbose mode', function (v, t) {
-        'use strict';
-        v = v;
-        return t + 1;
-    }, 0);
+    .version('0.2.0');
+
+tracelog.init_commander(commander);
 
 commander
     .command('match [restr] [instr]')
@@ -88,7 +29,7 @@ commander
         'use strict';
         var reg;
         commander.subname = 'match';
-        init_tracelog(options);
+        tracelog.set_commander(options.parent);
         tracelog.info('restr (%s) instr (%s)', restr, instr);
 
         reg = new RegExp(restr);
@@ -106,7 +47,7 @@ commander
         'use strict';
         var reg;
         commander.subname = 'match';
-        init_tracelog(options);
+        tracelog.set_commander(options.parent);
         tracelog.info('restr (%s) instr (%s)', restr, instr);
 
         reg = new RegExp(restr, 'i');
@@ -125,7 +66,7 @@ commander
         var reg;
         var m;
         commander.subname = 'ifind';
-        init_tracelog(options);
+        tracelog.set_commander(options.parent);
         tracelog.info('args %s %s', restr, instr);
 
         reg = new RegExp(restr, 'i');
@@ -148,7 +89,7 @@ commander
         var reg;
         var m;
         commander.subname = 'ifind';
-        init_tracelog(options);
+        tracelog.set_commander(options.options);
         tracelog.info('args %s %s', restr, instr);
 
         reg = new RegExp(restr);

@@ -7,47 +7,6 @@ commander.subname = '';
 commander.subopt = {};
 commander.subargs = [];
 
-var init_tracelog = function (opt) {
-    'use strict';
-    var logopt = {};
-    var options = opt.parent;
-    if (false) {
-        console.log('(%s)', util.inspect(options, {
-            showHidden: true,
-            depth: 3
-        }));
-    }
-    if (options.verbose >= 4) {
-        logopt.level = 'trace';
-    } else if (options.verbose >= 3) {
-        logopt.level = 'debug';
-    } else if (options.verbose >= 2) {
-        logopt.level = 'info';
-    } else if (options.verbose >= 1) {
-        logopt.level = 'warn';
-    } else {
-        logopt.level = 'error';
-    }
-
-    if (options.logappends !== null && options.logappends !== undefined && options.logappends.length > 0) {
-        logopt.appendfiles = options.logappends;
-    }
-
-    if (options.logfiles !== null && options.logfiles !== undefined && options.logfiles.length >= 0) {
-        logopt.files = options.logfiles;
-    }
-
-    if (options.lognoconsole !== null && options.lognoconsole !== undefined && options.lognoconsole) {
-        logopt.noconsole = true;
-    }
-    console.log('logopt (%s)', util.inspect(logopt, {
-        showHidden: true,
-        depth: null
-    }));
-    tracelog.Init(logopt);
-    return;
-};
-
 
 var trace_exit = function (ec) {
     'use strict';
@@ -287,39 +246,20 @@ var output_traverse = function (parser, tabs, pathname, idx, curchild, travers_s
 
 commander
     .version('0.2.0')
-    .option('--logappends <appends>', 'log append files', function (v, t) {
-        'use strict';
-        t.push(v);
-        return t;
-    }, [])
-    .option('--logfiles <files>', 'log files truncated', function (v, t) {
-        'use strict';
-        t.push(v);
-        return t;
-    }, [])
     .option('-s --selector <selector>', 'selector ', function (v, t) {
         'use strict';
         t = t;
         return v;
-    }, '')
-    .option('--lognoconsole', 'set no console for output as log', function (v, t) {
-        'use strict';
-        v = v;
-        t = t;
-        return true;
-    }, false)
-    .option('-v --verbose', 'verbose mode', function (v, t) {
-        'use strict';
-        v = v;
-        return t + 1;
-    }, 0);
+    }, '');
+
+tracelog.init_commander(commander);
 
 
 commander
     .command('text <str>')
     .action(function (args, options) {
         'use strict';
-        init_tracelog(options);
+        tracelog.set_commander(options.parent);
         options = options;
         commander.subname = 'text';
         if (args === null || args === undefined || args.length < 1) {
@@ -370,7 +310,7 @@ commander
     .command('parent <str>')
     .action(function (args, options) {
         'use strict';
-        init_tracelog(options);
+        tracelog.set_commander(options.parent);
         options = options;
         commander.subname = 'parent';
         if (args === null || args === undefined || args.length < 1) {
@@ -405,7 +345,7 @@ commander
     .command('each <str>')
     .action(function (args, options) {
         'use strict';
-        init_tracelog(options);
+        tracelog.set_commander(options.parent);
         options = options;
         commander.subname = 'each';
         if (args.length < 1) {
@@ -454,7 +394,7 @@ commander
     }, '')
     .action(function (args, options) {
         'use strict';
-        init_tracelog(options);
+        tracelog.set_commander(options.parent);
         options = options;
         commander.subname = 'find';
         if (args.length < 1) {
@@ -515,7 +455,7 @@ commander
     }, '')
     .action(function (args, options) {
         'use strict';
-        init_tracelog(options);
+        tracelog.set_commander(options.parent);
         options = options;
         commander.subname = 'attr';
         if (args.length < 1) {
@@ -580,7 +520,7 @@ commander
     .command('traverse <str>')
     .action(function (args, options) {
         'use strict';
-        init_tracelog(options);
+        tracelog.set_commander(options.parent);
         options = options;
         commander.subname = 'traverse';
         if (args.length < 1) {
@@ -623,7 +563,7 @@ commander
     .command('childrens <str>')
     .action(function (args, options) {
         'use strict';
-        init_tracelog(options);
+        tracelog.set_commander(options.parent);
         commander.subname = 'childrens';
         if (args.length < 1) {
             tracelog.error('need instr restr\n');
