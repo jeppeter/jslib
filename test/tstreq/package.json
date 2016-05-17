@@ -1,0 +1,17 @@
+{
+  "name": "tstreq",
+  "version": "1.0.0",
+  "description": "test request",
+  "main": "tstreq.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "commander": "latest",
+    "request": "latest",
+    "express": "latest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
