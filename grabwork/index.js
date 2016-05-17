@@ -110,7 +110,7 @@ function createGrabwork() {
         }
         reqopt.url = url;
         reqopt.method = meth;
-        if (worker.pipe !== null) {
+        if (worker.pipe !== null && worker.pipe !== undefined) {
             /*we should on end to finish the */
             worker.pipe.on('close', function () {
                 worker.finish(null);
@@ -133,15 +133,28 @@ function createGrabwork() {
 
     self.queue = function (url, reqopt) {
         var worker = createWorker(self, 'GET', url, reqopt);
-        /*we should add*/
-        worker.pre_next(true, null);
+        if (typeof reqopt.finish_callback === 'function') {
+            worker.add_finish(reqopt.finish_callback);
+        }
+        if (typeof reqopt.notice_callback === 'function') {
+            reqopt.notice_callback(null, worker, worker.pre_next);
+        } else {
+            worker.pre_next(true, null);
+        }
         self.request_work(worker);
         return self;
     };
 
     self.post_queue = function (url, reqopt) {
-        var worker = createGrabwork(self, 'POST', url, reqopt);
-        worker.pre_next(null, true);
+        var worker = createWorker(self, 'POST', url, reqopt);
+        if (typeof reqopt.finish_callback === 'function') {
+            worker.add_finish(reqopt.finish_callback);
+        }
+        if (typeof reqopt.notice_callback === 'function') {
+            reqopt.notice_callback(null, worker, worker.pre_next);
+        } else {
+            worker.pre_next(null, true);
+        }
         self.request_work(worker);
         return self;
     };

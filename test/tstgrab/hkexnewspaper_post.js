@@ -75,6 +75,28 @@ var get_post_data = function (viewstate) {
     return postdata;
 };
 
+var paper_notice = function (err, worker, next) {
+    'use strict';
+    if (err === null) {
+        worker.paper_timer = setTimeout(function () {
+            var newerr;
+            newerr = new Error(util.format('connect (%s) timeout', worker.url));
+            tracelog.error('%s', JSON.stringify(newerr));
+            worker.finish(newerr);
+        }, 5000);
+    }
+    next(true, err);
+};
+
+var paper_finish = function (err, worker, next) {
+    'use strict';
+    if (worker.paper_timer !== undefined && worker.paper_timer !== null) {
+        clearTimeout(worker.paper_timer);
+        worker.paper_timer = null;
+    }
+    next(err);
+};
+
 
 function createHkexNewsPaperPost() {
     'use strict';
@@ -87,12 +109,18 @@ function createHkexNewsPaperPost() {
         tracelog.trace('newspaper');
         if (err) {
             /*if we have nothing to do*/
+            tracelog.info('err (%s)', JSON.stringify(err));
             next(true, err);
             return;
         }
+        tracelog.info('worker (%s)', util.inspect(worker, {
+            showHidden: true,
+            depth: null
+        }));
 
-        if (worker.reqopt.hkexnewspaper === undefined || worker.reqopt.hkexnewspaper === null || !worker.reqopt.hknexnewspaper) {
+        if (worker.reqopt.hkexnewspaper === undefined || worker.reqopt.hkexnewspaper === null || !worker.reqopt.hkexnewspaper) {
             /*if we do not handle news make*/
+            tracelog.info('');
             next(true, err);
             return;
         }
@@ -180,6 +208,8 @@ function createHkexNewsPaperPost() {
         worker.parent.post_queue(worker.url, {
             hkexnewspaper: true,
             reuse: true,
+            notice_callback: paper_notice,
+            finish_callback: paper_finish,
             reqopt: {
                 body: postdata
             }

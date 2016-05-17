@@ -3,6 +3,30 @@ var cheerio = require('cheerio');
 var util = require('util');
 var qs = require('querystring');
 
+var paper_notice = function (err, worker, next) {
+    'use strict';
+    if (err === null) {
+        worker.paper_timer = setTimeout(function () {
+            var newerr;
+            newerr = new Error(util.format('connect (%s) timeout', worker.url));
+            tracelog.error('%s', JSON.stringify(newerr));
+            worker.finish(newerr);
+        }, 5000);
+    }
+    next(true, err);
+};
+
+var paper_finish = function (err, worker, next) {
+    'use strict';
+    if (worker.paper_timer !== undefined && worker.paper_timer !== null) {
+        clearTimeout(worker.paper_timer);
+        worker.paper_timer = null;
+    }
+    next(err);
+};
+
+
+
 function createHkexNewsMainPost(options) {
     'use strict';
     var hknews = {};
@@ -26,9 +50,9 @@ function createHkexNewsMainPost(options) {
     hknews.options.ddlTierTwoGroup = '19,5';
     hknews.options.txtKeyWord = '';
     hknews.options.rdo_SelectDateOfRelease = 'rbManualRange';
-    hknews.options.sel_DateOfReleaseFrom_d = hknews.options.startdate.substring(6, 8);
-    hknews.options.sel_DateOfReleaseFrom_m = hknews.options.startdate.substring(4, 6);
-    hknews.options.sel_DateOfReleaseFrom_y = hknews.options.startdate.substring(0, 4);
+    hknews.options.sel_DateOfReleaseFrom_d = hknews.options.ex_startdate.substring(6, 8);
+    hknews.options.sel_DateOfReleaseFrom_m = hknews.options.ex_startdate.substring(4, 6);
+    hknews.options.sel_DateOfReleaseFrom_y = hknews.options.ex_startdate.substring(0, 4);
     hknews.options.sel_DateOfReleaseTo_d = hknews.options.ex_enddate.substring(6, 8);
     hknews.options.sel_DateOfReleaseTo_m = hknews.options.ex_enddate.substring(4, 6);
     hknews.options.sel_DateOfReleaseTo_y = hknews.options.ex_enddate.substring(0, 4);
@@ -159,6 +183,8 @@ function createHkexNewsMainPost(options) {
         worker.parent.post_queue(worker.url, {
             hkexnewspaper: true,
             reuse: true,
+            finish_callback: paper_finish,
+            notice_callback: paper_notice,
             reqopt: {
                 body: postdata
             }
