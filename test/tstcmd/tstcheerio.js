@@ -63,7 +63,7 @@ var trace_exit = function (ec) {
 var get_data_name = function (elm, selector, idx, jdx) {
     'use strict';
     var s;
-    var valuename = 'html';
+    var valuename = 'text';
     s = '';
     if (jdx === undefined || jdx === null) {
         s += util.format('[%d](%s)', idx, selector);
