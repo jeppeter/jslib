@@ -156,7 +156,7 @@ var traverse_next = function (parser, tabs, cont, travers_state) {
             curchild = allchildrens.children.eq(idx);
             allchildrens.idx += 1;
             pathname = allchildrens.pathname;
-            tracelog.info('pathname (%s)', pathname);
+            tracelog.info('{%s}[%d]', pathname, idx);
             travers_state.callback_fn(parser, tabs, pathname, idx, curchild, travers_state);
             allchildrens = null;
             return;
@@ -224,6 +224,11 @@ var traverse_get = function (parser, tabs, travers_state) {
             return;
         }
         tracelog.info('[%d]{%s} child 0', idx, curallchildrens.pathname);
+        if (idx > 0) {
+            /*the first we have search before*/
+            travers_state.callback_fn(parser, tabs, curallchildrens.pathname, idx, curchild, travers_state);
+            return;
+        }
     }
 
     /*ok we should make the upper calling*/
@@ -511,10 +516,10 @@ commander
             trace_exit(3);
             return;
         }
-        tracelog.trace('parent (%s)', util.inspect(options.parent, {
+        /*tracelog.trace('parent (%s)', util.inspect(options.parent, {
             showHidden: true,
             depth: 3
-        }));
+        }));*/
 
         if (options.attr === undefined || options.attr === null) {
             tracelog.error('need a --children set\n');
@@ -524,10 +529,10 @@ commander
 
         tracelog.info('args %s', args);
         call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
-            tracelog.trace('parser (%s)', util.inspect(parser, {
+            /*tracelog.trace('parser (%s)', util.inspect(parser, {
                 showHidden: true,
                 depth: 3
-            }));
+            }));*/
             if (content === null || content === undefined) {
                 tracelog.error('can not find(%s) in (%s)', options.parent.selector, args);
                 exit_fn(4);
