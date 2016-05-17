@@ -64,6 +64,7 @@ var get_data_name = function (elm, selector, idx, jdx) {
     'use strict';
     var s;
     var valuename = 'text';
+    var keys;
     s = '';
     if (jdx === undefined || jdx === null) {
         s += util.format('[%d](%s)', idx, selector);
@@ -77,6 +78,18 @@ var get_data_name = function (elm, selector, idx, jdx) {
         s += elm[0].name;
     } else {
         s += 'undefined';
+    }
+    if (elm[0].attribs !== undefined && elm[0].attribs !== null) {
+        keys = Object.keys(elm[0].attribs);
+        if (keys.length > 0) {
+            s += ') attrib(';
+            keys.forEach(function (elmattr, idx) {
+                if (idx > 0) {
+                    s += ',';
+                }
+                s += util.format('%s="%s"', elmattr, elm[0].attribs[elmattr]);
+            });
+        }
     }
 
     s += ')=(';
