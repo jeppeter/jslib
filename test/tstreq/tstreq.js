@@ -2,8 +2,8 @@ var request = require('request');
 var tracelog = require('../../tracelog');
 var commander = require('commander');
 var url = 'http://127.0.0.1:9000/';
-var req = null;
 var util = require('util');
+var req = null;
 
 commander
     .version('0.2.0')
@@ -56,7 +56,11 @@ if (commander.args !== undefined && Array.isArray(commander.args) && typeof comm
 tracelog.info('request (%s)', url);
 req = request({
     method: 'GET',
-    url: url
+    url: url,
+    headers: {
+        session: "new session",
+        connection: "keep-alive"
+    }
 }, function (error, response, body) {
     'use strict';
     if (error) {
@@ -67,24 +71,43 @@ req = request({
     response = response;
 
     tracelog.info('%s', body);
-    if (req !== null) {
+    if (req !== null && req !== undefined) {
         tracelog.info('make anothercall');
-        req._callback = null;
-        req._callbackCalled = false;
         req.init({
             method: 'GET',
             url: url,
-            callback: function (error, response, body) {
-                if (error) {
-                    tracelog.error('request (%s) error (%s)', url, JSON.stringify(error));
-                    trace_exit(3);
-                    return;
-                }
-                tracelog.info('body (%s)', body);
-                response.end('');
-                trace_exit(0);
+            headers: {
+                session: 'old session',
+                connection: 'keep-alive'
+            }
+        }, function (err2, resp2, body2) {
+            if (err2) {
+                tracelog.error('request (%s) error (%s)', url, JSON.stringify(err2));
+                trace_exit(3);
                 return;
             }
+            resp2 = resp2;
+            tracelog.info('body (%s)', body2);
+            trace_exit(0);
+            return;
+        });
+    } else {
+        request({
+            method: 'GET',
+            url: url,
+            headers: {
+                session: "old session"
+            }
+        }, function (err2, resp2, body2) {
+            if (err2) {
+                tracelog.error('request (%s) error (%s)', url, JSON.stringify(err2));
+                trace_exit(3);
+                return;
+            }
+            resp2 = resp2;
+            tracelog.info('body (%s)', body2);
+            trace_exit(0);
+            return;
         });
     }
     return;

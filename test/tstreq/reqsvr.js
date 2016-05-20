@@ -1,6 +1,7 @@
 var express = require('express');
 var commander = require('commander');
 var tracelog = require('../../tracelog');
+var util = require('util');
 var app;
 
 commander
@@ -17,6 +18,10 @@ tracelog.init_commander(commander);
 var handler_request = function (req, res, next) {
     'use strict';
     tracelog.info('call handler');
+    tracelog.info('req.headers (%s)', util.inspect(req.headers, {
+        showHidden: true,
+        depth: null
+    }));
     if (req.session !== undefined && req.session !== null) {
         next();
         return;
@@ -30,6 +35,10 @@ var handler_request = function (req, res, next) {
 var session_request = function (req, res, next) {
     'use strict';
     tracelog.info('call session');
+    tracelog.info('req.headers (%s)', util.inspect(req.headers, {
+        showHidden: true,
+        depth: null
+    }));
     if (req.session === undefined || req.session === null) {
         next();
         return;
