@@ -226,8 +226,8 @@ function createGrabwork(options) {
         return;
     };
 
-    self.queue = function (url, reqopt) {
-        var worker = createWorker(self, 'GET', url, reqopt);
+    self.inner_queue = function (meth, url, reqopt) {
+        var worker = createWorker(self, meth, url, reqopt);
         if (typeof reqopt.finish_callback === 'function') {
             worker.add_finish(reqopt.finish_callback);
         }
@@ -238,20 +238,17 @@ function createGrabwork(options) {
         }
         self.request_work(worker);
         return self;
+
+    };
+
+    self.queue = function (url, reqopt) {
+        self.inner_queue('GET', url, reqopt);
+        return;
     };
 
     self.post_queue = function (url, reqopt) {
-        var worker = createWorker(self, 'POST', url, reqopt);
-        if (typeof reqopt.finish_callback === 'function') {
-            worker.add_finish(reqopt.finish_callback);
-        }
-        if (typeof reqopt.notice_callback === 'function') {
-            reqopt.notice_callback(null, worker, worker.pre_next);
-        } else {
-            worker.pre_next(null, true);
-        }
-        self.request_work(worker);
-        return self;
+        self.inner_queue('POST', url, reqopt);
+        return;
     };
 
     self.add_pre = function (handler) {
