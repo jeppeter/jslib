@@ -422,24 +422,24 @@ commander
         tracelog.info('args %s', args);
         call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
             var children;
+            var idx, jdx;
+            var curchild, curcon;
+            var s;
             tracelog.trace('parser (%s)', util.inspect(parser, {
                 showHidden: true,
                 depth: 3
             }));
-            if (content === null || content === undefined) {
-                tracelog.error('can not find(%s) in (%s)', options.parent.selector, args);
-                exit_fn(4);
-                return;
+            for (idx = 0; idx < content.length; idx += 1) {
+                curcon = content.eq(idx);
+                children = curcon.find(options.children);
+                s = get_data_name(curcon, options.parent.selector, idx, null);
+                console.log(s);
+                for (jdx = 0; jdx < children.length; jdx += 1) {
+                    curchild = children.eq(jdx);
+                    s = get_data_name(curchild, options.parent.selector, idx, jdx);
+                    console.log(s);
+                }
             }
-            children = content.find(options.children);
-            if (children === null || children === undefined) {
-                tracelog.error('can not find (%s) in (%s)', options.children, options.parent.selector);
-                exit_fn(4);
-            }
-            tracelog.trace('{%s->%s}children (%s)', options.parent.selector, options.children, util.inspect(children, {
-                showHidden: true,
-                depth: 3
-            }));
             console.log('{[%s]->[%s]}children (%d)', options.parent.selector, options.children, children.length);
             exit_fn(0);
         });
@@ -619,8 +619,69 @@ commander
         });
     });
 
-commander.parse(process.argv);
+commander
+    .command('childselect <str...> (filename selector)')
+    .action(function (args, options) {
+        'use strict';
+        tracelog.set_commander(options.parent);
+        commander.subname = 'childselect';
+        if (args.length < 2) {
+            tracelog.error('need file\n');
+            trace_exit(3);
+            return;
+        }
 
+        if (options.parent.selector.length === 0) {
+            tracelog.error('need selector set\n');
+            trace_exit(3);
+            return;
+        }
+
+        tracelog.info('args %s', args);
+        call_cheerparser(args[0], options.parent.selector, function (parser, content, exit_fn) {
+            var children;
+            var curelm;
+            var idx, jdx;
+            var s;
+            var curchild; //, siblings;
+            parser = parser;
+            if (content.length === 0) {
+                tracelog.info('length %d', content.length);
+                exit_fn(0);
+                return;
+            }
+
+            tracelog.info('length %d', content.length);
+            jdx = 0;
+            for (jdx = 0; jdx < content.length; jdx += 1) {
+                curelm = content.eq(jdx);
+                children = curelm.children();
+                s = get_data_name(curelm, options.parent.selector, jdx, null);
+                console.log(s);
+                idx = 0;
+                tracelog.info('children %d', children.length);
+                for (idx = 0; idx < children.length; idx += 1) {
+                    curchild = children.eq(idx);
+                    s = get_data_name(curchild, options.parent.selector, jdx, idx);
+                    console.log(s);
+                    if (true) {
+                        tracelog.info('[%d] (%s)', idx, util.inspect(curchild, {
+                            showHidden: true,
+                            depth: 2
+                        }));
+                    } else {
+                        tracelog.info('[%d] type (%s) name(%s)', idx, curchild.type(), curchild.name());
+                    }
+                }
+            }
+            exit_fn(0);
+            return;
+        });
+    });
+
+
+
+commander.parse(process.argv);
 if (commander.subname.length === 0) {
     commander.outputHelp(function (cb) {
         'use strict';

@@ -9,10 +9,12 @@ var get_text_html = function (elm, parser) {
     var textkey = 'text';
     parser = parser;
     s = '';
-    if (typeof elm[0][textkey] === 'function') {
-        s += elm[0][textkey]();
-    } else if (typeof elm[0][textkey] === 'string') {
-        s += elm[0][textkey];
+    if (elm[0] !== null && elm[0] !== undefined) {
+        if (typeof elm[0][textkey] === 'function') {
+            s += elm[0][textkey]();
+        } else if (typeof elm[0][textkey] === 'string') {
+            s += elm[0][textkey];
+        }
     }
     return s;
 };
@@ -63,6 +65,7 @@ var get_attr_value = function (elm, parser, keyname) {
     return s;
 };
 
+
 var get_post_data = function (viewstate) {
     'use strict';
     var postdata;
@@ -110,6 +113,7 @@ function createHkexNewsPaperPost() {
         parser = cheerio.load(worker.htmldata);
 
         selected = parser('#ctl00_gvMain tr');
+        tracelog.info('selected length %d', selected.length);
         /*we should get table*/
         for (i = 0; i < selected.length; i += 1) {
             curtr = selected.eq(i);
@@ -119,6 +123,7 @@ function createHkexNewsPaperPost() {
             for (j = 0; j < spans.length; j += 1) {
                 curspan = spans.eq(j);
                 curval = get_attr_value(curspan, parser, 'id');
+                tracelog.info('id (%s)', curval);
                 if (match_expr(curval, '_lbDateTime$')) {
                     /*now we get the year value*/
                     curval = get_text_html(curspan, parser);
@@ -148,7 +153,7 @@ function createHkexNewsPaperPost() {
                 tracelog.info('year (%s) href (%s)', year, href);
             }
         }
-        selected = parser('ctl00_lblDisplay');
+        selected = parser('#ctl00_lblDisplay');
         value = get_text_html(selected, parser);
         if (value === '') {
             tracelog.error('nothing to handle');

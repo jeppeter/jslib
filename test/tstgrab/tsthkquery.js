@@ -1,7 +1,5 @@
-var tracelog = require('../../tracelog');
-var cheerio = require('cheerio');
-var util = require('util');
 var qs = require('querystring');
+var util = require('util');
 
 var number_format_length = function (size, number) {
     'use strict';
@@ -14,8 +12,7 @@ var number_format_length = function (size, number) {
     return s.slice(-size);
 };
 
-
-function createHkexNewsMainPost(options) {
+function HkExNews(options) {
     'use strict';
     var hknews = {};
     var setopt = options || {};
@@ -56,7 +53,6 @@ function createHkexNewsMainPost(options) {
     hknews.options.sel_defaultDateRange = 'SevenDays';
     hknews.options.rdo_SelectSortBy = 'rbDateTime';
 
-
     if (setopt.enddate !== null && setopt.enddate !== undefined) {
         hknews.options.ex_enddate = setopt.enddate;
         hknews.options.sel_DateOfReleaseTo_d = hknews.options.ex_enddate.substring(6, 8);
@@ -79,12 +75,14 @@ function createHkexNewsMainPost(options) {
         hknews.options.txt_stock_name = setopt.stockname;
     }
 
+
     hknews.make_post_data = function (inputctrl) {
         var postdata;
         var ctl00_dollar = 'ctl00$';
+        inputctrl = inputctrl;
         postdata = '';
-        postdata += '__VIEWSTATE=';
-        postdata += qs.escape(inputctrl.attribs.value);
+        //postdata += '__VIEWSTATE=';
+        //postdata += qs.escape(inputctrl.attribs.value);
         postdata += util.format('&__VIEWSTATEENCRYPTED=&%stxt_today=', qs.escape(ctl00_dollar));
         postdata += util.format('%s&', qs.escape(hknews.options.txt_today));
         postdata += util.format('%shfStatus=', qs.escape(ctl00_dollar));
@@ -133,68 +131,9 @@ function createHkexNewsMainPost(options) {
         return postdata;
     };
 
-    hknews.post_handler = function (err, worker, next) {
-        var parser;
-        var inputs, i, input;
-        var findinput;
-        var postdata;
-        if (err) {
-            /*if we have nothing to do*/
-            next(true, err);
-            return;
-        }
-
-        if (worker.reqopt.hkexnewsmain === undefined || worker.reqopt.hkexnewsmain === null || !worker.reqopt.hkexnewsmain) {
-            /*if we do not handle news make*/
-            next(true, err);
-            return;
-        }
-
-        /*now it is time ,we handle ,so we should no more to handle out*/
-        //tracelog.info('htmldata (%s)', worker.htmldata);
-        parser = cheerio.load(worker.htmldata);
-        inputs = parser('input');
-        tracelog.info('inputs (%d)', inputs.length);
-        findinput = null;
-        for (i = 0; i < inputs.length; i += 1) {
-            input = inputs[i];
-            if (input.attribs !== null && input.attribs !== undefined) {
-                if (input.attribs.name !== null && input.attribs.name !== undefined) {
-                    if (input.attribs.name === '__VIEWSTATE' && input.attribs.value !== null && input.attribs.value !== undefined) {
-                        findinput = input;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (findinput === null) {
-            /*we can not find the input we just return*/
-            next(true, null);
-            return;
-        }
-
-        /*now we find the input ,so we should all things we should put post data*/
-        postdata = hknews.make_post_data(findinput);
-        tracelog.info('postdata (%s)', postdata);
-        worker.parent.post_queue(worker.url, {
-            hkexnewspaper: true,
-            reuse: true,
-            reqopt: {
-                body: postdata,
-                timeout: 5000,
-                headers: {
-                    Referer: worker.url,
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            }
-        });
-
-        next(false, null);
-    };
-
     return hknews;
 }
 
-
-module.exports = createHkexNewsMainPost;
+var hk;
+hk = new HkExNews();
+console.log('%s', hk.make_post_data());
