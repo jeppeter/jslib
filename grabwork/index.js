@@ -120,6 +120,42 @@ function createGrabwork(options) {
         self.grabmaxsock = setopt.grabmaxsock;
     }
 
+    self.inner_request_work = function (worker) {
+        var reqopt = worker.reqopt.reqopt || {};
+        var url = worker.url;
+        var meth = worker.meth.toUpperCase();
+
+        if (url.length === 0) {
+            /*we should not handle any more if no url request*/
+            worker.finish(null);
+            return;
+        }
+        /*we push it into the request queue, as it will work ok*/
+        self.reqworkqueue.push(worker);
+        reqopt.url = url;
+        reqopt.method = meth;
+        self.reqworkqueue.push(worker);
+        if (worker.pipe !== null && worker.pipe !== undefined) {
+            /*we should on end to finish the */
+            worker.pipe.on('close', function () {
+                worker.finish(null);
+            });
+            worker.pipe.on('error', function (err) {
+                worker.finish(err);
+            });
+
+            request(reqopt).pipe(worker.pipe);
+        } else {
+            request(reqopt, function (err, resp, body) {
+                if (err === null) {
+                    worker.response = resp;
+                    worker.htmldata = body;
+                }
+                worker.post_next(true, err);
+            });
+        }
+    };
+
     self.inner_pull_request = function () {
         var getworker;
         var retval = 0;
@@ -170,41 +206,6 @@ function createGrabwork(options) {
         return retval;
     };
 
-    self.inner_request_work = function (worker) {
-        var reqopt = worker.reqopt.reqopt || {};
-        var url = worker.url;
-        var meth = worker.meth.toUpperCase();
-
-        if (url.length === 0) {
-            /*we should not handle any more if no url request*/
-            worker.finish(null);
-            return;
-        }
-        /*we push it into the request queue, as it will work ok*/
-        self.reqworkqueue.push(worker);
-        reqopt.url = url;
-        reqopt.method = meth;
-        self.reqworkqueue.push(worker);
-        if (worker.pipe !== null && worker.pipe !== undefined) {
-            /*we should on end to finish the */
-            worker.pipe.on('close', function () {
-                worker.finish(null);
-            });
-            worker.pipe.on('error', function (err) {
-                worker.finish(err);
-            });
-
-            request(reqopt).pipe(worker.pipe);
-        } else {
-            request(reqopt, function (err, resp, body) {
-                if (err === null) {
-                    worker.response = resp;
-                    worker.htmldata = body;
-                }
-                worker.post_next(true, err);
-            });
-        }
-    };
 
     self.request_work = function (worker) {
         var priority;
