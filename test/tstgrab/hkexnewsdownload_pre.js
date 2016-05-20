@@ -23,8 +23,8 @@ function createHkexNewsDownloadPre() {
 
         /*now it is time ,we handle ,so we should no more to handle out*/
         tracelog.trace('download dir', worker.reqopt.hkexnewsdownloaddir);
-        getdir = urlparse.parse(worker.reqopt.url);
-        getfilename = path.basename(getdir);
+        getdir = urlparse.parse(worker.url);
+        getfilename = path.basename(getdir.pathname);
 
         if (getfilename.length === 0) {
             tracelog.error('can not get from path (%s)', worker.reqopt.url);
@@ -37,10 +37,12 @@ function createHkexNewsDownloadPre() {
         fname = worker.reqopt.hkexnewsdownloaddir;
         fname += path.sep;
         fname += getfilename;
-        ws = fs.createWriteStream(fname);
-        tracelog.info('get (%s) => (%s)', worker.reqopt.url, fname);
+        tracelog.info('get (%s) => (%s)', worker.url, fname);
         /*we do not need any more*/
-        worker.pipe = ws;
+        //worker.pipe = ws;
+        ws = null;
+        fs = fs;
+        worker.url = '';
         return;
     };
 

@@ -4,7 +4,7 @@ var qs = require('querystring');
 var util = require('util');
 var URL = require('url');
 var grabcheerio = require('./grabcheerio');
-
+var path = require('path');
 
 
 var get_post_data = function (viewstate) {
@@ -34,10 +34,10 @@ function createHkexNewsPaperPost() {
         var host;
         var proto, urlparse;
         var cururl;
+        var downdir;
         //tracelog.trace('newspaper');
         if (err) {
             /*if we have nothing to do*/
-            tracelog.info('err (%s)', JSON.stringify(err));
             next(true, err);
             return;
         }
@@ -46,9 +46,8 @@ function createHkexNewsPaperPost() {
             depth: null
         }));*/
 
-        if (worker.reqopt.hkexnewspaper === undefined || worker.reqopt.hkexnewspaper === null || !worker.reqopt.hkexnewspaper) {
+        if (worker.reqopt.hkexnewspaper === undefined || worker.reqopt.hkexnewspaper === null || worker.reqopt.hkexnewspaper.length === 0) {
             /*if we do not handle news make*/
-            tracelog.info('');
             next(true, err);
             return;
         }
@@ -106,13 +105,18 @@ function createHkexNewsPaperPost() {
             cururl += '//';
             cururl += host;
             cururl += findres.lists_html[i].href;
+            downdir = worker.reqopt.hkexnewspaper;
+            downdir += path.sep;
+            downdir += findres.lists_html[i].year;
             if (grabcheerio.match_expr_i(cururl, '\.pdf$')) {
-                //tracelog.info('will download (%s)', cururl);
-                cururl = cururl;
+                /*store by year */
+                worker.parent.post_queue(cururl, {
+                    hkexnewsdownloaddir: downdir
+                });
             } else if (grabcheerio.match_expr_i(cururl, '\.htm[l]?$')) {
                 tracelog.info('will more query (%s)', cururl);
                 worker.parent.queue(cururl, {
-                    hkexnewsextenddir: 'dir',
+                    hkexnewsextenddir: downdir,
                     reuse: true,
                     reqopt: {
                         body: postdata,

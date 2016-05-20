@@ -27,6 +27,11 @@ var trace_exit = function (ec) {
 
 commander
     .version('0.2.0')
+    .option('-m --grabmaxsock <num>', 'grab max socket in one', function (v, t) {
+        'use strict';
+        v = v;
+        return t;
+    }, 10)
     .option('-U --url <url>', 'specify url', function (v, t) {
         'use strict';
         v = v;
@@ -51,7 +56,7 @@ tracelog.set_commander(commander);
 
 grab.add_pre(random_delay());
 grab.add_pre(hkexnewsdownload_pre());
-grab.add_post(hkexnewsmain_post());
+grab.add_post(hkexnewsmain_post(commander));
 grab.add_post(hkexnewspaper_post());
 grab.add_post(hkexnewsextend_post());
 

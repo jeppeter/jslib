@@ -18,7 +18,6 @@ function createHkexNewsPaperPost() {
         //tracelog.trace('newspaper');
         if (err) {
             /*if we have nothing to do*/
-            tracelog.info('err (%s)', JSON.stringify(err));
             next(true, err);
             return;
         }

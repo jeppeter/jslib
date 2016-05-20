@@ -56,6 +56,8 @@ function createHkexNewsMainPost(options) {
     hknews.options.sel_defaultDateRange = 'SevenDays';
     hknews.options.rdo_SelectSortBy = 'rbDateTime';
 
+    hknews.topdir = __dirname;
+
 
     if (setopt.enddate !== null && setopt.enddate !== undefined) {
         hknews.options.ex_enddate = setopt.enddate;
@@ -77,6 +79,10 @@ function createHkexNewsMainPost(options) {
 
     if (setopt.stockname !== null && setopt.stockname !== undefined) {
         hknews.options.txt_stock_name = setopt.stockname;
+    }
+
+    if (setopt.topdir !== null && setopt.topdir !== undefined) {
+        hknews.topdir = setopt.topdir;
     }
 
     hknews.make_post_data = function (inputctrl) {
@@ -178,7 +184,7 @@ function createHkexNewsMainPost(options) {
         postdata = hknews.make_post_data(findinput);
         //tracelog.info('postdata (%s)', postdata);
         worker.parent.post_queue(worker.url, {
-            hkexnewspaper: true,
+            hkexnewspaper: hknews.topdir,
             reuse: true,
             reqopt: {
                 body: postdata,

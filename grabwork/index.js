@@ -109,6 +109,7 @@ function createGrabwork(options) {
     self.post_handlers = [];
     self.domain_request = {};
     self.grabmaxsock = 30;
+    self.grabtimeout = 10000;
     self.reqworkqueue = [];
     self.priorqueue = [];
 
@@ -118,6 +119,10 @@ function createGrabwork(options) {
 
     if (setopt.grabmaxsock !== null && setopt.grabmaxsock !== undefined && setopt.grabmaxsock >= 0) {
         self.grabmaxsock = setopt.grabmaxsock;
+    }
+
+    if (setopt.grabtimeout !== null && setopt.grabtimeout !== undefined && typeof setopt.grabtimeout === 'number' && setopt.grabtimeout >= 0) {
+        self.grabtimeout = setopt.grabtimeout;
     }
 
     self.inner_request_work = function (worker) {
@@ -141,15 +146,22 @@ function createGrabwork(options) {
                 worker.finish(null);
             });
             worker.pipe.on('error', function (err) {
+                tracelog.error('(%s) error(%s)', worker.url, JSON.stringify(err));
                 worker.finish(err);
             });
 
             request(reqopt).pipe(worker.pipe);
         } else {
+
+            if (reqopt.timeout === null || reqopt.timeout === undefined) {
+                reqopt.timeout = self.grabtimeout;
+            }
             request(reqopt, function (err, resp, body) {
                 if (err === null) {
                     worker.response = resp;
                     worker.htmldata = body;
+                } else {
+                    tracelog.error('(%s) error(%s)', worker.url, JSON.stringify(err));
                 }
                 worker.post_next(true, err);
             });
