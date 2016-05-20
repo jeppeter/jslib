@@ -2,6 +2,18 @@ var request = require('request');
 var tracelog = require('../tracelog');
 //var util = require('util');
 
+var MAX_PRIORITY = 5;
+var DEF_PRIORITY = 3;
+var MIN_PRIORITY = 1;
+
+var remove_member = function (listmem, valmem) {
+    'use strict';
+    listmem = listmem.filter(function (e) {
+        return e !== valmem;
+    });
+    return listmem;
+};
+
 function createWorker(parent, meth, url, reqopt) {
     'use strict';
     var worker = {};
@@ -26,13 +38,10 @@ function createWorker(parent, meth, url, reqopt) {
         }
         if (worker.parent !== null) {
             p = worker.parent;
-            if (p.workers.indexOf(worker) >= 0) {
-                p.workers = p.workers.filter(function (e) {
-                    return e !== worker;
-                });
-            }
+            p.remove_request_worker(worker);
             worker.parent = null;
         }
+        return;
     };
     worker.finish = function (err) {
         worker.next_finish(err);
@@ -90,15 +99,78 @@ function createWorker(parent, meth, url, reqopt) {
 }
 
 
-function createGrabwork() {
+function createGrabwork(options) {
     'use strict';
     var self = {};
+    var setopt = options || {};
+    var idx;
     self.workers = [];
     self.pre_handlers = [];
     self.post_handlers = [];
     self.domain_request = {};
+    self.grabmaxsock = 30;
+    self.reqworkqueue = [];
+    self.priorqueue = [];
 
-    self.request_work = function (worker) {
+    for (idx = 0; idx < MAX_PRIORITY; idx += 1) {
+        self.priorqueue.push([]);
+    }
+
+    if (setopt.grabmaxsock !== null && setopt.grabmaxsock !== undefined && setopt.grabmaxsock >= 0) {
+        self.grabmaxsock = setopt.grabmaxsock;
+    }
+
+    self.inner_pull_request = function () {
+        var getworker;
+        var retval = 0;
+        var i;
+        while (self.reqworkqueue.length < self.grabmaxsock || self.grabmaxsock === 0) {
+            getworker = null;
+            for (i = 0; i < MAX_PRIORITY; i += 1) {
+                if (self.priorqueue[i].length > 0) {
+                    getworker = self.priorqueue[i][0];
+                    self.priorqueue[i] = remove_member(self.priorqueue[i], getworker);
+                    break;
+                }
+            }
+
+            if (getworker === null) {
+                /*nothing to find*/
+                break;
+            }
+
+            retval += 1;
+            self.inner_request_work(getworker);
+        }
+        return retval;
+    };
+
+    self.remove_request_worker = function (worker) {
+        var i;
+        var retval = 0;
+        for (i = 0; i < MAX_PRIORITY; i += 1) {
+            if (self.priorqueue[i].indexOf(worker) >= 0) {
+                self.priorqueue[i] = remove_member(self.priorqueue[i], worker);
+                retval += 1;
+                break;
+            }
+        }
+
+        if (self.reqworkqueue.indexOf(worker) >= 0) {
+            self.reqworkqueue = remove_member(self.reqworkqueue, worker);
+            retval += 1;
+        }
+
+        if (self.workers.indexOf(worker) >= 0) {
+            self.workers = remove_member(self.workers, worker);
+        }
+
+        /*we have remove some thing,so we can pull request*/
+        self.inner_pull_request();
+        return retval;
+    };
+
+    self.inner_request_work = function (worker) {
         var reqopt = worker.reqopt.reqopt || {};
         var url = worker.url;
         var meth = worker.meth.toUpperCase();
@@ -108,8 +180,11 @@ function createGrabwork() {
             worker.finish(null);
             return;
         }
+        /*we push it into the request queue, as it will work ok*/
+        self.reqworkqueue.push(worker);
         reqopt.url = url;
         reqopt.method = meth;
+        self.reqworkqueue.push(worker);
         if (worker.pipe !== null && worker.pipe !== undefined) {
             /*we should on end to finish the */
             worker.pipe.on('close', function () {
@@ -129,6 +204,26 @@ function createGrabwork() {
                 worker.post_next(true, err);
             });
         }
+    };
+
+    self.request_work = function (worker) {
+        var priority;
+        if (worker.reqopt.priority === null || worker.reqopt.priority === undefined) {
+            worker.reqopt.priority = DEF_PRIORITY;
+        }
+
+        if (worker.reqopt.priority > MAX_PRIORITY) {
+            worker.reqopt.priority = MAX_PRIORITY;
+        }
+
+        if (worker.reqopt.priority < MIN_PRIORITY) {
+            worker.reqopt.priority = MIN_PRIORITY;
+        }
+        priority = (worker.reqopt.priority - 1);
+        /*we put it into the queue ,so handle it by default*/
+        self.priorqueue[priority].push(worker);
+        self.inner_pull_request();
+        return;
     };
 
     self.queue = function (url, reqopt) {
