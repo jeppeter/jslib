@@ -161,7 +161,11 @@ function createHkexNewsMainPost(options) {
             reuse: true,
             reqopt: {
                 body: postdata,
-                timeout: 5000
+                timeout: 5000,
+                headers: {
+                    Referer: worker.url,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
             }
         });
 

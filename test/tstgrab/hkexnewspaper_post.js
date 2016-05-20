@@ -92,10 +92,10 @@ function createHkexNewsPaperPost() {
             next(true, err);
             return;
         }
-        tracelog.info('worker (%s)', util.inspect(worker, {
+        /*tracelog.info('worker (%s)', util.inspect(worker, {
             showHidden: true,
             depth: null
-        }));
+        }));*/
 
         if (worker.reqopt.hkexnewspaper === undefined || worker.reqopt.hkexnewspaper === null || !worker.reqopt.hkexnewspaper) {
             /*if we do not handle news make*/
@@ -106,6 +106,7 @@ function createHkexNewsPaperPost() {
 
         /*now it is time ,we handle ,so we should no more to handle out*/
         tracelog.trace('request paper');
+        tracelog.info('htmldata %s', worker.htmldata);
         parser = cheerio.load(worker.htmldata);
 
         selected = parser('#ctl00_gvMain tr');
