@@ -14,14 +14,15 @@
     "url": ""
   },
   "dependencies": {
-    "yargs":"latest",
-    "request":"latest",
-    "tracer":"latest",
-    "cheerio":"latest",
-    "express":"latest",
-    "formidable":"latest",
-    "ejs":"latest",
-    "commander":"latest"
+    "yargs": "latest",
+    "request": "latest",
+    "tracer": "latest",
+    "cheerio": "latest",
+    "express": "latest",
+    "formidable": "latest",
+    "ejs": "latest",
+    "commander": "latest",
+    "keep-alive-agent": "latest"
   },
   "keywords": [],
   "author": "",

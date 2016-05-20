@@ -22,11 +22,17 @@ var handler_request = function (req, res, next) {
         showHidden: true,
         depth: null
     }));
-    if (req.session !== undefined && req.session !== null) {
+    if (req.session_set !== undefined && req.session_set !== null) {
         next();
         return;
     }
-    req.session = 'session set';
+    req.on('end', function () {
+        tracelog.info('handler ended');
+    });
+    req.on('close', function () {
+        tracelog.info('handler closed');
+    });
+    req.session_set = 'session set';
     tracelog.info('write hello');
     res.send('<html><body><p>hello world</p></body></html>');
     return;
@@ -39,10 +45,16 @@ var session_request = function (req, res, next) {
         showHidden: true,
         depth: null
     }));
-    if (req.session === undefined || req.session === null) {
+    if (req.session_set === undefined || req.session_set === null) {
         next();
         return;
     }
+    req.on('end', function () {
+        tracelog.info('session ended');
+    });
+    req.on('close', function () {
+        tracelog.info('session closed');
+    });
     tracelog.info('write session');
     res.end('<html><body><p>session read</p></body></html>');
     return;

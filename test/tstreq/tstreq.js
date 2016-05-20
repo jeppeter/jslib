@@ -1,18 +1,15 @@
 var request = require('request');
 var tracelog = require('../../tracelog');
 var commander = require('commander');
+var keepagent = require('keep-alive-agent');
+var agent = new keepagent();
 var url = 'http://127.0.0.1:9000/';
 var util = require('util');
 var req = null;
 
 commander
     .version('0.2.0')
-    .usage('[options] <url>')
-    .option('-p --port <port>', 'set port to listen', function (t, v) {
-        'use strict';
-        t = t;
-        return parseInt(v);
-    }, 9000);
+    .usage('[options] <url>');
 
 var trace_exit = function (ec) {
     'use strict';
@@ -54,13 +51,15 @@ if (commander.args !== undefined && Array.isArray(commander.args) && typeof comm
 }
 
 tracelog.info('request (%s)', url);
-req = request({
+request({
     method: 'GET',
     url: url,
+    forever: true,
     headers: {
         session: "new session",
         connection: "keep-alive"
-    }
+    },
+    agent: agent
 }, function (error, response, body) {
     'use strict';
     if (error) {
@@ -76,10 +75,12 @@ req = request({
         req.init({
             method: 'GET',
             url: url,
+            forever: true,
             headers: {
                 session: 'old session',
                 connection: 'keep-alive'
-            }
+            },
+            agent: agent
         }, function (err2, resp2, body2) {
             if (err2) {
                 tracelog.error('request (%s) error (%s)', url, JSON.stringify(err2));
@@ -97,7 +98,8 @@ req = request({
             url: url,
             headers: {
                 session: "old session"
-            }
+            },
+            agent: agent
         }, function (err2, resp2, body2) {
             if (err2) {
                 tracelog.error('request (%s) error (%s)', url, JSON.stringify(err2));
