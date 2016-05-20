@@ -9,7 +9,6 @@ function createHkexNewsDownloadPre() {
     hknews.pre_handler = function (err, worker, next) {
         var getfilename, getdir;
         var ws, fname;
-        tracelog.trace('download');
         if (err) {
             /*if we have nothing to do*/
             next(true, err);

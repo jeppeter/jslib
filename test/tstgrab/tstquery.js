@@ -30,13 +30,38 @@ var get_text_html = function (elm, parser) {
     var textkey = 'text';
     parser = parser;
     s = '';
-    if (elm[0] !== null && elm[0] !== undefined) {
+    if (elm[textkey] !== null && elm[textkey] !== undefined) {
+        if (typeof elm[textkey] === 'function') {
+            s += elm[textkey]();
+        } else if (typeof elm[textkey] === 'string') {
+            s += elm[textkey];
+        }
+    } else if (elm[0] !== null && elm[0] !== undefined) {
         if (typeof elm[0][textkey] === 'function') {
             s += elm[0][textkey]();
         } else if (typeof elm[0][textkey] === 'string') {
             s += elm[0][textkey];
         }
     }
+    return s;
+};
+
+var get_br_text = function (elm, parser) {
+    'use strict';
+    var s;
+    var curptr;
+    parser = parser;
+    s = '';
+    if (elm[0] !== null && elm[0] !== undefined) {
+        curptr = elm[0];
+        if (curptr.next !== null && curptr.next !== undefined) {
+            curptr = curptr.next;
+            if (curptr.data !== null && curptr.data !== undefined) {
+                s += curptr.data;
+            }
+        }
+    }
+
     return s;
 };
 
@@ -50,9 +75,15 @@ var get_number_list = function (value) {
     num.push(0);
     num.push(0);
     num.push(0);
-    reg = new RegExp('[^\d]+([\d]+)[^\d]+([\d]+)[^\d]+([\d]+)[^\d]+', 'i');
+    reg = new RegExp('[^\\d]+([\\d]+)[^\\d]+([\\d]+)[^\\d]+([\\d]+)[^\\d]+', 'i');
     m = reg.exec(value);
-    if (m === undefined || m === null || m.length < 4) {
+    if (m === undefined || m === null) {
+        tracelog.info('value (%s) (%s)', value, m);
+        return num;
+    }
+
+    if (m.length < 4) {
+        tracelog.info('m (%d)', m.length);
         return num;
     }
 
@@ -79,9 +110,18 @@ var get_attr_value = function (elm, parser, keyname) {
     var s;
     parser = parser;
     s = '';
-    if (elm.attribs !== null && elm.attribs !== undefined) {
-        if (elm.attribs[keyname] !== null && elm.attribs[keyname] !== undefined) {
-            s += elm.attribs[keyname];
+    if (elm[0] !== null && elm[0] !== undefined) {
+        if (elm[0].attribs !== null && elm[0].attribs !== undefined) {
+            if (elm[0].attribs[keyname] !== null && elm[0].attribs[keyname] !== undefined) {
+                s += elm[0].attribs[keyname];
+            }
+        }
+
+    } else {
+        if (elm.attribs !== null && elm.attribs !== undefined) {
+            if (elm.attribs[keyname] !== null && elm.attribs[keyname] !== undefined) {
+                s += elm.attribs[keyname];
+            }
         }
     }
     return s;
@@ -102,29 +142,22 @@ var find_query_result = function (htmldata) {
     parser = cheerio.load(htmldata);
 
     selected = parser('#ctl00_gvMain tr');
-    tracelog.info('selected length %d', selected.length);
     /*we should get table*/
     for (i = 0; i < selected.length; i += 1) {
         curtr = selected.eq(i);
-        tracelog.info('[%d]curtr (%s)', i, util.inspect(curtr, {
-            showHidden: true,
-            depth: 1
-        }));
-        spans = curtr.children('span');
-        tracelog.info('[%d] spans %d', i, spans.length);
+        spans = curtr.find('span');
         year = null;
         href = null;
         for (j = 0; j < spans.length; j += 1) {
             curspan = spans.eq(j);
             curval = get_attr_value(curspan, parser, 'id');
-            tracelog.info('id (%s)', curval);
             if (match_expr(curval, '_lbDateTime$')) {
                 /*now we get the year value*/
                 curval = get_text_html(curspan, parser);
                 if (curval !== '') {
-                    curbr = curspan.children('br');
+                    curbr = curspan.find('br');
                     if (curbr.length > 0) {
-                        brval = get_text_html(curbr, parser);
+                        brval = get_br_text(curbr, parser);
                         curval = curval.replace(brval, '');
                         sarr = curval.split('/');
                         if (sarr.length >= 3) {
@@ -132,10 +165,10 @@ var find_query_result = function (htmldata) {
                         }
                     }
                 }
-            } else if (match_expr(curval, '_hlTitle$')) {
-                cura = selected.children('a');
+            } else if (match_expr(curval, '_lbShortText$')) {
+                cura = curtr.find('a');
                 if (cura.length > 0) {
-                    curval = get_attr_value(cura, 'href');
+                    curval = get_attr_value(cura, parser, 'href');
                     if (curval !== '') {
                         href = curval;
                     }
@@ -144,7 +177,6 @@ var find_query_result = function (htmldata) {
         }
 
         if (year !== null && href !== null) {
-            tracelog.info('year (%s) href (%s)', year, href);
             curref = {};
             curref.href = href;
             curref.year = year;
@@ -155,12 +187,12 @@ var find_query_result = function (htmldata) {
     value = get_text_html(selected, parser);
     if (value === '') {
         tracelog.error('nothing to handle');
-        return findres;
+        return null;
     }
     num = get_number_list(value);
     if (num[2] === 0) {
         tracelog.error('get 0 records');
-        return findres;
+        return null;
     }
 
     if (num[1] === num[2]) {
@@ -207,7 +239,7 @@ fs.readFile(commander.args[0], function (err, data) {
         return;
     }
     list_result = find_query_result(data);
-    tracelog.info('list_result (%s)', list_result);
+    tracelog.info('list_result (%s)', util.inspect(list_result));
     trace_exit(0);
     return;
 });

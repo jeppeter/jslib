@@ -21,11 +21,11 @@ function createRandomDelay() {
             hex = buffer.toString('hex');
             num = parseInt(hex, 16);
             num %= 256;
-            if (num > 120) {
+            if (num > 100) {
                 setTimeout(function () {
                     next(true, null);
                     return;
-                }, num * 10);
+                }, num * 20);
 
             }
             return;

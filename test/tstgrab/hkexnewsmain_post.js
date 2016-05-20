@@ -176,13 +176,13 @@ function createHkexNewsMainPost(options) {
 
         /*now we find the input ,so we should all things we should put post data*/
         postdata = hknews.make_post_data(findinput);
-        tracelog.info('postdata (%s)', postdata);
+        //tracelog.info('postdata (%s)', postdata);
         worker.parent.post_queue(worker.url, {
             hkexnewspaper: true,
             reuse: true,
             reqopt: {
                 body: postdata,
-                timeout: 5000,
+                timeout: 10000,
                 headers: {
                     Referer: worker.url,
                     'Content-Type': 'application/x-www-form-urlencoded'

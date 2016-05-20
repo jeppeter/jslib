@@ -92,15 +92,15 @@ commander
         tracelog.set_commander(options.options);
         tracelog.info('args %s %s', restr, instr);
 
-        reg = new RegExp(restr);
+        reg = new RegExp(restr, 'i');
         m = reg.exec(instr);
         if (m !== null && m !== undefined) {
-            console.log('%s find (%s)', instr, restr);
+            console.log('(%s) ifind (%s)', instr, restr);
             m.forEach(function (elm, idx) {
                 console.log('[%d] (%s)', idx, elm);
             });
         } else {
-            console.log('%s not find (%s)', instr, restr);
+            console.log('(%s) not ifind (%s)', instr, restr);
         }
         trace_exit(0);
     });
