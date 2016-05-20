@@ -7,9 +7,6 @@ var grabcheerio = require('./grabcheerio');
 
 
 
-
-
-
 var get_post_data = function (viewstate) {
     'use strict';
     var postdata;
@@ -114,6 +111,14 @@ function createHkexNewsPaperPost() {
                 cururl = cururl;
             } else if (grabcheerio.match_expr_i(cururl, '\.htm[l]?$')) {
                 tracelog.info('will more query (%s)', cururl);
+                worker.parent.queue(cururl, {
+                    hkexnewsextenddir: 'dir',
+                    reuse: true,
+                    reqopt: {
+                        body: postdata,
+                        timeout: 10000
+                    }
+                });
             } else {
                 tracelog.info('unknown url (%s)', cururl);
             }

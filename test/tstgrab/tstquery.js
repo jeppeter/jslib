@@ -25,10 +25,6 @@ var trace_exit = function (ec) {
 
 
 
-
-
-
-
 var usage = function (ec, cmd, fmt) {
     'use strict';
     var fp = process.stderr;
@@ -88,6 +84,19 @@ commander
         });
     });
 
+
+commander
+    .command('combind <url> <pdf>')
+    .description('to combind url and pdf')
+    .action(function (url, pdf, options) {
+        'use strict';
+        var retval;
+        commander.subname = 'combind';
+        tracelog.set_commander(options.parent);
+
+        retval = grabcheerio.combine_dir(url, pdf);
+        console.log('<%s> <%s> = <%s>', url, pdf, retval);
+    });
 
 tracelog.init_commander(commander);
 commander.parse(process.argv);

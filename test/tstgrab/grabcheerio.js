@@ -1,5 +1,7 @@
 var tracelog = require('../../tracelog');
 var cheerio = require('cheerio');
+var URL = require('url');
+var path = require('path');
 var inner_get_text_html = function (elm, parser) {
     'use strict';
     var s;
@@ -216,13 +218,11 @@ module.exports.more_query_html = function (htmldata) {
     htmllists = [];
 
     ahrefs = parser('a');
-    tracelog.info('ahrefs %d', ahrefs.length);
     for (idx = 0; idx < ahrefs.length; idx += 1) {
         cura = ahrefs.eq(idx);
         curval = inner_get_attr_value(cura, parser, 'href');
         if (curval.length > 0) {
             if (inner_match_expr_i(curval, '\.pdf$')) {
-                tracelog.info('curval (%s)', curval);
                 htmllists.push(curval);
             } else {
                 tracelog.info('curval unknown (%s)', curval);
@@ -230,5 +230,49 @@ module.exports.more_query_html = function (htmldata) {
         }
     }
     return htmllists;
-
 };
+
+var path_to_url = function (dir) {
+    'use strict';
+    var retval;
+    retval = path.resolve(dir);
+    if (retval.length >= 2) {
+        if (retval[1] === ':') {
+            /*it is in windows mode*/
+            retval = retval.replace(/[a-zA-Z]\:/, '');
+        }
+    }
+
+    retval = retval.replace(/\\/g, '/');
+    return retval;
+};
+
+var inner_combine_dir = function (url, file) {
+    'use strict';
+    var host;
+    var proto;
+    var pathname;
+    var urlparser;
+    var retval;
+    var totaldir;
+
+    urlparser = URL.parse(url);
+    host = urlparser.host;
+    proto = urlparser.protocol;
+    pathname = urlparser.pathname;
+
+    retval = proto;
+    retval += '//';
+    retval += host;
+
+    totaldir = pathname;
+    totaldir = path.resolve(totaldir);
+    totaldir = path.dirname(totaldir);
+    totaldir += '/' + file;
+    totaldir = path.resolve(totaldir);
+    retval += path_to_url(totaldir);
+
+    return retval;
+};
+
+module.exports.combine_dir = inner_combine_dir;
