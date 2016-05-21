@@ -17,6 +17,11 @@ commander
         t = t;
         return parseInt(v);
     }, 5000)
+    .option('-j --jsonfile <jsonfile>', 'jsonfile to set for the request option default (\'\')', function (v, t) {
+        'use strict';
+        t = t;
+        return v;
+    }, '')
     .usage('[options] <url...>');
 
 var trace_exit = function (ec) {
@@ -49,33 +54,37 @@ var usage = function (ec, cmd, fmt) {
     return;
 };
 
+
 commander
     .command('get <url...>')
     .description(' get htmldata from url')
     .action(function (args, options) {
         'use strict';
+        var errcode = 0;
         commander.subname = 'get';
         tracelog.set_commander(options.parent);
         tracelog.info('args(%d) %s', args.length, args);
         if (args.length === 0) {
             usage(3, commander, 'please specify at lease one url');
         }
-        args.forEach(function (elm, idx) {
-            tracelog.info('request (%s)', elm);
-            request({
-                method: 'GET',
-                timeout: options.parent.timeout,
-                url: elm
-            }, function (error, response, body) {
-                if (error) {
-                    tracelog.error('request (%d:%s) error (%s)', idx, elm, JSON.stringify(error));
-                    trace_exit(3);
-                    return;
-                }
-                response = response;
-                tracelog.info('<%d:%s>body(%s)', idx, elm, body);
-                trace_exit(0);
+        baseop.read_json_parse(options.jsonfile, function (err, opt) {
+            if (err) {
+                tracelog.error('can not read (%s)', options.jsonfile);
+                trace_exit(3);
                 return;
+            }
+            args.forEach(function (elm, idx) {
+                request.get(elm, opt, function (err2, resp2, body2) {
+                    if (err2) {
+                        errcode = 3;
+                    } else {
+                        console.log('<%d:%s> htmls(%s)', idx, elm, body2);
+                    }
+                    resp2 = resp2;
+                    if (idx === (args.length - 1)) {
+                        trace_exit(errcode);
+                    }
+                });
             });
         });
     });
@@ -107,28 +116,71 @@ commander
             outfile = __dirname + path.sep + outfile;
         }
         tracelog.set_commander(options.parent);
-        ws = fs.createWriteStream(outfile);
-        ws.on('error', function (err) {
-            tracelog.error('parse <%s> error(%s)', outfile, JSON.stringify(err));
-            trace_exit(3);
-            return;
-        });
-        ws.on('close', function () {
-            tracelog.info('<%s> closed', url);
-            trace_exit(0);
-            return;
-        });
-        request.get(url, {
-            timeout: options.timeout
-        }, function (err) {
+
+        baseop.read_json_parse(options.parent.jsonfile, function (err, opt) {
             if (err) {
-                tracelog.error('<%s> error(%s)', url, JSON.stringify(err));
+                console.error('can not parse (%s) error(%s)', options.parent.jsonfile, JSON.stringify(err));
+                trace_exit(3);
                 return;
             }
-        }).pipe(ws);
+
+            ws = fs.createWriteStream(outfile);
+            ws.on('error', function (err) {
+                tracelog.error('parse <%s> error(%s)', outfile, JSON.stringify(err));
+                trace_exit(3);
+                return;
+            });
+            ws.on('close', function () {
+                tracelog.info('<%s> closed', url);
+                trace_exit(0);
+                return;
+            });
+            request.get(url, opt, function (err2) {
+                if (err2) {
+                    tracelog.error('<%s> error(%s)', url, JSON.stringify(err2));
+                    trace_exit(3);
+                    return;
+                }
+            }).pipe(ws);
+        });
         return;
 
     });
+
+commander
+    .command('post <url...>')
+    .description(' get htmldata from url')
+    .action(function (args, options) {
+        'use strict';
+        var errcode = 0;
+        commander.subname = 'get';
+        tracelog.set_commander(options.parent);
+        tracelog.info('args(%d) %s', args.length, args);
+        if (args.length === 0) {
+            usage(3, commander, 'please specify at lease one url');
+        }
+        baseop.read_json_parse(options.jsonfile, function (err, opt) {
+            if (err) {
+                tracelog.error('can not read (%s)', options.jsonfile);
+                trace_exit(3);
+                return;
+            }
+            args.forEach(function (elm, idx) {
+                request.get(elm, opt, function (err2, resp2, body2) {
+                    if (err2) {
+                        errcode = 3;
+                    } else {
+                        console.log('<%d:%s> htmls(%s)', idx, elm, body2);
+                    }
+                    resp2 = resp2;
+                    if (idx === (args.length - 1)) {
+                        trace_exit(errcode);
+                    }
+                });
+            });
+        });
+    });
+
 
 tracelog.init_commander(commander);
 commander.parse(process.argv);

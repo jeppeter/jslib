@@ -179,6 +179,30 @@ commander
         return;
     });
 
+commander
+    .command('readjson <jsonfile>')
+    .description(' readjson and parse opt')
+    .action(function (jsonfile, options) {
+        'use strict';
+        commander.subname = 'readjson';
+        tracelog.set_commander(options.parent);
+        baseop.read_json_parse(jsonfile, function (err, opt) {
+            if (err) {
+                console.error('read (%s) error(%s)', jsonfile, JSON.stringify(err));
+                trace_exit(3);
+                return;
+            }
+
+            console.log('<%s> (%s)', jsonfile, util.inspect(opt, {
+                showHidden: true,
+                depth: null
+            }));
+            trace_exit(0);
+            return;
+        });
+        return;
+    });
+
 
 tracelog.init_commander(commander);
 commander.parse(process.argv);

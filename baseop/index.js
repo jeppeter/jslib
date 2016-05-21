@@ -324,3 +324,31 @@ var parse_number = function (valstr) {
 };
 
 module.exports.parse_number = parse_number;
+
+
+var read_json_parse = function (fname, callback) {
+    'use strict';
+    var opt;
+    if (fname.length === 0) {
+        callback(null, {});
+        return;
+    }
+    fs.readFile(fname, function (err, data) {
+        if (err) {
+            callback(err, null);
+            return;
+        }
+        try {
+            opt = JSON.parse(data);
+            callback(null, opt);
+        } catch (e) {
+            callback(e, null);
+            return;
+        }
+        return;
+    });
+    return;
+};
+
+
+module.exports.read_json_parse = read_json_parse;
