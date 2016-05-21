@@ -7,13 +7,6 @@ var MAX_PRIORITY = 5;
 var DEF_PRIORITY = 3;
 var MIN_PRIORITY = 1;
 
-var is_pdf_down_worker = function (worker) {
-    'use strict';
-    if (/\.pdf$/.test(worker.url)) {
-        return true;
-    }
-    return false;
-};
 
 function createWorker(parent, meth, url, reqopt) {
     'use strict';
@@ -72,9 +65,6 @@ function createWorker(parent, meth, url, reqopt) {
             if (worker.preidx < parent.pre_handlers.length) {
                 /*we inc for it will call when*/
                 idx = worker.preidx;
-                if (is_pdf_down_worker(worker)) {
-                    tracelog.info('<%s>call [%d] pre_next', worker.url, idx);
-                }
                 worker.preidx += 1;
                 handler = parent.pre_handlers[idx];
                 handler.pre_handler(err, worker, worker.pre_next);
@@ -164,7 +154,6 @@ function createGrabwork(options) {
         if (worker.pipe !== null && worker.pipe !== undefined) {
             /*we should on end to finish the */
             worker.pipe.on('close', function () {
-                tracelog.info('(%s) close', worker.url);
                 worker.finish(null);
             });
             worker.pipe.on('error', function (err) {
@@ -180,12 +169,6 @@ function createGrabwork(options) {
                 }
             }).pipe(worker.pipe);
         } else {
-            if (is_pdf_down_worker(worker)) {
-                tracelog.info('<%s>reqopt (%s)', worker.url, util.inspect(worker.reqopt, {
-                    showHidden: true,
-                    depth: null
-                }));
-            }
             request(reqopt, function (err, resp, body) {
                 if (err === null) {
                     worker.response = resp;
@@ -252,7 +235,6 @@ function createGrabwork(options) {
 
     self.request_work = function (worker) {
         var priority;
-        var retval;
         if (worker.reqopt.priority === null || worker.reqopt.priority === undefined) {
             worker.reqopt.priority = DEF_PRIORITY;
         }
@@ -267,10 +249,7 @@ function createGrabwork(options) {
         priority = (worker.reqopt.priority - 1);
         /*we put it into the queue ,so handle it by default*/
         self.priorqueue[priority].push(worker);
-        retval = self.inner_pull_request();
-        if (retval === 0) {
-            tracelog.warn('(%s)(%s)on queued', worker.meth, worker.url);
-        }
+        self.inner_pull_request();
         return;
     };
 
@@ -278,12 +257,6 @@ function createGrabwork(options) {
         var worker = createWorker(self, meth, url, reqopt);
         if (typeof reqopt.finish_callback === 'function') {
             worker.add_finish(reqopt.finish_callback);
-        }
-        if (is_pdf_down_worker(worker)) {
-            tracelog.info('<%s>reqopt (%s)', worker.url, util.inspect(worker.reqopt, {
-                showHidden: true,
-                depth: null
-            }));
         }
         if (typeof reqopt.notice_callback === 'function') {
             reqopt.notice_callback(null, worker, worker.pre_next);
@@ -331,6 +304,7 @@ function createGrabwork(options) {
         self.post_handlers.push(handler);
         return;
     };
+
     return self;
 }
 

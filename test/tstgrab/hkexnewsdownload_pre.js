@@ -3,7 +3,7 @@ var urlparse = require('url');
 var path = require('path');
 var fs = require('fs');
 var baseop = require('../../baseop');
-var util = require('util');
+//var util = require('util');
 
 function createHkexNewsDownloadPre() {
     'use strict';
@@ -15,19 +15,30 @@ function createHkexNewsDownloadPre() {
             return;
         }
 
-
         if (baseop.is_in_array(hknews.workingfiles, worker.hkexnewsdownloadfile)) {
             /*we should remove the */
             hknews.workingfiles = baseop.remove_array(hknews.workingfiles, worker.hkexnewsdownloadfile);
+        } else {
+            tracelog.warn('<%s> not in workingfiles', worker.hkexnewsdownloadfile);
         }
 
         if (err) {
             /*this is error code so we should make return*/
-            if (baseop.is_valid_string(worker, 'url')) {
-                tracelog.warn('request (%s) again', worker.url);
-                worker.parent.queue(worker.url, {
-                    hkexnewsdownloaddir: worker.reqopt.hkexnewsdownloaddir
-                });
+            if (baseop.is_valid_string(worker, 'url', 1)) {
+                var trytimes = 0;
+                if (typeof worker.reqopt.hkexnewsdownloadtries === 'number') {
+                    trytimes = worker.reqopt.hkexnewsdownloadtries;
+                }
+                trytimes += 1;
+                if (trytimes < 5) {
+                    tracelog.warn('[%d]request (%s) again', trytimes, worker.url);
+                    worker.parent.queue(worker.url, {
+                        hkexnewsdownloaddir: worker.reqopt.hkexnewsdownloaddir,
+                        hkexnewsdownloadtries: trytimes
+                    });
+                } else {
+                    tracelog.error('request (%s) failed totally', worker.url);
+                }
             }
         }
 
@@ -79,14 +90,9 @@ function createHkexNewsDownloadPre() {
                     next(false, err);
                     return;
                 }
-                tracelog.info('(%s) pipe for (%s)', worker.url, fname);
                 /*we make sure the timeout not let it out*/
                 worker.reqopt.timeout = 10000 * 1000;
                 worker.pipe = fs.createWriteStream(fname);
-                tracelog.trace('<%s>worker (%s)', worker.url, util.inspect(worker.reqopt, {
-                    showHidden: true,
-                    depth: 3
-                }));
                 next(false, null);
                 return;
             });

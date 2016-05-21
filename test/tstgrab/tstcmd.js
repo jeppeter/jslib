@@ -120,6 +120,7 @@ tracelog.set_commander(commander);
 
 grab.add_pre(random_delay());
 grab.add_pre(hkexnewsdownload_pre());
+grab.add_post(random_delay());
 grab.add_post(hkexnewsmain_post(commander));
 grab.add_post(hkexnewspaper_post());
 grab.add_post(hkexnewsextend_post());
