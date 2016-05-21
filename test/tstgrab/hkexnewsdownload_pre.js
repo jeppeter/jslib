@@ -15,7 +15,7 @@ function createHkexNewsDownloadPre() {
         }
 
 
-        if (worker.hkexnewsdownloadfile !== null && worker.hkexnewsdownloadfile !== undefined && worker.hkexnewsdownloadfile.length > 0 && hknews.workingfiles.indexOf(worker.hkexnewsdownloadfile) >= 0) {
+        if (baseop.is_in_array(hknews.workingfiles, worker.hkexnewsdownloadfile)) {
             /*we should remove the */
             hknews.workingfiles = baseop.remove_array(hknews.workingfiles, worker.hkexnewsdownloadfile);
         }
@@ -51,7 +51,6 @@ function createHkexNewsDownloadPre() {
         }
 
         /*now it is time ,we handle ,so we should no more to handle out*/
-        tracelog.trace('download dir', worker.reqopt.hkexnewsdownloaddir);
         getdir = urlparse.parse(worker.url);
         getfilename = path.basename(getdir.pathname);
 
@@ -68,15 +67,18 @@ function createHkexNewsDownloadPre() {
         fname += getfilename;
         if (!baseop.is_in_array(hknews.workingfiles, fname)) {
             fdir = path.dirname(fname);
-            tracelog.info('get (%s) => (%s)(%s)', worker.url, fname, fdir);
             worker.hkexnewsdownloadfile = fname;
             hknews.workingfiles.push(fname);
             baseop.mkdir_safe(fdir, function (err) {
                 if (err) {
+                    tracelog.error('can not mkdir(%s)', fdir);
                     worker.url = '';
                     next(false, err);
                     return;
                 }
+                tracelog.info('(%s) pipe', worker.url);
+                /*we make sure the timeout not let it out*/
+                worker.reqopt.timeout = 10000 * 1000;
                 worker.pipe = fs.createWriteStream(fname);
                 next(false, null);
                 return;

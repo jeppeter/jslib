@@ -137,6 +137,48 @@ commander
         return;
     });
 
+commander
+    .command('validnum <num>')
+    .option('--is16', 'set is 16')
+    .description(' validdate date')
+    .action(function (numstr, options) {
+        'use strict';
+        var errcode = 0;
+        commander.subname = 'validnum';
+        tracelog.set_commander(options.parent);
+        if (baseop.is_valid_number(numstr, options.is16)) {
+            console.log('<%s> is valid number', numstr);
+        } else {
+            console.error('<%s> is not valid number', numstr);
+            errcode = 3;
+        }
+        trace_exit(errcode);
+        return;
+    });
+
+commander
+    .command('parsenum <num>')
+    .description(' parsenum number')
+    .action(function (numstr, options) {
+        'use strict';
+        var errcode = 0;
+        var num;
+        commander.subname = 'parsenum';
+        tracelog.set_commander(options.parent);
+        num = baseop.parse_number(numstr);
+        if (!isNaN(num)) {
+            if (baseop.is_valid_float(numstr)) {
+                console.log('<%s> number %s', numstr, num);
+            } else {
+                console.log('<%s> number %d', numstr, num);
+            }
+        } else {
+            console.error('<%s> not valid number', numstr);
+        }
+        trace_exit(errcode);
+        return;
+    });
+
 
 tracelog.init_commander(commander);
 commander.parse(process.argv);

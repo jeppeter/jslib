@@ -241,3 +241,86 @@ var is_valid_date = function (datestr) {
 };
 
 module.exports.is_valid_date = is_valid_date;
+
+var is_valid_float = function (v) {
+    'use strict';
+    var isvalid = false;
+    if (match_expr_i(v, '^[\+\-]?([0-9]+)?\.[0-9]+$')) {
+        isvalid = true;
+    }
+    return isvalid;
+};
+
+module.exports.is_valid_float = is_valid_float;
+
+var is_valid_number = function (v, is16) {
+    'use strict';
+    var isvalid = false;
+    var i, partnum;
+    if (is16 === undefined || is16 === null) {
+        is16 = false;
+    }
+    if (typeof v === 'string') {
+        if (!is16 && match_expr_i(v, '^[\+\-]?[0-9]+(\.[0-9]*)?$')) {
+            isvalid = true;
+        } else if (is16) {
+            if (!isvalid && v.length > 2 && v[0] === '0' && (v[1] === 'x' || v[1] === 'X')) {
+                partnum = '';
+                for (i = 2; i < v.length; i += 1) {
+                    partnum += v[i];
+                }
+
+                if (match_expr(partnum, '^[a-f0-9A-Z]+$')) {
+                    isvalid = true;
+                }
+            }
+
+            if (!isvalid && v.length > 1 && (v[0] === 'x' || v[0] === 'X')) {
+                partnum = '';
+                for (i = 1; i < v.length; i += 1) {
+                    partnum += v[i];
+                }
+
+                if (match_expr(partnum, '^[a-f0-9A-Z]+$')) {
+                    isvalid = true;
+                }
+            }
+        }
+    }
+    return isvalid;
+};
+
+module.exports.is_valid_number = is_valid_number;
+
+var parse_number = function (valstr) {
+    'use strict';
+    var numstr;
+    var fromidx;
+    if (is_valid_number(valstr, false)) {
+        if (is_valid_float(valstr)) {
+            return parseFloat(valstr);
+        }
+        return parseInt(valstr, 10);
+    }
+
+    if (is_valid_number(valstr, true)) {
+        fromidx = 0;
+        if (valstr[1] === 'x' || valstr[1] === 'X') {
+            fromidx = 2;
+        }
+
+        if (valstr[0] === 'x' || valstr[0] === 'X') {
+            fromidx = 1;
+        }
+
+        numstr = '';
+        while (fromidx < valstr.length) {
+            numstr += valstr[fromidx];
+            fromidx += 1;
+        }
+        return parseInt(numstr, 16);
+    }
+    return NaN;
+};
+
+module.exports.parse_number = parse_number;

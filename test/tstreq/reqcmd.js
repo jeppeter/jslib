@@ -2,6 +2,8 @@ var request = require('request');
 var tracelog = require('../../tracelog');
 var commander = require('commander');
 var util = require('util');
+var URL = require('url');
+var path = require('path');
 commander.subname = '';
 commander.subopt = {};
 commander.subargs = [];
@@ -73,6 +75,38 @@ commander
                 return;
             });
         });
+    });
+
+commander
+    .command('pipe <url> [outfile]')
+    .option('--timeout <timemills>', 'time mills for download', function (t, v) {
+        'use strict';
+        if (baseop.is_valid_date(t)) {
+            return t;
+        }
+        return v;
+    }, 30000)
+    .description(' downfile to file')
+    .action(function (url, outfile, options) {
+        'use strict';
+        var parser;
+        commander.subname = 'pipe';
+        if (options === null || options === undefined) {
+            options = outfile;
+            outfile = null;
+        }
+
+        if (outfile === null || outfile === undefined) {
+            parser = URL.parse(url);
+            outfile = parser.pathname;
+            outfile = path.basename(outfile);
+            outfile = __dirname + path.sep + outfile;
+        }
+        tracelog.set_commander(options.parent);
+        request.get(url, {
+
+        }, )
+
     });
 
 tracelog.init_commander(commander);

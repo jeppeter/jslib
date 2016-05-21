@@ -137,6 +137,7 @@ function createGrabwork(options) {
         if (worker.pipe !== null && worker.pipe !== undefined) {
             /*we should on end to finish the */
             worker.pipe.on('close', function () {
+                tracelog.info('(%s) close', worker.url);
                 worker.finish(null);
             });
             worker.pipe.on('error', function (err) {
