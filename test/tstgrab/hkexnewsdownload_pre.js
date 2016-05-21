@@ -37,6 +37,7 @@ function createHkexNewsDownloadPre() {
     hknews.pre_handler = function (err, worker, next) {
         var getfilename, getdir;
         var fname;
+        var fdir;
         if (err) {
             /*if we have nothing to do*/
             next(true, err);
@@ -66,14 +67,25 @@ function createHkexNewsDownloadPre() {
         fname += path.sep;
         fname += getfilename;
         if (!baseop.is_in_array(hknews.workingfiles, fname)) {
-            tracelog.info('get (%s) => (%s)', worker.url, fname);
+            fdir = path.dirname(fname);
+            tracelog.info('get (%s) => (%s)(%s)', worker.url, fname, fdir);
             worker.hkexnewsdownloadfile = fname;
             hknews.workingfiles.push(fname);
+            baseop.mkdir_safe(fdir, function (err) {
+                if (err) {
+                    worker.url = '';
+                    next(false, err);
+                    return;
+                }
+                worker.pipe = fs.createWriteStream(fname);
+                next(false, null);
+                return;
+            });
+            return;
         }
-        /*we do not need any more*/
-        //worker.pipe = ws;
-        fs = fs;
+        /*the file is already handled ,so we do not handle this any more*/
         worker.url = '';
+        next(true, null);
         return;
     };
 
