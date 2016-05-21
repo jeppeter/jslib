@@ -1,6 +1,6 @@
 var fs = require('fs');
 var path = require('path');
-var tracelog = require('../tracelog');
+//var tracelog = require('../tracelog');
 var util = require('util');
 module.exports.remove_array = function (array, elm) {
     'use strict';
@@ -106,7 +106,6 @@ var __mkdir_upstream = function (callstate) {
     }
     parentdir = path.resolve(callstate.pathname, '..');
     newcallstate = new CreateMkdirCallState(parentdir, callstate);
-    tracelog.info('call up %s', parentdir);
     newcallstate.inner_fn(null, newcallstate);
     return;
 };
@@ -120,6 +119,8 @@ var __mkdir_downstream = function (err, callstate) {
     } else {
         callstate.call_fn(err);
     }
+    callstate = {};
+    newstate = {};
     return;
 };
 

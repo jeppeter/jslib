@@ -1,25 +1,25 @@
-var tracelog = require('../../tracelog');
+var tracelog = require('../tracelog');
 var urlparse = require('url');
 var path = require('path');
 var fs = require('fs');
-var baseop = require('../../baseop');
+var baseop = require('../baseop');
 //var util = require('util');
 
-function createHkexNewsDownloadPre() {
+function createDownloadPre() {
     'use strict';
     var hknews = {};
     hknews.workingfiles = [];
     hknews.finish_callback = function (worker, err, next) {
-        if (!baseop.is_valid_string(worker.reqopt, 'hkexnewsdownloaddir')) {
+        if (!baseop.is_valid_string(worker.reqopt, 'downloaddir')) {
             next(err);
             return;
         }
 
-        if (baseop.is_in_array(hknews.workingfiles, worker.hkexnewsdownloadfile)) {
+        if (baseop.is_in_array(hknews.workingfiles, worker.downloadfile)) {
             /*we should remove the */
-            hknews.workingfiles = baseop.remove_array(hknews.workingfiles, worker.hkexnewsdownloadfile);
+            hknews.workingfiles = baseop.remove_array(hknews.workingfiles, worker.downloadfile);
         } else {
-            tracelog.warn('<%s> not in workingfiles', worker.hkexnewsdownloadfile);
+            tracelog.warn('<%s> not in workingfiles', worker.downloadfile);
         }
 
         if (err) {
@@ -33,7 +33,7 @@ function createHkexNewsDownloadPre() {
                 if (trytimes < 5) {
                     tracelog.warn('[%d]request (%s) again', trytimes, worker.url);
                     worker.parent.queue(worker.url, {
-                        hkexnewsdownloaddir: worker.reqopt.hkexnewsdownloaddir,
+                        downloaddir: worker.reqopt.downloaddir,
                         hkexnewsdownloadtries: trytimes
                     });
                 } else {
@@ -51,14 +51,14 @@ function createHkexNewsDownloadPre() {
         var fname;
         var fdir;
 
-        if (!baseop.is_valid_string(worker.reqopt, 'hkexnewsdownloaddir', 0)) {
+        if (!baseop.is_valid_string(worker.reqopt, 'downloaddir', 0)) {
             /*if we do not handle news make*/
             next(true, err);
             return;
         }
         if (err) {
             /*if we have nothing to do*/
-            tracelog.error('hkexnewsdownloaddir (%s) error(%s)', worker.reqopt.hkexnewsdownloaddir, JSON.stringify(err));
+            tracelog.error('downloaddir (%s) error(%s)', worker.reqopt.downloaddir, JSON.stringify(err));
             worker.url = '';
             next(false, err);
             return;
@@ -76,12 +76,12 @@ function createHkexNewsDownloadPre() {
             return;
         }
         worker.add_finish(hknews.finish_callback);
-        fname = worker.reqopt.hkexnewsdownloaddir;
+        fname = worker.reqopt.downloaddir;
         fname += path.sep;
         fname += getfilename;
         if (!baseop.is_in_array(hknews.workingfiles, fname)) {
             fdir = path.dirname(fname);
-            worker.hkexnewsdownloadfile = fname;
+            worker.downloadfile = fname;
             hknews.workingfiles.push(fname);
             baseop.mkdir_safe(fdir, function (err) {
                 if (err) {
@@ -109,4 +109,4 @@ function createHkexNewsDownloadPre() {
 }
 
 
-module.exports = createHkexNewsDownloadPre;
+module.exports = createDownloadPre;

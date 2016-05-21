@@ -7,7 +7,7 @@ var grab = grabwork();
 var hkexnewsmain_post = require('./hkexnewsmain_post');
 var hkexnewspaper_post = require('./hkexnewspaper_post');
 var hkexnewsextend_post = require('./hkexnewsextend_post');
-var hkexnewsdownload_pre = require('./hkexnewsdownload_pre');
+var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('./random_delay');
 var commander = require('commander');
 var curdate;
@@ -119,7 +119,7 @@ tracelog.set_commander(commander);
 
 
 grab.add_pre(random_delay());
-grab.add_pre(hkexnewsdownload_pre());
+grab.add_pre(download_pre(commander));
 grab.add_post(random_delay());
 grab.add_post(hkexnewsmain_post(commander));
 grab.add_post(hkexnewspaper_post());

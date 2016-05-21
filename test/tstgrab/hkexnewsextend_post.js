@@ -55,7 +55,7 @@ function createHkexNewsPaperPost() {
             curpdf = grabcheerio.combine_dir(worker.url, pdfs[i]);
             if (baseop.match_expr_i(curpdf, '\.pdf$')) {
                 worker.parent.queue(curpdf, {
-                    hkexnewsdownloaddir: downdir
+                    downloaddir: downdir
                 });
             }
 
