@@ -353,3 +353,18 @@ var read_json_parse = function (fname, callback) {
 
 
 module.exports.read_json_parse = read_json_parse;
+
+var is_non_null = function (opt, name) {
+    'use strict';
+    var isvalid = true;
+    if (opt === undefined || opt === null) {
+        isvalid = false;
+    } else {
+        if (opt[name] === undefined || opt[name] === null) {
+            isvalid = false;
+        }
+    }
+    return isvalid;
+};
+
+module.exports.is_non_null = is_non_null;

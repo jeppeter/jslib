@@ -8,7 +8,7 @@ var hkexnewsmain_post = require('./hkexnewsmain_post');
 var hkexnewspaper_post = require('./hkexnewspaper_post');
 var hkexnewsextend_post = require('./hkexnewsextend_post');
 var download_pre = require('../../grabwork/download_pre');
-var random_delay = require('./random_delay');
+var random_delay = require('../../grabwork/random_delay');
 var commander = require('commander');
 var curdate;
 var d = new Date();
@@ -96,6 +96,18 @@ commander
         v = v;
         return t;
     }, __dirname)
+    .option('-w --watermark <watermark>', 'watermark to delay default is (20)', function (t, v) {
+        'use strict';
+        var tmpval;
+        if (typeof t === 'string' && t.length === 5 && baseop.match_expr_i(t, '[0-9]+')) {
+            tmpval = parseInt(t);
+            if (tmpval < 256) {
+                return tmpval;
+            }
+        }
+        usage(3, commander, util.format('<%s> not valid watermark', t));
+        return v;
+    }, 20)
     .option('-U --url <url>', 'specify url', function (t, v) {
         'use strict';
         v = v;
@@ -120,7 +132,7 @@ tracelog.set_commander(commander);
 
 grab.add_pre(random_delay());
 grab.add_pre(download_pre(commander));
-grab.add_post(random_delay());
+grab.add_post(random_delay(commander));
 grab.add_post(hkexnewsmain_post(commander));
 grab.add_post(hkexnewspaper_post());
 grab.add_post(hkexnewsextend_post());

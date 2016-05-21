@@ -1,19 +1,18 @@
 var crypto = require('crypto');
-var tracelog = require('../../tracelog');
-var util = require('util');
-
-var is_pdf_down_worker = function (worker) {
-    'use strict';
-    if (/\.pdf$/.test(worker.url)) {
-        return true;
-    }
-    return false;
-};
+//var tracelog = require('../tracelog');
+//var util = require('util');
+var baseop = require('../baseop');
 
 
-function createRandomDelay() {
+function createRandomDelay(options) {
     'use strict';
     var hknews = {};
+
+    hknews.options = {};
+    hknews.options.watermark = 20;
+    if (baseop.is_non_null(options, 'watermark') && options.watermark < 256) {
+        hknews.options.watermark = options.watermark;
+    }
 
     hknews.pre_handler = function (err, worker, next) {
         if (err) {
@@ -31,7 +30,7 @@ function createRandomDelay() {
             hex = buffer.toString('hex');
             num = parseInt(hex, 16);
             num %= 256;
-            if (num > 20) {
+            if (num > hknews.options.watermark) {
                 setTimeout(function () {
                     next(true, null);
                     return;
@@ -48,12 +47,7 @@ function createRandomDelay() {
             next(true, err);
             return;
         }
-        if (is_pdf_down_worker(worker)) {
-            tracelog.info('<%s>reqopt (%s)', worker.url, util.inspect(worker.reqopt, {
-                showHidden: true,
-                depth: null
-            }));
-        }
+        worker = worker;
         crypto.randomBytes(1, function (err, buffer) {
             var hex;
             var num;
@@ -64,7 +58,7 @@ function createRandomDelay() {
             hex = buffer.toString('hex');
             num = parseInt(hex, 16);
             num %= 256;
-            if (num > 20) {
+            if (num > hknews.options.watermark) {
                 setTimeout(function () {
                     next(true, null);
                     return;
