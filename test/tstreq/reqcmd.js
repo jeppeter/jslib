@@ -153,24 +153,28 @@ commander
     .action(function (args, options) {
         'use strict';
         var errcode = 0;
-        commander.subname = 'get';
+        commander.subname = 'post';
         tracelog.set_commander(options.parent);
         tracelog.info('args(%d) %s', args.length, args);
         if (args.length === 0) {
             usage(3, commander, 'please specify at lease one url');
         }
-        baseop.read_json_parse(options.jsonfile, function (err, opt) {
+        baseop.read_json_parse(options.parent.jsonfile, function (err, opt) {
             if (err) {
-                tracelog.error('can not read (%s)', options.jsonfile);
+                tracelog.error('can not read (%s) (%s)', options.parent.jsonfile, JSON.stringify(err));
                 trace_exit(3);
                 return;
             }
             args.forEach(function (elm, idx) {
-                request.get(elm, opt, function (err2, resp2, body2) {
+                request.post(elm, opt, function (err2, resp2, body2) {
                     if (err2) {
                         errcode = 3;
                     } else {
-                        console.log('<%d:%s> htmls(%s)', idx, elm, body2);
+                        tracelog.info('<%d:%s> htmls(%s)', idx, elm, body2);
+                        tracelog.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp2.headers, {
+                            showHidden: true,
+                            depth: null
+                        }));
                     }
                     resp2 = resp2;
                     if (idx === (args.length - 1)) {

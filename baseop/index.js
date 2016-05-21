@@ -329,7 +329,7 @@ module.exports.parse_number = parse_number;
 var read_json_parse = function (fname, callback) {
     'use strict';
     var opt;
-    if (fname.length === 0) {
+    if (typeof fname !== 'string' || fname.length === 0) {
         callback(null, {});
         return;
     }
@@ -342,7 +342,7 @@ var read_json_parse = function (fname, callback) {
             opt = JSON.parse(data);
             callback(null, opt);
         } catch (e) {
-            callback(e, null);
+            callback(e, {});
             return;
         }
         return;
