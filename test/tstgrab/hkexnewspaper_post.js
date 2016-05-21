@@ -5,7 +5,7 @@ var util = require('util');
 var URL = require('url');
 var grabcheerio = require('./grabcheerio');
 var path = require('path');
-
+var baseop = require('../../baseop');
 
 var get_post_data = function (viewstate) {
     'use strict';
@@ -36,19 +36,21 @@ function createHkexNewsPaperPost() {
         var cururl;
         var downdir;
         //tracelog.trace('newspaper');
-        if (err) {
-            /*if we have nothing to do*/
-            next(true, err);
-            return;
-        }
         /*tracelog.info('worker (%s)', util.inspect(worker, {
             showHidden: true,
             depth: null
         }));*/
 
-        if (worker.reqopt.hkexnewspaper === undefined || worker.reqopt.hkexnewspaper === null || worker.reqopt.hkexnewspaper.length === 0) {
+        if (!baseop.is_valid_string(worker.reqopt, 'hkexnewspaper')) {
             /*if we do not handle news make*/
             next(true, err);
+            return;
+        }
+
+
+        if (err) {
+            /*we have handler this functions*/
+            next(false, err);
             return;
         }
 
@@ -83,7 +85,7 @@ function createHkexNewsPaperPost() {
             postdata = get_post_data(curval);
             //tracelog.info('postdata (%s)', postdata);
             worker.parent.post_queue(worker.url, {
-                hkexnewspaper: true,
+                hkexnewspaper: worker.reqopt.hkexnewspaper,
                 reuse: true,
                 reqopt: {
                     body: postdata,
@@ -108,12 +110,13 @@ function createHkexNewsPaperPost() {
             downdir = worker.reqopt.hkexnewspaper;
             downdir += path.sep;
             downdir += findres.lists_html[i].year;
-            if (grabcheerio.match_expr_i(cururl, '\.pdf$')) {
+            if (baseop.match_expr_i(cururl, '\.pdf$')) {
                 /*store by year */
+                tracelog.info('downdir (%s)', downdir);
                 worker.parent.post_queue(cururl, {
                     hkexnewsdownloaddir: downdir
                 });
-            } else if (grabcheerio.match_expr_i(cururl, '\.htm[l]?$')) {
+            } else if (baseop.match_expr_i(cururl, '\.htm[l]?$')) {
                 tracelog.info('will more query (%s)', cururl);
                 worker.parent.queue(cururl, {
                     hkexnewsextenddir: downdir,

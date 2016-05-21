@@ -1,5 +1,7 @@
 var tracelog = require('../../tracelog');
 var grabwork = require('../../grabwork');
+var baseop = require('../../baseop');
+var util = require('util');
 //var util = require('util');
 var grab = grabwork();
 var hkexnewsmain_post = require('./hkexnewsmain_post');
@@ -8,6 +10,14 @@ var hkexnewsextend_post = require('./hkexnewsextend_post');
 var hkexnewsdownload_pre = require('./hkexnewsdownload_pre');
 var random_delay = require('./random_delay');
 var commander = require('commander');
+var curdate;
+var d = new Date();
+
+curdate = '';
+curdate += baseop.number_format_length(4, d.getFullYear());
+curdate += baseop.number_format_length(2, d.getMonth() + 1);
+curdate += baseop.number_format_length(2, d.getDate());
+
 
 commander.subname = '';
 commander.subopt = {};
@@ -25,14 +35,63 @@ var trace_exit = function (ec) {
     return;
 };
 
+var usage = function (ec, cmd, fmt) {
+    'use strict';
+    var fp = process.stderr;
+    if (ec === 0) {
+        fp = process.stdout;
+    }
+
+    if (fmt !== undefined && typeof fmt === 'string' && fmt.length > 0) {
+        fp.write(util.format('%s\n', fmt));
+    }
+
+    cmd.outputHelp(function (txt) {
+        fp.write(txt);
+        return '';
+    });
+    trace_exit(ec);
+    return;
+};
+
+
 commander
     .version('0.2.0')
-    .option('-m --grabmaxsock <num>', 'grab max socket in one', function (v, t) {
+    .option('-m --grabmaxsock <num>', 'grab max socket in one default(10)', function (t, v) {
         'use strict';
         v = v;
-        return t;
+        return parseInt(t);
     }, 10)
-    .option('-U --url <url>', 'specify url', function (v, t) {
+    .option('-t --grabtimeout <time>', 'grab timeout in one deafult(10000)', function (t, v) {
+        'use strict';
+        v = v;
+        return parseInt(t);
+    }, 10000)
+    .option('-S --startdate <date>', 'startdate search for deafult(19990101)', function (t, v) {
+        'use strict';
+        if (baseop.is_valid_date(t)) {
+            return t;
+        }
+        usage(3, commander, util.format('<%s> not valid date', t));
+        return v;
+    }, '19990101')
+    .option('-E --enddate <date>', util.format('enddate search for default(%s)', curdate), function (t, v) {
+        'use strict';
+        if (baseop.is_valid_date(t)) {
+            return t;
+        }
+        usage(3, commander, util.format('<%s> not valid date', t));
+        return v;
+    }, curdate)
+    .option('-s --stockcode <code>', 'stock code for HKEX as 5 bytes default(02010)', function (t, v) {
+        'use strict';
+        if (typeof t === 'string' && t.length === 5 && baseop.match_expr_i(t, '[0-9]+')) {
+            return t;
+        }
+        usage(3, commander, util.format('<%s> not valid stockcode', t));
+        return v;
+    }, '02010')
+    .option('-U --url <url>', 'specify url', function (t, v) {
         'use strict';
         v = v;
         return t;

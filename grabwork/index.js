@@ -1,18 +1,12 @@
 var request = require('request');
 var tracelog = require('../tracelog');
+var baseop = require('../baseop');
 //var util = require('util');
 
 var MAX_PRIORITY = 5;
 var DEF_PRIORITY = 3;
 var MIN_PRIORITY = 1;
 
-var remove_member = function (listmem, valmem) {
-    'use strict';
-    listmem = listmem.filter(function (e) {
-        return e !== valmem;
-    });
-    return listmem;
-};
 
 function createWorker(parent, meth, url, reqopt) {
     'use strict';
@@ -177,7 +171,7 @@ function createGrabwork(options) {
             for (i = 0; i < MAX_PRIORITY; i += 1) {
                 if (self.priorqueue[i].length > 0) {
                     getworker = self.priorqueue[i][0];
-                    self.priorqueue[i] = remove_member(self.priorqueue[i], getworker);
+                    self.priorqueue[i] = baseop.remove_array(self.priorqueue[i], getworker);
                     break;
                 }
             }
@@ -198,19 +192,19 @@ function createGrabwork(options) {
         var retval = 0;
         for (i = 0; i < MAX_PRIORITY; i += 1) {
             if (self.priorqueue[i].indexOf(worker) >= 0) {
-                self.priorqueue[i] = remove_member(self.priorqueue[i], worker);
+                self.priorqueue[i] = baseop.remove_array(self.priorqueue[i], worker);
                 retval += 1;
                 break;
             }
         }
 
         if (self.reqworkqueue.indexOf(worker) >= 0) {
-            self.reqworkqueue = remove_member(self.reqworkqueue, worker);
+            self.reqworkqueue = baseop.remove_array(self.reqworkqueue, worker);
             retval += 1;
         }
 
         if (self.workers.indexOf(worker) >= 0) {
-            self.workers = remove_member(self.workers, worker);
+            self.workers = baseop.remove_array(self.workers, worker);
         }
 
         /*we have remove some thing,so we can pull request*/

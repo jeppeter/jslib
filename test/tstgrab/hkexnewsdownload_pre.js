@@ -2,13 +2,41 @@ var tracelog = require('../../tracelog');
 var urlparse = require('url');
 var path = require('path');
 var fs = require('fs');
+var baseop = require('../../baseop');
 
 function createHkexNewsDownloadPre() {
     'use strict';
     var hknews = {};
+    hknews.workingfiles = [];
+    hknews.finish_callback = function (worker, err, next) {
+        if (baseop.is_valid_string(worker.reqopt, 'hkexnewsdownloaddir')) {
+            next(err);
+            return;
+        }
+
+
+        if (worker.hkexnewsdownloadfile !== null && worker.hkexnewsdownloadfile !== undefined && worker.hkexnewsdownloadfile.length > 0 && hknews.workingfiles.indexOf(worker.hkexnewsdownloadfile) >= 0) {
+            /*we should remove the */
+            hknews.workingfiles = baseop.remove_array(hknews.workingfiles, worker.hkexnewsdownloadfile);
+        }
+
+        if (err) {
+            /*this is error code so we should make return*/
+            if (baseop.is_valid_string(worker, 'url')) {
+                tracelog.warn('request (%s) again', worker.url);
+                worker.parent.queue(worker.url, {
+                    hkexnewsdownloaddir: worker.reqopt.hkexnewsdownloaddir
+                });
+            }
+        }
+
+        next(err);
+        return;
+    };
+
     hknews.pre_handler = function (err, worker, next) {
         var getfilename, getdir;
-        var ws, fname;
+        var fname;
         if (err) {
             /*if we have nothing to do*/
             next(true, err);
@@ -33,14 +61,17 @@ function createHkexNewsDownloadPre() {
             next(false, null);
             return;
         }
-
+        worker.add_finish(hknews.finish_callback);
         fname = worker.reqopt.hkexnewsdownloaddir;
         fname += path.sep;
         fname += getfilename;
-        tracelog.info('get (%s) => (%s)', worker.url, fname);
+        if (!baseop.is_in_array(hknews.workingfiles, fname)) {
+            tracelog.info('get (%s) => (%s)', worker.url, fname);
+            worker.hkexnewsdownloadfile = fname;
+            hknews.workingfiles.push(fname);
+        }
         /*we do not need any more*/
         //worker.pipe = ws;
-        ws = null;
         fs = fs;
         worker.url = '';
         return;

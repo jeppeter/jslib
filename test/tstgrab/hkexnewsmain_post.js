@@ -2,17 +2,8 @@ var tracelog = require('../../tracelog');
 var cheerio = require('cheerio');
 var util = require('util');
 var qs = require('querystring');
+var baseop = require('../../baseop');
 
-var number_format_length = function (size, number) {
-    'use strict';
-    var s = '';
-    var idx;
-    for (idx = 0; idx < size; idx += 1) {
-        s += '0';
-    }
-    s += util.format('%d', number);
-    return s.slice(-size);
-};
 
 
 function createHkexNewsMainPost(options) {
@@ -22,20 +13,21 @@ function createHkexNewsMainPost(options) {
     var d = new Date();
     var s;
 
+    hknews.lastdate = '';
     hknews.options = {};
     hknews.options.hfStatus = 'ACM';
     hknews.options.hfAlert = '';
     hknews.options.ex_startdate = '19990101';
     s = '';
-    s += number_format_length(4, d.getFullYear());
-    s += number_format_length(2, d.getMonth() + 1);
-    s += number_format_length(2, d.getDate());
+    s += baseop.number_format_length(4, d.getFullYear());
+    s += baseop.number_format_length(2, d.getMonth() + 1);
+    s += baseop.number_format_length(2, d.getDate());
     hknews.options.ex_enddate = s;
     hknews.options.txt_stock_code = '02010';
     s = '';
-    s += number_format_length(4, d.getFullYear());
-    s += number_format_length(2, d.getMonth() + 1);
-    s += number_format_length(2, d.getDate());
+    s += baseop.number_format_length(4, d.getFullYear());
+    s += baseop.number_format_length(2, d.getMonth() + 1);
+    s += baseop.number_format_length(2, d.getDate());
     hknews.options.txt_today = s;
     hknews.options.txt_stock_name = '';
     hknews.options.rdo_SelectDocType = 'rbAll';
@@ -59,18 +51,18 @@ function createHkexNewsMainPost(options) {
     hknews.topdir = __dirname;
 
 
-    if (setopt.enddate !== null && setopt.enddate !== undefined) {
+    if (baseop.is_valid_date(setopt.enddate)) {
         hknews.options.ex_enddate = setopt.enddate;
         hknews.options.sel_DateOfReleaseTo_d = hknews.options.ex_enddate.substring(6, 8);
         hknews.options.sel_DateOfReleaseTo_m = hknews.options.ex_enddate.substring(4, 6);
         hknews.options.sel_DateOfReleaseTo_y = hknews.options.ex_enddate.substring(0, 4);
     }
 
-    if (setopt.startdate !== null && setopt.startdate !== undefined) {
+    if (baseop.is_valid_date(setopt.startdate)) {
         hknews.options.ex_startdate = setopt.startdate;
-        hknews.options.sel_DateOfReleaseFrom_d = hknews.options.startdate.substring(6, 8);
-        hknews.options.sel_DateOfReleaseFrom_m = hknews.options.startdate.substring(4, 6);
-        hknews.options.sel_DateOfReleaseFrom_y = hknews.options.startdate.substring(0, 4);
+        hknews.options.sel_DateOfReleaseFrom_d = hknews.options.ex_startdate.substring(6, 8);
+        hknews.options.sel_DateOfReleaseFrom_m = hknews.options.ex_startdate.substring(4, 6);
+        hknews.options.sel_DateOfReleaseFrom_y = hknews.options.ex_startdate.substring(0, 4);
     }
 
     if (setopt.stockcode !== null && setopt.stockcode !== undefined) {
@@ -85,7 +77,7 @@ function createHkexNewsMainPost(options) {
         hknews.topdir = setopt.topdir;
     }
 
-    hknews.make_post_data = function (inputctrl) {
+    hknews.make_post_data = function (inputctrl, queryopt) {
         var postdata;
         var ctl00_dollar = 'ctl00$';
         postdata = '';
@@ -97,7 +89,6 @@ function createHkexNewsMainPost(options) {
         postdata += util.format('%s&', qs.escape(hknews.options.hfStatus));
         postdata += util.format('%shfAlert=', qs.escape(ctl00_dollar));
         postdata += util.format('%s&', qs.escape(hknews.options.hfAlert));
-
         postdata += util.format('%stxt_stock_code=', qs.escape(ctl00_dollar));
         postdata += util.format('%s&', qs.escape(hknews.options.txt_stock_code));
         postdata += util.format('%stxt_stock_name=', qs.escape(ctl00_dollar));
@@ -150,7 +141,7 @@ function createHkexNewsMainPost(options) {
             return;
         }
 
-        if (worker.reqopt.hkexnewsmain === undefined || worker.reqopt.hkexnewsmain === null || !worker.reqopt.hkexnewsmain) {
+        if (!baseop.is_valid_bool(worker.reqopt, 'hkexnewsmain')) {
             /*if we do not handle news make*/
             next(true, err);
             return;
@@ -181,7 +172,7 @@ function createHkexNewsMainPost(options) {
         }
 
         /*now we find the input ,so we should all things we should put post data*/
-        postdata = hknews.make_post_data(findinput);
+        postdata = hknews.make_post_data(findinput, worker.reqopt);
         //tracelog.info('postdata (%s)', postdata);
         worker.parent.post_queue(worker.url, {
             hkexnewspaper: hknews.topdir,

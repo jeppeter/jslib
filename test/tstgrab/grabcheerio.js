@@ -2,6 +2,8 @@ var tracelog = require('../../tracelog');
 var cheerio = require('cheerio');
 var URL = require('url');
 var path = require('path');
+var baseop = require('../../baseop');
+
 var inner_get_text_html = function (elm, parser) {
     'use strict';
     var s;
@@ -79,32 +81,7 @@ var inner_get_number_list = function (value) {
 
 module.exports.get_number_list = inner_get_number_list;
 
-var inner_match_expr = function (value, expr) {
-    'use strict';
-    var reg;
 
-    reg = new RegExp(expr);
-    if (reg.test(value)) {
-        return true;
-    }
-    return false;
-};
-
-
-module.exports.match_expr = inner_match_expr;
-
-var inner_match_expr_i = function (value, expr) {
-    'use strict';
-    var reg;
-
-    reg = new RegExp(expr, 'i');
-    if (reg.test(value)) {
-        return true;
-    }
-    return false;
-};
-
-module.exports.match_expr_i = inner_match_expr_i;
 
 var inner_get_attr_value = function (elm, parser, keyname) {
     'use strict';
@@ -153,7 +130,7 @@ module.exports.find_query_result = function (htmldata) {
         for (j = 0; j < spans.length; j += 1) {
             curspan = spans.eq(j);
             curval = inner_get_attr_value(curspan, parser, 'id');
-            if (inner_match_expr(curval, '_lbDateTime$')) {
+            if (baseop.match_expr(curval, '_lbDateTime$')) {
                 /*now we get the year value*/
                 curval = inner_get_text_html(curspan, parser);
                 if (curval !== '') {
@@ -167,7 +144,7 @@ module.exports.find_query_result = function (htmldata) {
                         }
                     }
                 }
-            } else if (inner_match_expr(curval, '_lbShortText$')) {
+            } else if (baseop.match_expr(curval, '_lbShortText$')) {
                 cura = curtr.find('a');
                 if (cura.length > 0) {
                     curval = inner_get_attr_value(cura, parser, 'href');
@@ -222,7 +199,7 @@ module.exports.more_query_html = function (htmldata) {
         cura = ahrefs.eq(idx);
         curval = inner_get_attr_value(cura, parser, 'href');
         if (curval.length > 0) {
-            if (inner_match_expr_i(curval, '\.pdf$')) {
+            if (baseop.match_expr_i(curval, '\.pdf$')) {
                 htmllists.push(curval);
             } else {
                 tracelog.info('curval unknown (%s)', curval);

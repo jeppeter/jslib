@@ -1,6 +1,49 @@
 var fs = require('fs');
 var path = require('path');
 var tracelog = require('../tracelog');
+var util = require('util');
+module.exports.remove_array = function (array, elm) {
+    'use strict';
+    if (Array.isArray(array)) {
+        array = array.filter(function (e) {
+            return e !== elm;
+        });
+    }
+    return array;
+};
+
+module.exports.is_valid_string = function (opt, name, minlen) {
+    'use strict';
+    var isvalid = false;
+    if (minlen === undefined || minlen === null || typeof minlen !== 'number' || minlen < 0) {
+        minlen = 0;
+    }
+    if (opt[name] !== null && opt[name] !== undefined && typeof opt[name] === 'string' && opt[name].length > minlen) {
+        isvalid = true;
+    }
+    return isvalid;
+};
+
+module.exports.is_valid_bool = function (opt, name) {
+    'use strict';
+    var isvalid = false;
+    if (opt[name] !== null && opt[name] !== undefined && typeof opt[name] === 'boolean' && opt[name]) {
+        isvalid = true;
+    }
+    return isvalid;
+};
+
+module.exports.is_in_array = function (array, elm) {
+    'use strict';
+    var isin = false;
+    if (Array.isArray(array) && elm !== null && elm !== undefined) {
+        if (array.indexOf(elm) >= 0) {
+            isin = true;
+        }
+    }
+    return isin;
+};
+
 var is_root = function (elm) {
     'use strict';
     var realpath;
@@ -124,3 +167,77 @@ var mkdir_safe = function (dirname, callback) {
 };
 
 module.exports.mkdir_safe = mkdir_safe;
+
+var number_format_length = function (size, number) {
+    'use strict';
+    var s = '';
+    var idx;
+    for (idx = 0; idx < size; idx += 1) {
+        s += '0';
+    }
+    s += util.format('%d', number);
+    return s.slice(-size);
+};
+
+module.exports.number_format_length = number_format_length;
+
+var match_expr = function (value, expr) {
+    'use strict';
+    var reg;
+
+    reg = new RegExp(expr);
+    if (reg.test(value)) {
+        return true;
+    }
+    return false;
+};
+
+
+module.exports.match_expr = match_expr;
+
+var match_expr_i = function (value, expr) {
+    'use strict';
+    var reg;
+
+    reg = new RegExp(expr, 'i');
+    if (reg.test(value)) {
+        return true;
+    }
+    return false;
+};
+
+module.exports.match_expr_i = match_expr_i;
+
+var monthday_least = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+var is_valid_date = function (datestr) {
+    'use strict';
+    var isvalid = false;
+    var isleap = false;
+    var year, month, day;
+    if (typeof datestr === 'string' && datestr.length === 8 && match_expr_i(datestr, '[0-9]+')) {
+        year = parseInt(datestr.substring(0, 4));
+        month = parseInt(datestr.substring(4, 6));
+        day = parseInt(datestr.substring(6, 8));
+        if (month <= 12 && month > 0 && year >= 1900 && day <= 31 && day > 0) {
+            if (day <= monthday_least[month - 1]) {
+                isvalid = true;
+            } else if (month === 2) {
+                if ((year % 4) === 0) {
+                    isleap = true;
+                    if ((year % 100) === 0 && (year % 400) !== 0) {
+                        isleap = false;
+                    }
+                }
+
+                if (isleap && day <= 29) {
+                    isvalid = true;
+                }
+            }
+
+        }
+    }
+    return isvalid;
+};
+
+module.exports.is_valid_date = is_valid_date;

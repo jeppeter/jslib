@@ -1,7 +1,7 @@
 var commander = require('commander');
 var util = require('util');
 var tracelog = require('../../tracelog');
-var fscallback = require('../../fscallback');
+var baseop = require('../../baseop');
 
 commander.subname = '';
 
@@ -71,7 +71,7 @@ commander
         }
 
         args.forEach(function (elm, idx) {
-            fscallback.mkdir_safe(elm, function (err) {
+            baseop.mkdir_safe(elm, function (err) {
                 if (err) {
                     tracelog.error('[%d](%s) error(%s)', idx, elm, err);
                     errcode = 3;
@@ -105,7 +105,7 @@ commander
 
         args.forEach(function (elm, idx) {
             var isroot;
-            isroot = fscallback.is_root(elm);
+            isroot = baseop.is_root(elm);
             if (isroot) {
                 console.log('[%d] (%s) is root', idx, elm);
             } else {
@@ -118,6 +118,25 @@ commander
         });
         return;
     });
+
+commander
+    .command('validdate <date>')
+    .description(' validdate date')
+    .action(function (datestr, options) {
+        'use strict';
+        var errcode = 0;
+        commander.subname = 'validdate';
+        tracelog.set_commander(options.parent);
+        if (baseop.is_valid_date(datestr)) {
+            console.log('<%s> is valid date', datestr);
+        } else {
+            console.error('<%s> is not valid date', datestr);
+            errcode = 3;
+        }
+        trace_exit(errcode);
+        return;
+    });
+
 
 tracelog.init_commander(commander);
 commander.parse(process.argv);

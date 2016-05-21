@@ -2,6 +2,7 @@ var grabcheerio = require('./grabcheerio');
 var tracelog = require('../../tracelog');
 var URL = require('url');
 var path = require('path');
+var baseop = require('../../baseop');
 
 function createHkexNewsPaperPost() {
     'use strict';
@@ -48,7 +49,9 @@ function createHkexNewsPaperPost() {
 
         for (i = 0; i < pdfs.length; i += 1) {
             curpdf = grabcheerio.combine_dir(worker.url, pdfs[i]);
-            tracelog.info('[%d] setdir (%s) curdir (%s)', i, setdir, curpdf);
+            if (baseop.match_expr_i(curpdf, '\.pdf$')) {
+                tracelog.info('[%d] setdir (%s) curdir (%s)', i, setdir, curpdf);
+            }
 
         }
         next(false, null);

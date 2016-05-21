@@ -3,7 +3,7 @@ var tracer = require('tracer');
 var util = require('util');
 var fs = require('fs');
 
-var _innerLogger;
+var _innerLogger = null;
 
 var add_write_streams = function (self, arfiles, isappend) {
     'use strict';
@@ -183,6 +183,8 @@ module.exports.finish = function (callback) {
     'use strict';
     if (_innerLogger !== null) {
         _innerLogger.finish(callback);
+    } else {
+        callback(null);
     }
     _innerLogger = null;
 };
