@@ -91,6 +91,11 @@ commander
         usage(3, commander, util.format('<%s> not valid stockcode', t));
         return v;
     }, '02010')
+    .option('-P --topdir <dir>', util.format('stock file store directory default(%s)', __dirname), function (t, v) {
+        'use strict';
+        v = v;
+        return t;
+    }, __dirname)
     .option('-U --url <url>', 'specify url', function (t, v) {
         'use strict';
         v = v;

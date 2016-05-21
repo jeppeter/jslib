@@ -3,7 +3,7 @@ var cheerio = require('cheerio');
 var util = require('util');
 var qs = require('querystring');
 var baseop = require('../../baseop');
-
+var path = require('path');
 
 
 function createHkexNewsMainPost(options) {
@@ -76,6 +76,9 @@ function createHkexNewsMainPost(options) {
     if (setopt.topdir !== null && setopt.topdir !== undefined) {
         hknews.topdir = setopt.topdir;
     }
+
+    hknews.topdir += path.sep;
+    hknews.topdir += hknews.options.txt_stock_code;
 
     hknews.make_post_data = function (inputctrl, queryopt) {
         var postdata;

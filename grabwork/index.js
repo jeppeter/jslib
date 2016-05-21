@@ -1,7 +1,7 @@
 var request = require('request');
 var tracelog = require('../tracelog');
 var baseop = require('../baseop');
-//var util = require('util');
+var util = require('util');
 
 var MAX_PRIORITY = 5;
 var DEF_PRIORITY = 3;
@@ -134,6 +134,15 @@ function createGrabwork(options) {
         reqopt.url = url;
         reqopt.method = meth;
         self.reqworkqueue.push(worker);
+        if (false) {
+            tracelog.trace('worker (%s)', util.inspect(worker, {
+                showHidden: true,
+                depth: 3
+            }));
+        }
+        if (reqopt.timeout === null || reqopt.timeout === undefined) {
+            reqopt.timeout = self.grabtimeout;
+        }
         if (worker.pipe !== null && worker.pipe !== undefined) {
             /*we should on end to finish the */
             worker.pipe.on('close', function () {
@@ -147,10 +156,6 @@ function createGrabwork(options) {
 
             request(reqopt).pipe(worker.pipe);
         } else {
-
-            if (reqopt.timeout === null || reqopt.timeout === undefined) {
-                reqopt.timeout = self.grabtimeout;
-            }
             request(reqopt, function (err, resp, body) {
                 if (err === null) {
                     worker.response = resp;
@@ -216,6 +221,7 @@ function createGrabwork(options) {
 
     self.request_work = function (worker) {
         var priority;
+        var retval;
         if (worker.reqopt.priority === null || worker.reqopt.priority === undefined) {
             worker.reqopt.priority = DEF_PRIORITY;
         }
@@ -230,7 +236,10 @@ function createGrabwork(options) {
         priority = (worker.reqopt.priority - 1);
         /*we put it into the queue ,so handle it by default*/
         self.priorqueue[priority].push(worker);
-        self.inner_pull_request();
+        retval = self.inner_pull_request();
+        if (retval === 0) {
+            tracelog.warn('(%s)(%s)on queued', worker.meth, worker.url);
+        }
         return;
     };
 

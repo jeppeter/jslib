@@ -3,6 +3,7 @@ var urlparse = require('url');
 var path = require('path');
 var fs = require('fs');
 var baseop = require('../../baseop');
+var util = require('util');
 
 function createHkexNewsDownloadPre() {
     'use strict';
@@ -80,6 +81,12 @@ function createHkexNewsDownloadPre() {
                 /*we make sure the timeout not let it out*/
                 worker.reqopt.timeout = 10000 * 1000;
                 worker.pipe = fs.createWriteStream(fname);
+                if (false) {
+                    tracelog.trace('worker (%s)', util.inspect(worker, {
+                        showHidden: true,
+                        depth: 3
+                    }));
+                }
                 next(false, null);
                 return;
             });

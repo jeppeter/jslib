@@ -16,6 +16,7 @@ function createHkexNewsPaperPost() {
         var setdir;
         var urlparse;
         var extension;
+        var downdir;
         //tracelog.trace('newspaper');
         if (err) {
             /*if we have nothing to do*/
@@ -23,7 +24,7 @@ function createHkexNewsPaperPost() {
             return;
         }
 
-        if (worker.reqopt.hkexnewsextenddir === undefined || worker.reqopt.hkexnewsextenddir === null || worker.reqopt.hkexnewsextenddir.length === 0) {
+        if (!baseop.is_valid_string(worker.reqopt, 'hkexnewsextenddir', 0)) {
             /*if we do not handle news make*/
             next(true, err);
             return;
@@ -47,10 +48,16 @@ function createHkexNewsPaperPost() {
         extension = path.extname(setdir);
         setdir = setdir.replace(extension, '');
 
+        downdir = worker.reqopt.hkexnewsextenddir;
+        downdir += path.sep;
+        downdir += setdir;
         for (i = 0; i < pdfs.length; i += 1) {
             curpdf = grabcheerio.combine_dir(worker.url, pdfs[i]);
             if (baseop.match_expr_i(curpdf, '\.pdf$')) {
-                tracelog.info('[%d] setdir (%s) curdir (%s)', i, setdir, curpdf);
+                tracelog.info('[%d] setdir (%s) curdir (%s) hkexnewsextenddir(%s)', i, setdir, curpdf, worker.reqopt.hkexnewsextenddir);
+                worker.parent.queue(curpdf, {
+                    hkexnewsdownloaddir: downdir
+                });
             }
 
         }

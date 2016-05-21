@@ -176,6 +176,7 @@ module.exports.find_query_result = function (htmldata) {
 
     if (num[1] === num[2]) {
         tracelog.info('get all %d', num[1]);
+        findres.next = false;
         return findres;
     }
 

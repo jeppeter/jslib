@@ -112,8 +112,7 @@ function createHkexNewsPaperPost() {
             downdir += findres.lists_html[i].year;
             if (baseop.match_expr_i(cururl, '\.pdf$')) {
                 /*store by year */
-                tracelog.info('downdir (%s)', downdir);
-                worker.parent.post_queue(cururl, {
+                worker.parent.queue(cururl, {
                     hkexnewsdownloaddir: downdir
                 });
             } else if (baseop.match_expr_i(cururl, '\.htm[l]?$')) {
