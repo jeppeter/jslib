@@ -120,6 +120,11 @@ commander
         });
         request.get(url, {
             timeout: options.timeout
+        }, function (err) {
+            if (err) {
+                tracelog.error('<%s> error(%s)', url, JSON.stringify(err));
+                return;
+            }
         }).pipe(ws);
         return;
 

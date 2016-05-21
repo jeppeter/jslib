@@ -131,6 +131,9 @@ function createGrabwork(options) {
         }
         /*we push it into the request queue, as it will work ok*/
         self.reqworkqueue.push(worker);
+        if (self.reqworkqueue.length > self.grabmaxsock && self.grabmaxsock !== 0) {
+            tracelog.error('length %d grabmaxsock %d', self.reqworkqueue.length, self.grabmaxsock);
+        }
         reqopt.url = url;
         reqopt.method = meth;
         self.reqworkqueue.push(worker);
@@ -154,8 +157,15 @@ function createGrabwork(options) {
                 worker.finish(err);
             });
 
-            request(reqopt).pipe(worker.pipe);
+            request(reqopt, function (err) {
+                if (err) {
+                    tracelog.error('<%s::%s> error(%s)', worker.meth, worker.url, JSON.stringify(err));
+                    worker.finish(err);
+                    return;
+                }
+            }).pipe(worker.pipe);
         } else {
+            tracelog.info('<%s::%s>', worker.meth, worker.url);
             request(reqopt, function (err, resp, body) {
                 if (err === null) {
                     worker.response = resp;
