@@ -26,8 +26,9 @@ function createRandomDelay() {
                     next(true, null);
                     return;
                 }, num * 20);
-
+                return;
             }
+            next(true, null);
             return;
         });
     };

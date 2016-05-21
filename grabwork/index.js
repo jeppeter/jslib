@@ -7,6 +7,13 @@ var MAX_PRIORITY = 5;
 var DEF_PRIORITY = 3;
 var MIN_PRIORITY = 1;
 
+var is_pdf_down_worker = function (worker) {
+    'use strict';
+    if (/\.pdf$/.test(worker.url)) {
+        return true;
+    }
+    return false;
+};
 
 function createWorker(parent, meth, url, reqopt) {
     'use strict';
@@ -20,6 +27,7 @@ function createWorker(parent, meth, url, reqopt) {
     worker.postidx = 0;
     worker.finish_callbacks = [];
     worker.finishidx = 0;
+    worker.pipe = null;
 
     worker.next_finish = function (err) {
         var idx;
@@ -35,6 +43,9 @@ function createWorker(parent, meth, url, reqopt) {
             p.remove_request_worker(worker);
             worker.parent = null;
         }
+        worker.pipe = null;
+        worker.url = '';
+        worker.reqopt = {};
         return;
     };
     worker.finish = function (err) {
@@ -61,6 +72,9 @@ function createWorker(parent, meth, url, reqopt) {
             if (worker.preidx < parent.pre_handlers.length) {
                 /*we inc for it will call when*/
                 idx = worker.preidx;
+                if (is_pdf_down_worker(worker)) {
+                    tracelog.info('<%s>call [%d] pre_next', worker.url, idx);
+                }
                 worker.preidx += 1;
                 handler = parent.pre_handlers[idx];
                 handler.pre_handler(err, worker, worker.pre_next);
@@ -68,6 +82,7 @@ function createWorker(parent, meth, url, reqopt) {
             }
         }
         worker.preidx = parent.pre_handlers.length;
+        worker.parent.request_work(worker);
         return;
     };
 
@@ -165,7 +180,12 @@ function createGrabwork(options) {
                 }
             }).pipe(worker.pipe);
         } else {
-            tracelog.info('<%s::%s>', worker.meth, worker.url);
+            if (is_pdf_down_worker(worker)) {
+                tracelog.info('<%s>reqopt (%s)', worker.url, util.inspect(worker.reqopt, {
+                    showHidden: true,
+                    depth: null
+                }));
+            }
             request(reqopt, function (err, resp, body) {
                 if (err === null) {
                     worker.response = resp;
@@ -176,6 +196,7 @@ function createGrabwork(options) {
                 worker.post_next(true, err);
             });
         }
+        return;
     };
 
     self.inner_pull_request = function () {
@@ -258,12 +279,17 @@ function createGrabwork(options) {
         if (typeof reqopt.finish_callback === 'function') {
             worker.add_finish(reqopt.finish_callback);
         }
+        if (is_pdf_down_worker(worker)) {
+            tracelog.info('<%s>reqopt (%s)', worker.url, util.inspect(worker.reqopt, {
+                showHidden: true,
+                depth: null
+            }));
+        }
         if (typeof reqopt.notice_callback === 'function') {
             reqopt.notice_callback(null, worker, worker.pre_next);
         } else {
             worker.pre_next(true, null);
         }
-        self.request_work(worker);
         return self;
 
     };

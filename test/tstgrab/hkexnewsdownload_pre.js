@@ -10,7 +10,7 @@ function createHkexNewsDownloadPre() {
     var hknews = {};
     hknews.workingfiles = [];
     hknews.finish_callback = function (worker, err, next) {
-        if (baseop.is_valid_string(worker.reqopt, 'hkexnewsdownloaddir')) {
+        if (!baseop.is_valid_string(worker.reqopt, 'hkexnewsdownloaddir')) {
             next(err);
             return;
         }
@@ -39,15 +39,17 @@ function createHkexNewsDownloadPre() {
         var getfilename, getdir;
         var fname;
         var fdir;
-        if (err) {
-            /*if we have nothing to do*/
+
+        if (!baseop.is_valid_string(worker.reqopt, 'hkexnewsdownloaddir', 0)) {
+            /*if we do not handle news make*/
             next(true, err);
             return;
         }
-
-        if (worker.reqopt.hkexnewsdownloaddir === undefined || worker.reqopt.hkexnewsdownloaddir === null || worker.reqopt.hkexnewsdownloaddir.length === 0) {
-            /*if we do not handle news make*/
-            next(true, err);
+        if (err) {
+            /*if we have nothing to do*/
+            tracelog.error('hkexnewsdownloaddir (%s) error(%s)', worker.reqopt.hkexnewsdownloaddir, JSON.stringify(err));
+            worker.url = '';
+            next(false, err);
             return;
         }
 
@@ -77,21 +79,20 @@ function createHkexNewsDownloadPre() {
                     next(false, err);
                     return;
                 }
-                tracelog.info('(%s) pipe', worker.url);
+                tracelog.info('(%s) pipe for (%s)', worker.url, fname);
                 /*we make sure the timeout not let it out*/
                 worker.reqopt.timeout = 10000 * 1000;
                 worker.pipe = fs.createWriteStream(fname);
-                if (false) {
-                    tracelog.trace('worker (%s)', util.inspect(worker, {
-                        showHidden: true,
-                        depth: 3
-                    }));
-                }
+                tracelog.trace('<%s>worker (%s)', worker.url, util.inspect(worker.reqopt, {
+                    showHidden: true,
+                    depth: 3
+                }));
                 next(false, null);
                 return;
             });
             return;
         }
+        tracelog.info('worker set url<%s> null', worker.url);
         /*the file is already handled ,so we do not handle this any more*/
         worker.url = '';
         next(true, null);
