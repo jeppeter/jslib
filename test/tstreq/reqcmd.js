@@ -4,6 +4,8 @@ var commander = require('commander');
 var util = require('util');
 var URL = require('url');
 var path = require('path');
+var baseop = require('../../baseop');
+var fs = require('fs');
 commander.subname = '';
 commander.subopt = {};
 commander.subargs = [];
@@ -49,6 +51,7 @@ var usage = function (ec, cmd, fmt) {
 
 commander
     .command('get <url...>')
+    .description(' get htmldata from url')
     .action(function (args, options) {
         'use strict';
         commander.subname = 'get';
@@ -81,8 +84,8 @@ commander
     .command('pipe <url> [outfile]')
     .option('--timeout <timemills>', 'time mills for download', function (t, v) {
         'use strict';
-        if (baseop.is_valid_date(t)) {
-            return t;
+        if (baseop.is_valid_number(t) && !baseop.is_valid_float(t)) {
+            return baseop.parse_num(t);
         }
         return v;
     }, 30000)
@@ -90,6 +93,7 @@ commander
     .action(function (url, outfile, options) {
         'use strict';
         var parser;
+        var ws;
         commander.subname = 'pipe';
         if (options === null || options === undefined) {
             options = outfile;
@@ -103,9 +107,21 @@ commander
             outfile = __dirname + path.sep + outfile;
         }
         tracelog.set_commander(options.parent);
+        ws = fs.createWriteStream(outfile);
+        ws.on('error', function (err) {
+            tracelog.error('parse <%s> error(%s)', outfile, JSON.stringify(err));
+            trace_exit(3);
+            return;
+        });
+        ws.on('close', function () {
+            tracelog.info('<%s> closed', url);
+            trace_exit(0);
+            return;
+        });
         request.get(url, {
-
-        }, )
+            timeout: options.timeout
+        }).pipe(ws);
+        return;
 
     });
 
