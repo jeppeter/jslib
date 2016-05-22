@@ -119,12 +119,10 @@ function createHkexNewsPaperPost() {
             } else if (baseop.match_expr_i(cururl, '\.htm[l]?$')) {
                 tracelog.info('will more query (%s)', cururl);
                 worker.parent.queue(cururl, {
-                    hkexnewsextenddir: downdir,
+                    hkexnewsextendoption: {
+                        downloaddir: downdir
+                    },
                     reuse: true,
-                    reqopt: {
-                        body: postdata,
-                        timeout: 10000
-                    }
                 });
             } else {
                 tracelog.info('unknown url (%s)', cururl);

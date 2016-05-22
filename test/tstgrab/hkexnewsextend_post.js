@@ -5,9 +5,15 @@ var path = require('path');
 var baseop = require('../../baseop');
 var grabwork = require('../../grabwork');
 
-function createHkexNewsPaperPost() {
+function createHkexNewsPaperPost(options) {
     'use strict';
     var hknews = {};
+    hknews.options = {};
+    hknews.options.maxtries = 0;
+
+    if (baseop.is_non_null(options, 'maxtries') && typeof options.maxtries === 'number' && options.maxtries >= 0) {
+        hknews.options.maxtries = options.maxtries;
+    }
 
     hknews.post_handler = function (err, worker, next) {
         var pdfs;
@@ -18,24 +24,42 @@ function createHkexNewsPaperPost() {
         var urlparse;
         var extension;
         var downdir;
+        var sendreqopt;
         //tracelog.trace('newspaper');
-        if (err) {
-            /*if we have nothing to do*/
-            next(true, err);
-            return;
-        }
 
-        if (!baseop.is_valid_string(worker.reqopt, 'hkexnewsextenddir', 0)) {
+        if (!baseop.is_non_null(worker.reqopt, 'hkexnewsextendoption')) {
             /*if we do not handle news make*/
             next(true, err);
             return;
         }
+
+        if (err) {
+            var trytimes = 0;
+            /*if we have nothing to do*/
+            sendreqopt = worker.reqopt;
+            if (typeof sendreqopt.hkexnewsextendoption.trytimes === 'number') {
+                trytimes = sendreqopt.hkexnewsextendoption.trytimes;
+            }
+            trytimes += 1;
+            if (trytimes < hknews.options.maxtries || hknews.options.maxtries === 0) {
+                sendreqopt.hkexnewsextendoption.trytimes = trytimes;
+                tracelog.warn('[%d]<%d>', trytimes, worker.url);
+                worker.parent.queue(worker.url, sendreqopt);
+            } else {
+                tracelog.error('really error on extend(%s)', worker.url);
+            }
+
+            next(true, err);
+            return;
+        }
+
 
         /*now it is time ,we handle ,so we should no more to handle out*/
         //tracelog.trace('request paper');
         //tracelog.info('htmldata %s', worker.htmldata);
         pdfs = grabcheerio.more_query_html(worker.htmldata);
         if (pdfs.length === 0) {
+
             /*we find nothing to handle*/
             tracelog.info('<%s> pdfs 0', worker.url);
             next(false, null);
@@ -49,7 +73,7 @@ function createHkexNewsPaperPost() {
         extension = path.extname(setdir);
         setdir = setdir.replace(extension, '');
 
-        downdir = worker.reqopt.hkexnewsextenddir;
+        downdir = worker.reqopt.hkexnewsextendoption.downloaddir;
         downdir += path.sep;
         downdir += setdir;
         for (i = 0; i < pdfs.length; i += 1) {
