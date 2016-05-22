@@ -174,7 +174,6 @@ function createCninfoQuery(options) {
             if (baseop.match_expr_i(curannounce.adjunctUrl, '\.pdf$')) {
                 downpdf = hosturl;
                 downpdf += curannounce.adjunctUrl;
-                tracelog.info('<%s> down (%s)', downpdf, curdowndir);
                 worker.parent.download_queue(downpdf, curdowndir, {
                     priority: grabwork.MAX_PRIORITY
                 });

@@ -11,6 +11,12 @@ function createDownloadPre(options) {
     downloadpre.workingfiles = [];
     downloadpre.pendingfiles = [];
     downloadpre.downloadmax = 30;
+    downloadpre.state = {};
+    downloadpre.state.success_download = 0;
+    downloadpre.state.start_download = 0;
+    downloadpre.state.failed_download = 0;
+    downloadpre.state.complete_download = 0;
+    downloadpre.state.queued_download = 0;
 
     if (baseop.is_non_null(options, 'downloadmax')) {
         downloadpre.downloadmax = options.downloadmax;
@@ -47,7 +53,7 @@ function createDownloadPre(options) {
                     return;
                 }
                 /*we make sure the timeout not let it out*/
-                tracelog.info('start download (%s) (%s)', worker.url, worker.reqopt.downloadoption.downloaddir);
+                downloadpre.state.start_download += 1;
                 worker.reqopt.timeout = 1000 * 1000;
                 worker.pipe = fs.createWriteStream(fname);
                 next(false, null);
@@ -109,9 +115,12 @@ function createDownloadPre(options) {
                     tracelog.error('request (%s) failed totally', worker.url);
                 }
             }
+            downloadpre.state.failed_download += 1;
         } else {
-            tracelog.info('<%s> (%s) succ', worker.url, worker.reqopt.downloadoption.downloaddir);
+            downloadpre.state.success_download += 1;
         }
+
+        downloadpre.state.complete_download += 1;
 
 
         downloadpre.inner_pull_download();
@@ -137,10 +146,15 @@ function createDownloadPre(options) {
         curpending = {};
         curpending.worker = worker;
         curpending.next = next;
+        downloadpre.state.queued_download += 1;
 
         downloadpre.pendingfiles.push(curpending);
         downloadpre.inner_pull_download();
         return;
+    };
+
+    downloadpre.query_state = function () {
+        return downloadpre.state;
     };
 
     return downloadpre;
