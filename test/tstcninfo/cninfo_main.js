@@ -36,7 +36,7 @@ function createCninfoMain(options) {
 
     cninfo.options = {};
     cninfo.options.stockcode = '600000';
-    cninfo.options.cninfoquerypath = '/cninfo-new/disclosure/szse/fulltext';
+    cninfo.options.cninfoquerypath = '/cninfo-new/announcement/query';
     cninfo.options.startdate = '19990101';
     d = new Date();
     cninfo.options.enddate = '';

@@ -122,7 +122,7 @@ function createHkexNewsPaperPost() {
                     hkexnewsextendoption: {
                         downloaddir: downdir
                     },
-                    reuse: true,
+                    reuse: true
                 });
             } else {
                 tracelog.info('unknown url (%s)', cururl);

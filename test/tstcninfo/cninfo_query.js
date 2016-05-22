@@ -8,11 +8,11 @@ var grabwork = require('../../grabwork');
 var get_annoucement = function (opt) {
     'use strict';
     var retval = {};
-    var i, j;
-    var curassign, curelm;
+    var i;
+    var curelm;
     var curpdf;
 
-    if (!baseop.is_non_null(opt, 'classifiedAnnouncements')) {
+    if (!baseop.is_non_null(opt, 'announcements')) {
         tracelog.error('can not get classifiedAnnouncements');
         return null;
     }
@@ -22,31 +22,24 @@ var get_annoucement = function (opt) {
         return null;
     }
 
+    if (!baseop.is_non_null(opt, 'totalRecordNum')) {
+        tracelog.error('can not get totalRecordNum');
+        return null;
+    }
+
     retval.totalAnnouncement = opt.totalAnnouncement;
+    retval.totalRecordNum = opt.totalRecordNum;
     retval.pdfs = [];
 
-    if (opt.classifiedAnnouncements.length > 0) {
-        for (i = 0; i < opt.classifiedAnnouncements.length; i += 1) {
-            curassign = opt.classifiedAnnouncements[i];
-            if (curassign.length > 0) {
-                for (j = 0; j < curassign.length; j += 1) {
-                    curelm = curassign[j];
-                    if (!baseop.is_non_null(curelm, 'adjunctUrl')) {
-                        tracelog.warn('[%d][%d] no adjunctUrl', i, j);
-                    } else {
-                        curpdf = {};
-                        curpdf.adjunctUrl = curelm.adjunctUrl;
-                        retval.pdfs.push(curpdf);
-                    }
-                }
+    if (opt.announcements.length > 0) {
+        for (i = 0; i < opt.announcements.length; i += 1) {
+            curelm = opt.announcements[i];
+            if (!baseop.is_non_null(curelm, 'adjunctUrl')) {
+                tracelog.warn('[%d] no adjunctUrl', i);
             } else {
-                if (!baseop.is_non_null(curassign, 'adjunctUrl')) {
-                    tracelog.warn('[%d] can not get adjunctUrl', i);
-                } else {
-                    curpdf = {};
-                    curpdf.adjunctUrl = curassign.adjunctUrl;
-                    retval.pdfs.push(curpdf);
-                }
+                curpdf = {};
+                curpdf.adjunctUrl = curelm.adjunctUrl;
+                retval.pdfs.push(curpdf);
             }
         }
     }
@@ -54,7 +47,6 @@ var get_annoucement = function (opt) {
 
     return retval;
 };
-
 
 
 function createCninfoQuery(options) {
@@ -83,11 +75,11 @@ function createCninfoQuery(options) {
         var curannounce;
         var cninfoquery;
         var hosturl, urlparser;
-        var totalget;
         var sendcninfoquery;
         var curdowndir;
         var sarr;
         var querylist;
+        var getnum;
         if (!baseop.is_non_null(worker.reqopt, 'cninfoquery')) {
             next(true, err);
             return;
@@ -146,13 +138,13 @@ function createCninfoQuery(options) {
         curdowndir += path.sep;
         sarr = cninfoquery.startdate.split('-');
         curdowndir += util.format('%s', sarr[0]);
+        sendcninfoquery = cninfoquery;
 
         if (cninfoquery.retry === 0) {
             /*it means it is the first time to send it ,so we should make sure it has something to query for*/
-            totalget = cninfoquery.pagesize * (cninfoquery.pagenum - 1);
-            totalget += querylist.pdfs.length;
-            sendcninfoquery = cninfoquery;
-            if (totalget < querylist.totalAnnouncement) {
+            getnum = sendcninfoquery.pagesize * (sendcninfoquery.pagenum - 1);
+            getnum += querylist.pdfs.length;
+            if (getnum < querylist.totalAnnouncement) {
                 /*this is the number */
                 sendcninfoquery.pagenum += 1;
                 postdata = '';

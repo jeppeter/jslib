@@ -79,6 +79,7 @@ commander
                         errcode = 3;
                     } else {
                         console.log('<%d:%s> htmls(%s)', idx, elm, body2);
+                        tracelog.info('<%d:%s> htmls(%s)', idx, elm, body2);
                     }
                     resp2 = resp2;
                     if (idx === (args.length - 1)) {
@@ -159,7 +160,7 @@ commander
         v = v;
         return t;
     }, null)
-    .description(' get htmldata from url')
+    .description(' post file')
     .action(function (args, options) {
         'use strict';
         var errcode = 0;

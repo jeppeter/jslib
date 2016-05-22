@@ -47,6 +47,7 @@ function createDownloadPre(options) {
                     return;
                 }
                 /*we make sure the timeout not let it out*/
+                tracelog.info('start download (%s) (%s)', worker.url, worker.reqopt.downloadoption.downloaddir);
                 worker.reqopt.timeout = 1000 * 1000;
                 worker.pipe = fs.createWriteStream(fname);
                 next(false, null);
@@ -79,7 +80,7 @@ function createDownloadPre(options) {
 
     downloadpre.finish_callback = function (worker, err, next) {
         var sendreqopt;
-        if (!baseop.is_valid_string(worker.reqopt, 'downloadoption') || !baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir')) {
+        if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || !baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir')) {
             next(err);
             return;
         }
@@ -102,13 +103,16 @@ function createDownloadPre(options) {
                 sendreqopt = worker.reqopt;
                 sendreqopt.downloadoption.downloadtries = trytimes;
                 if (trytimes < 5) {
-                    tracelog.warn('[%d]request (%s) again', trytimes, worker.url);
+                    tracelog.warn('[%d]request (%s) (%s) again', trytimes, worker.url);
                     worker.parent.download_queue(worker.url, sendreqopt);
                 } else {
                     tracelog.error('request (%s) failed totally', worker.url);
                 }
             }
+        } else {
+            tracelog.info('<%s> (%s) succ', worker.url, worker.reqopt.downloadoption.downloaddir);
         }
+
 
         downloadpre.inner_pull_download();
         next(err);
