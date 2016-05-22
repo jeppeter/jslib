@@ -128,7 +128,10 @@ function createCninfoMain(options) {
             tracelog.info('post query (%s) (%s)', queryurl, postdata);
             worker.parent.post_queue(queryurl, {
                 reqopt: {
-                    body: postdata
+                    body: postdata,
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                    }
                 },
                 cninfoquery: cninfoquery
             });

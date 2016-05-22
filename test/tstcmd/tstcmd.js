@@ -221,6 +221,163 @@ commander
     });
 
 
+commander
+    .command('jsonparse <jsonfile> [value...]')
+    .description('to parse jsonfile and get value')
+    .action(function (jsonfile, values, options) {
+        'use strict';
+        commander.subname = 'jsonparse';
+        tracelog.set_commander(options.parent);
+        baseop.read_json_parse(jsonfile, function (err, opt) {
+            if (err) {
+                console.error('can not read(%s) error(%s)', jsonfile, JSON.stringify(err));
+                trace_exit(3);
+                return;
+            }
+
+            if (baseop.is_non_null(values) && values.length > 0) {
+
+                values.forEach(function (elm, idx) {
+                    if (baseop.is_non_null(opt, elm)) {
+                        console.log('[%d]%s = %s', idx, elm, opt[elm]);
+                    } else {
+                        console.error('[%d]%s not defined', idx, elm);
+                    }
+                });
+            } else {
+                console.log('%s (%s)', jsonfile, util.inspect(opt, {
+                    showHidden: true,
+                    depth: null
+                }));
+            }
+            trace_exit(0);
+            return;
+        });
+    });
+
+commander
+    .command('jsonarray <jsonfile> [value]')
+    .option('--num <number>', 'number array', function (v, t) {
+        'use strict';
+        t = t;
+        return parseInt(v);
+    }, 0)
+    .description('to parse jsonfile and get value')
+    .action(function (jsonfile, value, options) {
+        'use strict';
+        var idx;
+        idx = options.num;
+        commander.subname = 'jsonarray';
+        tracelog.set_commander(options.parent);
+        baseop.read_json_parse(jsonfile, function (err, opt) {
+            if (err) {
+                console.error('can not read(%s) error(%s)', jsonfile, JSON.stringify(err));
+                trace_exit(3);
+                return;
+            }
+
+            if (value !== null && value !== undefined) {
+
+                if (baseop.is_non_null(opt, value)) {
+                    console.log('%s[%d] = %s', value, idx, util.inspect(opt[value][options.num], {
+                        showHidden: true,
+                        depth: null
+                    }));
+                } else {
+                    console.error('%s not defined', value);
+                }
+            } else {
+                console.log('%s (%s)', jsonfile, util.inspect(opt, {
+                    showHidden: true,
+                    depth: null
+                }));
+            }
+            trace_exit(0);
+            return;
+        });
+    });
+
+var get_annoucement = function (opt) {
+    'use strict';
+    var retval = {};
+    var i, j;
+    var curassign, curelm;
+    var curpdf;
+
+    if (!baseop.is_non_null(opt, 'classifiedAnnouncements')) {
+        tracelog.error('can not get classifiedAnnouncements');
+        return null;
+    }
+
+    if (!baseop.is_non_null(opt, 'totalAnnouncement')) {
+        tracelog.error('can not get totalAnnouncement');
+        return null;
+    }
+
+    retval.totalAnnouncement = opt.totalAnnouncement;
+    retval.pdfs = [];
+
+    if (opt.classifiedAnnouncements.length > 0) {
+        for (i = 0; i < opt.classifiedAnnouncements.length; i += 1) {
+            curassign = opt.classifiedAnnouncements[i];
+            if (curassign.length > 0) {
+                for (j = 0; j < curassign.length; j += 1) {
+                    curelm = curassign[j];
+                    if (!baseop.is_non_null(curelm, 'adjunctUrl')) {
+                        tracelog.warn('[%d][%d] no adjunctUrl', i, j);
+                    } else {
+                        curpdf = {};
+                        curpdf.adjunctUrl = curelm.adjunctUrl;
+                        retval.pdfs.push(curpdf);
+                    }
+                }
+            } else {
+                if (!baseop.is_non_null(curassign, 'adjunctUrl')) {
+                    tracelog.warn('[%d] can not get adjunctUrl', i);
+                } else {
+                    curpdf = {};
+                    curpdf.adjunctUrl = curassign.adjunctUrl;
+                    retval.pdfs.push(curpdf);
+                }
+            }
+        }
+    }
+
+
+    return retval;
+};
+
+commander
+    .command('getannounce <jsonfile>')
+    .description('to get announcement value for cninfo')
+    .action(function (jsonfile, options) {
+        'use strict';
+        commander.subname = 'getannounce';
+        tracelog.set_commander(options.parent);
+        baseop.read_json_parse(jsonfile, function (err, opt) {
+            var retlists;
+            if (err) {
+                console.error('can not read(%s) error(%s)', jsonfile, JSON.stringify(err));
+                trace_exit(3);
+                return;
+            }
+
+            retlists = get_annoucement(opt);
+            if (retlists === null) {
+                console.error('can not get announcement');
+                trace_exit(3);
+                return;
+            }
+
+            retlists.pdfs.forEach(function (elm, idx) {
+                console.log('[%d] pdfs (%s)', idx, elm.adjunctUrl);
+            });
+
+            trace_exit(0);
+            return;
+        });
+    });
+
 
 tracelog.init_commander(commander);
 commander.parse(process.argv);

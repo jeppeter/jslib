@@ -5,6 +5,58 @@ var URL = require('url');
 var path = require('path');
 var grabwork = require('../../grabwork');
 
+var get_annoucement = function (opt) {
+    'use strict';
+    var retval = {};
+    var i, j;
+    var curassign, curelm;
+    var curpdf;
+
+    if (!baseop.is_non_null(opt, 'classifiedAnnouncements')) {
+        tracelog.error('can not get classifiedAnnouncements');
+        return null;
+    }
+
+    if (!baseop.is_non_null(opt, 'totalAnnouncement')) {
+        tracelog.error('can not get totalAnnouncement');
+        return null;
+    }
+
+    retval.totalAnnouncement = opt.totalAnnouncement;
+    retval.pdfs = [];
+
+    if (opt.classifiedAnnouncements.length > 0) {
+        for (i = 0; i < opt.classifiedAnnouncements.length; i += 1) {
+            curassign = opt.classifiedAnnouncements[i];
+            if (curassign.length > 0) {
+                for (j = 0; j < curassign.length; j += 1) {
+                    curelm = curassign[j];
+                    if (!baseop.is_non_null(curelm, 'adjunctUrl')) {
+                        tracelog.warn('[%d][%d] no adjunctUrl', i, j);
+                    } else {
+                        curpdf = {};
+                        curpdf.adjunctUrl = curelm.adjunctUrl;
+                        retval.pdfs.push(curpdf);
+                    }
+                }
+            } else {
+                if (!baseop.is_non_null(curassign, 'adjunctUrl')) {
+                    tracelog.warn('[%d] can not get adjunctUrl', i);
+                } else {
+                    curpdf = {};
+                    curpdf.adjunctUrl = curassign.adjunctUrl;
+                    retval.pdfs.push(curpdf);
+                }
+            }
+        }
+    }
+
+
+    return retval;
+};
+
+
+
 function createCninfoQuery(options) {
     'use strict';
     var cnquery;
@@ -35,6 +87,7 @@ function createCninfoQuery(options) {
         var sendcninfoquery;
         var curdowndir;
         var sarr;
+        var querylist;
         if (!baseop.is_non_null(worker.reqopt, 'cninfoquery')) {
             next(true, err);
             return;
@@ -52,7 +105,10 @@ function createCninfoQuery(options) {
             if (sendcninfoquery.retry < 5) {
                 worker.parent.post_queue(worker.url, {
                     reqopt: {
-                        body: postdata
+                        body: postdata,
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                        }
                     },
                     cninfoquery: sendcninfoquery
                 });
@@ -73,16 +129,10 @@ function createCninfoQuery(options) {
             return;
         }
 
-        if (!baseop.is_non_null(parser, 'announcements')) {
-            err2 = new Error('can not get announcements');
-            tracelog.error('%s', err2);
-            next(false, err2);
-            return;
-        }
-
-        if (!baseop.is_non_null(parser, 'totalAnnouncement')) {
-            err2 = new Error('can not get totalAnnouncement');
-            tracelog.error('%s', err2);
+        querylist = get_annoucement(parser);
+        if (querylist === null) {
+            err2 = new Error('can not parse parser');
+            tracelog.error('parse (%s) error', worker.htmldata);
             next(false, err2);
             return;
         }
@@ -92,15 +142,17 @@ function createCninfoQuery(options) {
         hosturl += util.format('%s//%s/', urlparser.protocol, urlparser.host);
         curdowndir = cnquery.options.topdir;
         curdowndir += path.sep;
+        curdowndir += cninfoquery.stockcode;
+        curdowndir += path.sep;
         sarr = cninfoquery.startdate.split('-');
         curdowndir += util.format('%s', sarr[0]);
 
         if (cninfoquery.retry === 0) {
             /*it means it is the first time to send it ,so we should make sure it has something to query for*/
             totalget = cninfoquery.pagesize * (cninfoquery.pagenum - 1);
-            totalget += parser.anountments.length;
+            totalget += querylist.pdfs.length;
             sendcninfoquery = cninfoquery;
-            if (totalget < parser.totalAnnouncement) {
+            if (totalget < querylist.totalAnnouncement) {
                 /*this is the number */
                 sendcninfoquery.pagenum += 1;
                 postdata = '';
@@ -114,7 +166,10 @@ function createCninfoQuery(options) {
                     priority: grabwork.DEF_PRIORITY,
                     cninfoquery: sendcninfoquery,
                     reqopt: {
-                        body: postdata
+                        body: postdata,
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                        }
                     }
                 });
             }
@@ -122,22 +177,18 @@ function createCninfoQuery(options) {
 
 
         /*ok we should get all the anountments*/
-        for (i = 0; i < parser.anountments.length; i += 1) {
-            curannounce = parser.anountments[i];
-            if (baseop.is_non_null(curannounce, 'adjunctUrl')) {
-                if (baseop.match_expr_i(curannounce.adjunctUrl, '\.pdf$')) {
-                    downpdf = hosturl;
-                    downpdf += curannounce.adjunctUrl;
-                    tracelog.info('<%s> down (%s)', downpdf, curdowndir);
-                    worker.parent.queue(downpdf, {
-                        priority: grabwork.MAX_PRIORITY,
-                        downloaddir: curdowndir
-                    });
-                } else {
-                    tracelog.warn('<%s:%s>[%d] not pdf (%s)', cninfoquery.stockcode, cninfoquery.startdate, i, curannounce.adjunctUrl);
-                }
+        for (i = 0; i < querylist.pdfs.length; i += 1) {
+            curannounce = querylist.pdfs[i];
+            if (baseop.match_expr_i(curannounce.adjunctUrl, '\.pdf$')) {
+                downpdf = hosturl;
+                downpdf += curannounce.adjunctUrl;
+                tracelog.info('<%s> down (%s)', downpdf, curdowndir);
+                worker.parent.queue(downpdf, {
+                    priority: grabwork.MAX_PRIORITY,
+                    downloaddir: curdowndir
+                });
             } else {
-                tracelog.warn('<%s:%s>[%d] announcements not ', cninfoquery.stockcode, cninfoquery.startdate, i);
+                tracelog.warn('<%s:%s>[%d] not pdf (%s)', cninfoquery.stockcode, cninfoquery.startdate, i, curannounce.adjunctUrl);
             }
         }
 

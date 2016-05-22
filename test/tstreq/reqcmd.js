@@ -149,40 +149,102 @@ commander
 
 commander
     .command('post <url...>')
+    .option('--postdata <postdata>', 'specify postdata', function (t, v) {
+        'use strict';
+        v = v;
+        return t;
+    }, null)
+    .option('--postfile <postfile>', 'specify postdata from file', function (t, v) {
+        'use strict';
+        v = v;
+        return t;
+    }, null)
     .description(' get htmldata from url')
     .action(function (args, options) {
         'use strict';
         var errcode = 0;
+        var postdata = '';
         commander.subname = 'post';
         tracelog.set_commander(options.parent);
         tracelog.info('args(%d) %s', args.length, args);
         if (args.length === 0) {
             usage(3, commander, 'please specify at lease one url');
         }
-        baseop.read_json_parse(options.parent.jsonfile, function (err, opt) {
-            if (err) {
-                tracelog.error('can not read (%s) (%s)', options.parent.jsonfile, JSON.stringify(err));
-                trace_exit(3);
-                return;
-            }
-            args.forEach(function (elm, idx) {
-                request.post(elm, opt, function (err2, resp2, body2) {
-                    if (err2) {
-                        errcode = 3;
-                    } else {
-                        tracelog.info('<%d:%s> htmls(%s)', idx, elm, body2);
-                        tracelog.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp2.headers, {
-                            showHidden: true,
-                            depth: null
-                        }));
+        postdata = '';
+        if (baseop.is_valid_string(options, 'postdata')) {
+            postdata = options.postdata;
+        }
+        if (baseop.is_valid_string(options, 'postfile')) {
+            fs.readFile(options.postfile, function (err2, data) {
+                if (err2) {
+                    tracelog.error('can not read (%s) (%s)', options.postfile, JSON.stringify(err2));
+                    trace_exit(3);
+                    return;
+                }
+                postdata = data;
+                baseop.read_json_parse(options.parent.jsonfile, function (err, opt) {
+                    if (err) {
+                        tracelog.error('can not read (%s) (%s)', options.parent.jsonfile, JSON.stringify(err));
+                        trace_exit(3);
+                        return;
                     }
-                    resp2 = resp2;
-                    if (idx === (args.length - 1)) {
-                        trace_exit(errcode);
+                    if (!baseop.is_non_null(opt, 'body')) {
+                        opt.body = postdata;
                     }
+                    if (postdata.length > 0) {
+                        opt.body = postdata;
+                    }
+                    args.forEach(function (elm, idx) {
+                        request.post(elm, opt, function (err2, resp2, body2) {
+                            if (err2) {
+                                errcode = 3;
+                            } else {
+                                tracelog.info('<%d:%s> htmls(%s)', idx, elm, body2);
+                                tracelog.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp2.headers, {
+                                    showHidden: true,
+                                    depth: null
+                                }));
+                            }
+                            resp2 = resp2;
+                            if (idx === (args.length - 1)) {
+                                trace_exit(errcode);
+                            }
+                        });
+                    });
                 });
             });
-        });
+        } else {
+            baseop.read_json_parse(options.parent.jsonfile, function (err, opt) {
+                if (err) {
+                    tracelog.error('can not read (%s) (%s)', options.parent.jsonfile, JSON.stringify(err));
+                    trace_exit(3);
+                    return;
+                }
+                if (!baseop.is_non_null(opt, 'body')) {
+                    opt.body = postdata;
+                }
+                if (postdata.length > 0) {
+                    opt.body = postdata;
+                }
+                args.forEach(function (elm, idx) {
+                    request.post(elm, opt, function (err2, resp2, body2) {
+                        if (err2) {
+                            errcode = 3;
+                        } else {
+                            tracelog.info('<%d:%s> htmls(%s)', idx, elm, body2);
+                            tracelog.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp2.headers, {
+                                showHidden: true,
+                                depth: null
+                            }));
+                        }
+                        resp2 = resp2;
+                        if (idx === (args.length - 1)) {
+                            trace_exit(errcode);
+                        }
+                    });
+                });
+            });
+        }
     });
 
 
