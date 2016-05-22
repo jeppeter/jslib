@@ -277,10 +277,10 @@ commander
         tracelog.info('args %s', args);
 
         call_cheerparser(args, options.parent.selector, function (parser, content, exit_fn) {
-            tracelog.trace('parser (%s)', util.inspect(parser, {
+            /*tracelog.trace('parser (%s)', util.inspect(parser, {
                 showHidden: true,
                 depth: 3
-            }));
+            }));*/
             if (content === null || content === undefined) {
                 console.log('can not find(%s) in (%s)', options.parent.selector, args);
                 exit_fn(4);

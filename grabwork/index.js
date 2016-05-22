@@ -310,3 +310,6 @@ function createGrabwork(options) {
 
 
 module.exports = createGrabwork;
+module.exports.MAX_PRIORITY = MAX_PRIORITY;
+module.exports.MIN_PRIORITY = MIN_PRIORITY;
+module.exports.DEF_PRIORITY = DEF_PRIORITY;

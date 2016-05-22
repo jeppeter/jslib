@@ -1,6 +1,6 @@
 var fs = require('fs');
 var path = require('path');
-//var tracelog = require('../tracelog');
+var tracelog = require('../tracelog');
 var util = require('util');
 module.exports.remove_array = function (array, elm) {
     'use strict';
@@ -360,11 +360,84 @@ var is_non_null = function (opt, name) {
     if (opt === undefined || opt === null) {
         isvalid = false;
     } else {
-        if (opt[name] === undefined || opt[name] === null) {
-            isvalid = false;
+        if (typeof name === 'string') {
+            if (opt[name] === undefined || opt[name] === null) {
+                isvalid = false;
+            }
         }
     }
     return isvalid;
 };
 
 module.exports.is_non_null = is_non_null;
+
+var split_by_oneyear = function (startdate, enddate) {
+    'use strict';
+    var yeardate = [];
+    var curyeardate;
+    var syear, smonth, sday;
+    var eyear, emonth, eday;
+    var csyear, ceyear;
+
+    if (is_non_null(startdate) && is_non_null(enddate)) {
+        if (startdate.length === 8 && enddate.length === 8) {
+            syear = parseInt(startdate.substring(0, 4));
+            smonth = parseInt(startdate.substring(4, 6));
+            sday = parseInt(startdate.substring(6, 8));
+            eyear = parseInt(enddate.substring(0, 4));
+            emonth = parseInt(enddate.substring(4, 6));
+            eday = parseInt(enddate.substring(6, 8));
+
+            if (syear < eyear || (syear === eyear && smonth < emonth) || (syear === eyear && smonth === emonth && sday <= eday)) {
+                tracelog.info('');
+                csyear = syear;
+                ceyear = syear;
+
+                while (true) {
+                    curyeardate = {};
+                    curyeardate.startdate = '';
+                    curyeardate.enddate = '';
+                    if (csyear === syear) {
+                        curyeardate.startdate += number_format_length(4, csyear);
+                        curyeardate.startdate += '-';
+                        curyeardate.startdate += number_format_length(2, smonth);
+                        curyeardate.startdate += '-';
+                        curyeardate.startdate += number_format_length(2, sday);
+                    } else {
+                        curyeardate.startdate += number_format_length(4, csyear);
+                        curyeardate.startdate += '-';
+                        curyeardate.startdate += number_format_length(2, 1);
+                        curyeardate.startdate += '-';
+                        curyeardate.startdate += number_format_length(2, 1);
+                    }
+
+                    if (ceyear === eyear) {
+                        curyeardate.enddate += number_format_length(4, ceyear);
+                        curyeardate.enddate += '-';
+                        curyeardate.enddate += number_format_length(2, emonth);
+                        curyeardate.enddate += '-';
+                        curyeardate.enddate += number_format_length(2, eday);
+                    } else {
+                        curyeardate.enddate += number_format_length(4, ceyear);
+                        curyeardate.enddate += '-';
+                        curyeardate.enddate += number_format_length(2, 12);
+                        curyeardate.enddate += '-';
+                        curyeardate.enddate += number_format_length(2, 31);
+                    }
+
+                    yeardate.push(curyeardate);
+                    if (csyear === eyear) {
+                        break;
+                    }
+                    csyear += 1;
+                    ceyear += 1;
+                }
+
+            }
+        }
+    }
+
+    return yeardate;
+};
+
+module.exports.split_by_oneyear = split_by_oneyear;

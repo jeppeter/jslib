@@ -203,6 +203,24 @@ commander
         return;
     });
 
+commander
+    .command('datesplit <startdate> <enddate>')
+    .description(' datesplit into several years')
+    .action(function (startdate, enddate, options) {
+        'use strict';
+        var yeardate;
+        commander.subname = 'datesplit';
+        tracelog.set_commander(options.parent);
+        yeardate = baseop.split_by_oneyear(startdate, enddate);
+        tracelog.info('get date (%s) (%s) (%d)', startdate, enddate, yeardate.length);
+        yeardate.forEach(function (elm, idx) {
+            console.log('[%d] %s %s', idx, elm.startdate, elm.enddate);
+        });
+        trace_exit(0);
+        return;
+    });
+
+
 
 tracelog.init_commander(commander);
 commander.parse(process.argv);
