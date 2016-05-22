@@ -441,3 +441,16 @@ var split_by_oneyear = function (startdate, enddate) {
 };
 
 module.exports.split_by_oneyear = split_by_oneyear;
+
+var is_url_format = function (url) {
+    'use strict';
+    var isurl = false;
+    var reg;
+    reg = new RegExp('^http[s]?:', 'i');
+    if (reg.test(url)) {
+        isurl = true;
+    }
+    return isurl;
+};
+
+module.exports.is_url_format = is_url_format;

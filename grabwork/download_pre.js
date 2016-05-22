@@ -32,12 +32,12 @@ function createDownloadPre(options) {
             return;
         }
         worker.add_finish(downloadpre.finish_callback);
-        fname = worker.reqopt.downloaddir;
+        fname = worker.reqopt.downloadoption.downloaddir;
         fname += path.sep;
         fname += getfilename;
         if (!baseop.is_in_array(downloadpre.workingfiles, fname)) {
             fdir = path.dirname(fname);
-            worker.downloadfile = fname;
+            worker.reqopt.downloadoption.downloadfile = fname;
             downloadpre.workingfiles.push(fname);
             baseop.mkdir_safe(fdir, function (err) {
                 if (err) {
@@ -78,32 +78,32 @@ function createDownloadPre(options) {
     };
 
     downloadpre.finish_callback = function (worker, err, next) {
-        if (!baseop.is_valid_string(worker.reqopt, 'downloaddir')) {
+        var sendreqopt;
+        if (!baseop.is_valid_string(worker.reqopt, 'downloadoption') || !baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir')) {
             next(err);
             return;
         }
 
-        if (baseop.is_in_array(downloadpre.workingfiles, worker.downloadfile)) {
+        if (baseop.is_in_array(downloadpre.workingfiles, worker.reqopt.downloadoption.downloadfile)) {
             /*we should remove the */
-            downloadpre.workingfiles = baseop.remove_array(downloadpre.workingfiles, worker.downloadfile);
+            downloadpre.workingfiles = baseop.remove_array(downloadpre.workingfiles, worker.reqopt.downloadoption.downloadfile);
         } else {
-            tracelog.warn('<%s> not in workingfiles', worker.downloadfile);
+            tracelog.warn('<%s> not in workingfiles', worker.reqopt.downloadoption.downloadfile);
         }
 
         if (err) {
             /*this is error code so we should make return*/
             if (baseop.is_valid_string(worker, 'url', 1)) {
                 var trytimes = 0;
-                if (typeof worker.reqopt.downloadtries === 'number') {
-                    trytimes = worker.reqopt.downloadtries;
+                if (typeof worker.reqopt.downloadoption.downloadtries === 'number') {
+                    trytimes = worker.reqopt.downloadoption.downloadtries;
                 }
                 trytimes += 1;
+                sendreqopt = worker.reqopt;
+                sendreqopt.downloadoption.downloadtries = trytimes;
                 if (trytimes < 5) {
                     tracelog.warn('[%d]request (%s) again', trytimes, worker.url);
-                    worker.parent.queue(worker.url, {
-                        downloaddir: worker.reqopt.downloaddir,
-                        downloadtries: trytimes
-                    });
+                    worker.parent.download_queue(worker.url, sendreqopt);
                 } else {
                     tracelog.error('request (%s) failed totally', worker.url);
                 }
@@ -111,21 +111,20 @@ function createDownloadPre(options) {
         }
 
         downloadpre.inner_pull_download();
-
         next(err);
         return;
     };
 
     downloadpre.pre_handler = function (err, worker, next) {
         var curpending;
-        if (!baseop.is_valid_string(worker.reqopt, 'downloaddir', 0)) {
+        if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || !baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir')) {
             /*if we do not handle news make*/
             next(true, err);
             return;
         }
         if (err) {
             /*if we have nothing to do*/
-            tracelog.error('downloaddir (%s) error(%s)', worker.reqopt.downloaddir, JSON.stringify(err));
+            tracelog.error('downloaddir (%s) error(%s)', worker.reqopt.downloadoption.downloaddir, JSON.stringify(err));
             worker.url = '';
             next(false, err);
             return;

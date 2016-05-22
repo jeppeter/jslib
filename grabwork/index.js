@@ -277,6 +277,73 @@ function createGrabwork(options) {
         return;
     };
 
+    self.download_queue = function (url, dirname, opt) {
+        var url2 = url;
+        var dir2 = dirname;
+        var reqopt = {};
+        if (baseop.is_non_null(opt)) {
+            url2 = url;
+            dir2 = dirname;
+            reqopt = opt;
+        } else if (baseop.is_non_null(dirname)) {
+            if (typeof dirname === 'string') {
+                url2 = url;
+                dir2 = dirname;
+            } else {
+                if (baseop.is_url_format(url)) {
+                    url2 = url;
+                    reqopt = dirname;
+                } else {
+                    url2 = url;
+                    dir2 = dirname;
+                }
+            }
+        } else {
+            if (typeof url === 'string') {
+                if (baseop.is_url_format(url)) {
+                    url2 = url;
+                } else {
+                    dir2 = url;
+                }
+            } else {
+                reqopt = url;
+            }
+        }
+
+        if (!baseop.is_non_null(reqopt, 'downloadoption')) {
+            reqopt.downloadoption = {};
+        }
+
+        if (url2 === '') {
+            if (baseop.is_non_null(reqopt, 'reqopt')) {
+                if (baseop.is_valid_string(reqopt.reqopt, 'url')) {
+                    url2 = reqopt.reqopt.url;
+                }
+            }
+
+            if (!baseop.is_url_format(url2)) {
+                tracelog.warn('<no url specified>');
+                return;
+            }
+        }
+
+        if (baseop.is_valid_string(reqopt.downloadoption, 'downloaddir')) {
+            if (dir2 !== '' && dir2 !== reqopt.downloadoption.downloaddir) {
+                tracelog.warn('downloadoption.downloaddir <%s> != <%s>', reqopt.downloadoption.downloaddir, dir2);
+                reqopt.downloadoption.downloaddir = dir2;
+            }
+        } else {
+            if (dir2 === '') {
+                tracelog.warn('not specify downloaddir for (%s)', url2);
+                dir2 = __dirname;
+            }
+            reqopt.downloadoption.downloaddir = dir2;
+        }
+
+        self.inner_queue('GET', url2, reqopt);
+        return;
+    };
+
     self.add_pre = function (handler) {
         if (handler.pre_handler === null || handler.pre_handler === undefined || typeof handler.pre_handler !== 'function') {
             tracelog.error('handler (%s) not functions', handler);

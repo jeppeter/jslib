@@ -183,9 +183,8 @@ function createCninfoQuery(options) {
                 downpdf = hosturl;
                 downpdf += curannounce.adjunctUrl;
                 tracelog.info('<%s> down (%s)', downpdf, curdowndir);
-                worker.parent.queue(downpdf, {
-                    priority: grabwork.MAX_PRIORITY,
-                    downloaddir: curdowndir
+                worker.parent.download_queue(downpdf, curdowndir, {
+                    priority: grabwork.MAX_PRIORITY
                 });
             } else {
                 tracelog.warn('<%s:%s>[%d] not pdf (%s)', cninfoquery.stockcode, cninfoquery.startdate, i, curannounce.adjunctUrl);

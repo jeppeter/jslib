@@ -6,6 +6,7 @@ var URL = require('url');
 var grabcheerio = require('./grabcheerio');
 var path = require('path');
 var baseop = require('../../baseop');
+var grabwork = require('../../grabwork');
 
 var get_post_data = function (viewstate) {
     'use strict';
@@ -112,8 +113,8 @@ function createHkexNewsPaperPost() {
             downdir += findres.lists_html[i].year;
             if (baseop.match_expr_i(cururl, '\.pdf$')) {
                 /*store by year */
-                worker.parent.queue(cururl, {
-                    downloaddir: downdir
+                worker.parent.download_queue(cururl, downdir, {
+                    priority: grabwork.MAX_PRIORITY
                 });
             } else if (baseop.match_expr_i(cururl, '\.htm[l]?$')) {
                 tracelog.info('will more query (%s)', cururl);

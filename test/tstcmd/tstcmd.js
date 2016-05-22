@@ -379,6 +379,69 @@ commander
     });
 
 
+var download_file = function (url, dirname, opt) {
+    'use strict';
+    var url2, dir2, opt2;
+    url2 = '';
+    dir2 = '';
+    opt2 = {};
+    if (baseop.is_non_null(opt)) {
+        url2 = url;
+        dir2 = dirname;
+        opt2 = opt;
+    } else if (baseop.is_non_null(dirname)) {
+        if (typeof dirname === 'string') {
+            url2 = url;
+            dir2 = dirname;
+        } else {
+            if (baseop.is_url_format(url)) {
+                url2 = url;
+                opt2 = dirname;
+            } else {
+                url2 = url;
+                dir2 = dirname;
+            }
+        }
+    } else {
+        if (typeof url === 'string') {
+            if (baseop.is_url_format(url)) {
+                url2 = url;
+            } else {
+                dir2 = url;
+            }
+        } else {
+            opt2 = url;
+        }
+    }
+    console.log('url (%s) dirname (%s) opt (%s)', url2, dir2, opt2);
+    return;
+};
+
+commander
+    .command('testdownloadfile')
+    .description('test function call url dir')
+    .action(function (options) {
+        'use strict';
+        var url = 'https://download.com/download.pdf';
+        var dirname = __dirname;
+        var opt = {};
+        commander.subname = 'testdownloadfile';
+        opt.reqopt = {};
+        opt.reqopt.url = url;
+        commander.subname = 'downloadurldir';
+        tracelog.set_commander(options.parent);
+        download_file(url, dirname);
+        download_file(url, opt);
+        download_file(dirname, opt);
+        download_file(url, dirname, opt);
+        download_file(dirname);
+        download_file(url);
+        download_file(opt);
+        trace_exit(0);
+    });
+
+
+
 tracelog.init_commander(commander);
 commander.parse(process.argv);
 
