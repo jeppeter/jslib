@@ -378,6 +378,7 @@ var download_file = function (url, dirname, opt) {
     url2 = '';
     dir2 = '';
     opt2 = {};
+    console.log('url type(%s) dirname (%s) opt (%s)', typeof url, typeof dirname, typeof opt);
     if (baseop.is_non_null(opt)) {
         url2 = url;
         dir2 = dirname;

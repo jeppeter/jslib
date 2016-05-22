@@ -103,7 +103,7 @@ function createDownloadPre(options) {
                 sendreqopt = worker.reqopt;
                 sendreqopt.downloadoption.downloadtries = trytimes;
                 if (trytimes < 5) {
-                    tracelog.warn('[%d]request (%s) (%s) again', trytimes, worker.url);
+                    tracelog.warn('[%d]request (%s) again', trytimes, worker.url);
                     worker.parent.download_queue(worker.url, sendreqopt);
                 } else {
                     tracelog.error('request (%s) failed totally', worker.url);

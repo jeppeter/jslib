@@ -278,10 +278,10 @@ function createGrabwork(options) {
     };
 
     self.download_queue = function (url, dirname, opt) {
-        var url2 = url;
-        var dir2 = dirname;
+        var url2 = '';
+        var dir2 = '';
         var reqopt = {};
-        if (baseop.is_non_null(opt)) {
+        if (typeof opt === 'object') {
             url2 = url;
             dir2 = dirname;
             reqopt = opt;
@@ -292,11 +292,10 @@ function createGrabwork(options) {
             } else {
                 if (baseop.is_url_format(url)) {
                     url2 = url;
-                    reqopt = dirname;
                 } else {
-                    url2 = url;
-                    dir2 = dirname;
+                    dir2 = url;
                 }
+                reqopt = dirname;
             }
         } else {
             if (typeof url === 'string') {
