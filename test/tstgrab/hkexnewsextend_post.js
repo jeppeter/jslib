@@ -43,7 +43,7 @@ function createHkexNewsPaperPost(options) {
             trytimes += 1;
             if (trytimes < hknews.options.maxtries || hknews.options.maxtries === 0) {
                 sendreqopt.hkexnewsextendoption.trytimes = trytimes;
-                tracelog.warn('[%d]<%d>', trytimes, worker.url);
+                tracelog.warn('[%d]<%s>', trytimes, worker.url);
                 worker.parent.queue(worker.url, sendreqopt);
             } else {
                 tracelog.error('really error on extend(%s)', worker.url);
