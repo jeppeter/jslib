@@ -8,3 +8,7 @@ describe('Array', function () {
         });
     });
 });
+
+describe('reaonly use', function () {
+    describe('readset case')
+});
