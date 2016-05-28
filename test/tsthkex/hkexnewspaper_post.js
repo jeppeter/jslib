@@ -22,9 +22,17 @@ var get_post_data = function (viewstate) {
 
 
 
-function createHkexNewsPaperPost() {
+function createHkexNewsPaperPost(opt) {
     'use strict';
     var hknews = {};
+    var options = opt || {};
+
+    hknews.lastdate = null;
+    hknews.maxtries = 5;
+
+    if (baseop.is_non_null(options, 'maxtries')) {
+        hknews.maxtries = options.maxtries;
+    }
 
     hknews.post_handler = function (err, worker, next) {
         var parser, selected;
@@ -36,13 +44,14 @@ function createHkexNewsPaperPost() {
         var proto, urlparse;
         var cururl;
         var downdir;
+        var getenddate, curlastdate;
         //tracelog.trace('newspaper');
         /*tracelog.info('worker (%s)', util.inspect(worker, {
             showHidden: true,
             depth: null
         }));*/
 
-        if (!baseop.is_valid_string(worker.reqopt, 'hkexnewspaper')) {
+        if (!baseop.is_non_null(worker.reqopt, 'hkexnewspaperoption')) {
             /*if we do not handle news make*/
             next(true, err);
             return;
@@ -50,7 +59,31 @@ function createHkexNewsPaperPost() {
 
 
         if (err) {
+            var tries = 0;
             /*we have handler this functions*/
+            if (baseop.is_non_null(worker.reqopt.hkexnewspaperoption, "tries")) {
+                tries = worker.reqopt.hkexnewspaperoption.tries;
+            }
+            tries += 1;
+            if (tries < hknews.maxtries) {
+                if (hknews.lastdate !== null) {
+                    worker.parent.queue(worker.url, {
+                        hkexnewsmainoption: {
+                            enddate: hknews.lastdate,
+                            tries: tries
+                        }
+                    });
+                } else {
+                    worker.parent.queue(worker.url, {
+                        hkexnewsmainoption: {
+                            tries: tries
+                        }
+                    });
+                }
+            } else {
+                tracelog.error('query %s really failed', worker.url);
+            }
+
             next(false, err);
             return;
         }
@@ -86,7 +119,7 @@ function createHkexNewsPaperPost() {
             postdata = get_post_data(curval);
             //tracelog.info('postdata (%s)', postdata);
             worker.parent.post_queue(worker.url, {
-                hkexnewspaper: worker.reqopt.hkexnewspaper,
+                hkexnewspaperoption: worker.reqopt.hkexnewspaperoption,
                 reuse: true,
                 reqopt: {
                     body: postdata,
@@ -108,9 +141,17 @@ function createHkexNewsPaperPost() {
             cururl += '//';
             cururl += host;
             cururl += findres.lists_html[i].href;
-            downdir = worker.reqopt.hkexnewspaper;
+            downdir = worker.reqopt.hkexnewspaperoption.downdir;
             downdir += path.sep;
             downdir += findres.lists_html[i].year;
+            getenddate = baseop.parse_number(findres.lists_html[i].enddate);
+            curlastdate = baseop.parse_number(hknews.lastdate);
+            if (curlastdate > getenddate) {
+                /*we refresh date for it will give the date*/
+                hknews.lastdate = findres.lists_html[i].enddate;
+            }
+
+
             if (baseop.match_expr_i(cururl, '\.pdf$')) {
                 /*store by year */
                 worker.parent.download_queue(cururl, downdir, {

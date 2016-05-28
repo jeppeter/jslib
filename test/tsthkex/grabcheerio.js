@@ -115,6 +115,7 @@ module.exports.find_query_result = function (htmldata) {
     var i, curtr, spans, year, href, j, curspan, curval;
     var value;
     var cura, sarr, brval, curbr, curref, num;
+    var enddate;
     findres = {};
     findres.next = false;
     findres.lists_html = [];
@@ -127,6 +128,7 @@ module.exports.find_query_result = function (htmldata) {
         spans = curtr.find('span');
         year = null;
         href = null;
+        enddate = null;
         for (j = 0; j < spans.length; j += 1) {
             curspan = spans.eq(j);
             curval = inner_get_attr_value(curspan, parser, 'id');
@@ -141,6 +143,11 @@ module.exports.find_query_result = function (htmldata) {
                         sarr = curval.split('/');
                         if (sarr.length >= 3) {
                             year = sarr[2];
+                            enddate = '';
+                            /*year month date*/
+                            enddate += baseop.number_format_length(4, sarr[2]);
+                            enddate += baseop.number_format_length(2, sarr[1]);
+                            enddate += baseop.number_format_length(2, sarr[0]);
                         }
                     }
                 }
@@ -159,6 +166,7 @@ module.exports.find_query_result = function (htmldata) {
             curref = {};
             curref.href = href;
             curref.year = year;
+            curref.enddate = enddate;
             findres.lists_html.push(curref);
         }
     }

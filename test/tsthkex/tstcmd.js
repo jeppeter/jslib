@@ -140,7 +140,7 @@ grab.add_post(hkexnewsextend_post());
 tracelog.info('url (%s)', commander.url);
 
 grab.queue(commander.url, {
-    hkexnewsmain: true,
+    hkexnewsmainoption: {},
     reqopt: {
         timeout: 5000
     }

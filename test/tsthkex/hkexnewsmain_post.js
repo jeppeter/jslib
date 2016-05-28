@@ -18,6 +18,7 @@ function createHkexNewsMainPost(options) {
     hknews.options.hfStatus = 'ACM';
     hknews.options.hfAlert = '';
     hknews.options.ex_startdate = '19990101';
+    hknews.options.maxtries = 5;
     s = '';
     s += baseop.number_format_length(4, d.getFullYear());
     s += baseop.number_format_length(2, d.getMonth() + 1);
@@ -114,18 +115,37 @@ function createHkexNewsMainPost(options) {
         postdata += util.format('%s&', qs.escape(hknews.options.txtKeyWord));
         postdata += util.format('%srdo_SelectDateOfRelease=', qs.escape(ctl00_dollar));
         postdata += util.format('%s&', qs.escape(hknews.options.rdo_SelectDateOfRelease));
-        postdata += util.format('%ssel_DateOfReleaseFrom_d=', qs.escape(ctl00_dollar));
-        postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseFrom_d));
-        postdata += util.format('%ssel_DateOfReleaseFrom_m=', qs.escape(ctl00_dollar));
-        postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseFrom_m));
-        postdata += util.format('%ssel_DateOfReleaseFrom_y=', qs.escape(ctl00_dollar));
-        postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseFrom_y));
-        postdata += util.format('%ssel_DateOfReleaseTo_d=', qs.escape(ctl00_dollar));
-        postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseTo_d));
-        postdata += util.format('%ssel_DateOfReleaseTo_m=', qs.escape(ctl00_dollar));
-        postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseTo_m));
-        postdata += util.format('%ssel_DateOfReleaseTo_y=', qs.escape(ctl00_dollar));
-        postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseTo_y));
+        if (baseop.is_valid_date(queryopt.startdate)) {
+            postdata += util.format('%ssel_DateOfReleaseFrom_d=', qs.escape(ctl00_dollar));
+            postdata += queryopt.startdate.substring(6, 8);
+            postdata += util.format('%ssel_DateOfReleaseFrom_m=', qs.escape(ctl00_dollar));
+            postdata += queryopt.startdate.substring(4, 6);
+            postdata += util.format('%ssel_DateOfReleaseFrom_y=', qs.escape(ctl00_dollar));
+            postdata += queryopt.startdate.substring(0, 4);
+        } else {
+            postdata += util.format('%ssel_DateOfReleaseFrom_d=', qs.escape(ctl00_dollar));
+            postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseFrom_d));
+            postdata += util.format('%ssel_DateOfReleaseFrom_m=', qs.escape(ctl00_dollar));
+            postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseFrom_m));
+            postdata += util.format('%ssel_DateOfReleaseFrom_y=', qs.escape(ctl00_dollar));
+            postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseFrom_y));
+        }
+
+        if (baseop.is_valid_date(queryopt.enddate)) {
+            postdata += util.format('%ssel_DateOfReleaseTo_d=', qs.escape(ctl00_dollar));
+            postdata += queryopt.enddate.substring(6, 8);
+            postdata += util.format('%ssel_DateOfReleaseTo_m=', qs.escape(ctl00_dollar));
+            postdata += queryopt.enddate.substring(4, 6);
+            postdata += util.format('%ssel_DateOfReleaseTo_y=', qs.escape(ctl00_dollar));
+            postdata += queryopt.enddate.substring(0, 4);
+        } else {
+            postdata += util.format('%ssel_DateOfReleaseTo_d=', qs.escape(ctl00_dollar));
+            postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseTo_d));
+            postdata += util.format('%ssel_DateOfReleaseTo_m=', qs.escape(ctl00_dollar));
+            postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseTo_m));
+            postdata += util.format('%ssel_DateOfReleaseTo_y=', qs.escape(ctl00_dollar));
+            postdata += util.format('%s&', qs.escape(hknews.options.sel_DateOfReleaseTo_y));
+        }
         postdata += util.format('%ssel_defaultDateRange=', qs.escape(ctl00_dollar));
         postdata += util.format('%s&', qs.escape(hknews.options.sel_defaultDateRange));
         postdata += util.format('%srdo_SelectSortBy=', qs.escape(ctl00_dollar));
@@ -137,15 +157,30 @@ function createHkexNewsMainPost(options) {
         var parser;
         var inputs, i, input;
         var findinput;
+        var tries = 0;
         var postdata;
-        if (err) {
-            /*if we have nothing to do*/
+
+        if (!baseop.is_non_null(worker.reqopt, 'hkexnewsmainoption')) {
+            /*if we do not handle news make*/
             next(true, err);
             return;
         }
 
-        if (!baseop.is_valid_bool(worker.reqopt, 'hkexnewsmain')) {
-            /*if we do not handle news make*/
+        if (err) {
+            /*if we have nothing to do*/
+            if (baseop.is_non_null(worker.reqopt.hkexnewsmainoption, 'maxtries')) {
+                tries = worker.reqopt.hkexnewsmainoption.maxtries;
+            }
+            tries += 1;
+            if (tries < hknews.options.maxtries) {
+                worker.parent.queue(worker.url, {
+                    hkexnewsmainoption: {
+                        tries: tries
+                    }
+                });
+            } else {
+                tracelog.error('can not make hkexnewsmainoption (%s)', worker.url);
+            }
             next(true, err);
             return;
         }
@@ -173,12 +208,19 @@ function createHkexNewsMainPost(options) {
             next(true, null);
             return;
         }
+        tries = 0;
+        if (baseop.is_non_null(worker.reqopt.hkexnewsmainoption, 'tries')) {
+            tries = worker.reqopt.hkexnewsmainoption.tries;
+        }
 
         /*now we find the input ,so we should all things we should put post data*/
-        postdata = hknews.make_post_data(findinput, worker.reqopt);
+        postdata = hknews.make_post_data(findinput, worker.reqopt.hkexnewsmainoption);
         //tracelog.info('postdata (%s)', postdata);
         worker.parent.post_queue(worker.url, {
-            hkexnewspaper: hknews.topdir,
+            hkexnewspaperoption: {
+                downdir: hknews.topdir,
+                tries: tries
+            },
             reuse: true,
             reqopt: {
                 body: postdata,
