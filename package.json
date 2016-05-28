@@ -22,7 +22,10 @@
     "formidable": "latest",
     "ejs": "latest",
     "commander": "latest",
-    "keep-alive-agent": "latest"
+    "keep-alive-agent": "latest",
+    "tape": "latest",
+    "mocha": "latest",
+    "chai": "latest"
   },
   "keywords": [],
   "author": "",
