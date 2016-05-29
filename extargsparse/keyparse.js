@@ -1,4 +1,5 @@
 var util = require('util');
+var assert = require('assert');
 
 var set_words_access = function (words, self) {
     'use strict';
@@ -28,7 +29,7 @@ var get_value_type = function (value) {
     return typeof value;
 };
 
-function CreateKeyParse(prefix, key, value, iskey) {
+function CreateKeyParse(prefix, key, value, isflag) {
     'use strict';
     var dict;
     var self;
@@ -42,6 +43,10 @@ function CreateKeyParse(prefix, key, value, iskey) {
 
     self.helpexpr = new RegExp('##([^#]+)##$', 'i');
     self.cmdexpr = new RegExp('^([^\\#\\<\\>\\+\\$]+)', 'i');
+    self.prefixexpr = new RegExp('\\+([^\\+\\#\\<\\>\\|\\$ \t]+)', 'i');
+    self.funcexpr = new RegExp('<([^\\<\\>\\#\\$\\| \t]+)>', 'i');
+    self.flagexpr = new RegExp('^([^\\<\\>\\#\\+\\$ \t]+)', 'i');
+    self.mustflagexpr = new RegExp('^\\$([^\\$\\+\\#\\<\\>]+)', 'i');
 
     self.form_words = function (elm) {
         var errstr;
@@ -122,11 +127,110 @@ function CreateKeyParse(prefix, key, value, iskey) {
         dict.isflag = false;
         dict.iscmd = false;
         dict.type = null;
-        return;
+        return self;
     };
 
     self.validate = function () {
+        var errstr;
+        if (dict.isflag) {
+            assert(!dict.iscmd);
+            if (dict.function !== null) {
+                errstr = util.format('(%s) flag include function(%s)', dict.origkey, dict.function);
+                throw new Error(errstr);
+            }
+            if (dict.type === 'object' && dict.flagname !== null) {
+                errstr = util.format('(%s) flag type object', dict.origkey);
+                throw new Error(errstr);
+            }
+            if (dict.type !== get_value_type(dict.value) && dict.type !== 'count') {
+                errstr = util.format('(%s) (%s)not match type(%s)', dict.origkey, dict.type, get_value_type(dict.value));
+                throw new Error(errstr);
+            }
 
+            if (dict.flagname === null) {
+                if (dict.prefix.length === 0) {
+                    errstr = util.format('(%s) not specified  prefix', dict.origkey);
+                    throw new Error(errstr);
+                }
+                dict.type = 'prefix';
+                if (get_value_type(dict.value) !== 'object') {
+                    errstr = util.format('(%s) prefix value is not type(object)', dict.origkey);
+                    throw new Error(errstr);
+                }
+
+                if (dict.helpinfo !== null) {
+                    errstr = util.format('(%s) prefix should not have helpinfo', dict.origkey);
+                    throw new Error(errstr);
+                }
+
+                if (dict.shortflag !== null) {
+                    errstr = util.format('(%s) prefix should not have shortflag', dict.origkey);
+                    throw new Error(errstr);
+                }
+            } else if (dict.flagname === '$') {
+                dict.type = 'args';
+                if (dict.shortflag !== null) {
+                    errstr = util.format('(%s) should not have shortflag', dict.origkey);
+                    throw new Error(errstr);
+                }
+            } else {
+                if (dict.flagname === null || dict.flagname.length <= 0) {
+                    errstr = util.format('(%s) should specified flagname', dict.origkey);
+                    throw new Error(errstr);
+                }
+            }
+
+            if (dict.shortflag !== null) {
+                if (dict.shortflag.length !== 1) {
+                    errstr = util.format('(%s) shortflag not 1 length', dict.origkey);
+                    throw new Error(errstr);
+                }
+            }
+
+            if (dict.type === 'boolean') {
+                if (dict.nargs !== null && dict.nargs !== 0) {
+                    errstr = util.format('(%s) nargs not 0', dict.origkey);
+                    throw new Error(errstr);
+                }
+                dict.nargs = 0;
+            } else if (dict.type !== 'prefix' && dict.flagname !== '$' && dict.type !== 'count') {
+                if (dict.flagname !== '$' && dict.nargs !== 1 && dict.nargs !== null) {
+                    errstr = util.format('(%s) should set nargs 1', dict.origkey);
+                    throw new Error(errstr);
+                }
+                dict.nargs = 1;
+            } else {
+                if (dict.flagname === '$' && dict.nargs === null) {
+                    /*we make sure it should be multiple to 0*/
+                    dict.nargs = '*';
+                }
+            }
+
+        } else {
+            if (dict.cmdname === null || dict.cmdname.length === 0) {
+                errstr = util.format('(%s) cmdname is null or 0 length', dict.origkey);
+                throw new Error(errstr);
+            }
+
+            if (dict.shortflag !== null) {
+                errstr = util.format('(%s) cmdname should not have shortflag', dict.origkey);
+                throw new Error(errstr);
+            }
+
+            if (dict.nargs !== null) {
+                errstr = util.format('(%s) cmdname should not have nargs', dict.origkey);
+                throw new Error(errstr);
+            }
+
+            if (dict.type !== 'object') {
+                errstr = util.format('(%s) cmdname should value object', dict.origkey);
+                throw new Error(errstr);
+            }
+
+            dict.prefix = dict.cmdname;
+            dict.type = 'commnad';
+        }
+        return self;
     };
 
     self.set_flag = function () {
@@ -188,11 +292,185 @@ function CreateKeyParse(prefix, key, value, iskey) {
         }
     };
 
-    self.init_fn = function () {
-        self.reset_value();
+    self.parse = function () {
+        var errstr;
+        var i;
+        var m;
+        var flags;
+        var flagmod, cmdmod;
+        var sarr;
+        var newprefix;
+        flagmod = false;
+        cmdmod = false;
+        dict.origkey = key;
+        if (key.indexOf('$') >= 0) {
+            if (key[0] !== '$') {
+                errstr = util.format('(%s) has $ not at begin', dict.origkey);
+                throw new Error(errstr);
+            }
+
+            for (i = 1; i < dict.origkey; i += 1) {
+                if (dict.origkey[i] === '$') {
+                    errstr = util.format('(%s) has $ for twice', dict.origkey);
+                    throw new Error(errstr);
+                }
+            }
+        }
+        flags = null;
+
+        if (isflag) {
+            m = self.flagexpr.exec(dict.origkey);
+            if (m !== undefined && m !== null) {
+                flags = m[0];
+            }
+
+            if (flags === null) {
+                m = self.mustflagexpr.exec(dict.origkey);
+                if (m !== undefined && m !== null) {
+                    flags = m[0];
+                }
+            }
+
+            if (flags === null && dict.origkey[0] === '$') {
+                dict.flagname = '$';
+                flagmod = true;
+            }
+
+            if (flags !== null) {
+                if (flags.indexOf('|') >= 0) {
+                    sarr = flags.split('|');
+                    if (sarr.length > 2 || sarr[0].length <= 1 || sarr[1].length !== 1) {
+                        errstr = util.format('(%s) invalid flag format', dict.origkey);
+                        throw new Error(errstr);
+                    }
+                    dict.flagname = sarr[0];
+                    dict.shortflag = sarr[1];
+                } else {
+                    dict.flagname = flags;
+                }
+                flagmod = true;
+            }
+
+        } else {
+            m = self.mustflagexpr.exec(dict.origkey);
+            if (m !== undefined && m !== null) {
+                flags = m[0];
+                if (flags.indexOf('|') >= 0) {
+                    sarr = flags.split('|');
+                    if (sarr.length > 2 || sarr[0].length <= 1 || sarr[1].length !== 1) {
+                        errstr = util.format('(%s) invalid flag format', dict.origkey);
+                        throw new Error(errstr);
+                    }
+                    dict.flagname = sarr[0];
+                    dict.shortflag = sarr[1];
+                } else {
+                    dict.flagname = flags;
+                }
+                flagmod = true;
+            } else if (dict.origkey[0] === '$') {
+                dict.flagname = '$';
+                flagmod = true;
+            }
+
+            m = self.cmdexpr.exec(dict.origkey);
+            if (m !== null && m !== undefined) {
+                assert(!flagmod);
+                if (m[0].indexOf('|') >= 0) {
+                    flags = m[0];
+                    if (flags.indexOf('|') >= 0) {
+                        sarr = flags.split('|');
+                        if (sarr.length > 2 || sarr[0].length <= 1 || sarr[1].length !== 1) {
+                            errstr = util.format('(%s) invalid flag format', dict.origkey);
+                            throw new Error(errstr);
+                        }
+                        dict.flagname = sarr[0];
+                        dict.shortflag = sarr[1];
+                    } else {
+                        dict.flagname = flags;
+                    }
+                    flagmod = true;
+                } else {
+                    cmdmod = true;
+                    dict.cmdname = m[0];
+                }
+            }
+        }
+
+        m = self.funcexpr.exec(dict.origkey);
+        if (m !== undefined && m !== null) {
+            dict.function = m[0];
+        }
+
+        m = self.helpexpr.exec(dict.origkey);
+        if (m !== undefined && m !== null) {
+            dict.helpinfo = m[0];
+        }
+
+        newprefix = '';
+        if (prefix.length > 0) {
+            newprefix += util.format('%s_', prefix);
+        }
+
+        m = self.prefixexpr.exec(dict.origkey);
+        if (m !== undefined && m !== null) {
+            newprefix += m[0];
+            dict.prefix = newprefix;
+        } else {
+            if (prefix.length > 0) {
+                dict.prefix = prefix;
+            }
+        }
+
+        if (flagmod) {
+            dict.isflag = true;
+            dict.iscmd = false;
+        }
+        if (cmdmod) {
+            dict.isflag = false;
+            dict.iscmd = true;
+        }
+
+        if (!flagmod && !cmdmod) {
+            dict.isflag = true;
+            dict.iscmd = false;
+        }
+        dict.value = value;
+        dict.type = get_value_type(value);
+        if (cmdmod && dict.type !== 'object') {
+            /*flag mod is true we give the flag*/
+            dict.isflag = true;
+            dict.iscmd = false;
+            dict.flagname = dict.cmdname;
+            dict.cmdname = null;
+        }
+
+        if (dict.isflag && dict.type === 'string' && dict.value === '+' && dict.flagname !== '$') {
+            dict.type = 'count';
+            dict.value = 0;
+            dict.nargs = 0;
+        }
+
+        if (dict.isflag && dict.flagname === '$' && dict.type !== 'object') {
+            if (!((dict.type === 'string' && (dict.value === '+' || dict.value === '*' || dict.value === '?')) || dict.type === 'number')) {
+                errstr = util.format('(%s) not valid args description (%s)', dict.origkey, dict.value);
+                throw new Error(errstr);
+            }
+            dict.nargs = dict.value;
+            dict.value = null;
+            dict.type = 'string';
+        }
+
+        if (dict.isflag && dict.type === 'object' && dict.flagname !== null) {
+            self.set_flag();
+        }
+        return self.validate();
     };
 
-    return self;
+    self.init_fn = function () {
+        return self.reset_value().parse();
+    };
+
+    return self.init_fn();
 }
 
 module.exports = CreateKeyParse;
