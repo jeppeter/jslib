@@ -238,7 +238,7 @@ function KeyParser(prefix, key, value, isflag) {
             }
 
             dict.prefix = dict.cmdname;
-            dict.typename = 'commnad';
+            dict.typename = 'command';
         }
         return self;
     };

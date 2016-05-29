@@ -6,6 +6,11 @@ tracelog.Init({
     level: 'trace'
 });
 
+var get_notice = function (t, name) {
+    'use strict';
+    return util.format('%s %s', t.name, name);
+};
+
 
 var opt_fail_check = function (t, keycls) {
     'use strict';
@@ -21,7 +26,7 @@ var opt_fail_check = function (t, keycls) {
         err = e;
         ok = true;
     }
-    t.assert(ok, 'will not get longopt ');
+    t.assert(ok, get_notice(t, 'longopt'));
 
     ok = false;
     try {
@@ -31,7 +36,7 @@ var opt_fail_check = function (t, keycls) {
         ok = true;
     }
 
-    t.assert(ok, 'will not get shortopt');
+    t.assert(ok, get_notice(t, 'shortopt'));
 
     ok = false;
     try {
@@ -41,14 +46,10 @@ var opt_fail_check = function (t, keycls) {
         ok = true;
     }
     err = err;
-    t.assert(ok, 'will not get optdest');
+    t.assert(ok, get_notice(t, 'optdest'));
     return t;
 };
 
-var get_notice = function (t, name) {
-    'use strict';
-    return util.format('%s %s', t.name, name);
-};
 
 
 test('A001', function (t) {
@@ -103,5 +104,61 @@ test('A003', function (t) {
     t.equal(keycls.cmdname, null, get_notice(t, 'cmdname'));
     t.equal(keycls.isflag, true, get_notice(t, 'isflag'));
     t.equal(keycls.iscmd, false, get_notice(t, 'iscmd'));
+    t.end();
+});
+
+test('A004', function (t) {
+    'use strict';
+    var keycls;
+    keycls = keyparse.KeyParser('newtype', 'flag<flag.main>##help for flag##', {}, false);
+    t.equal(keycls.cmdname, 'flag', get_notice(t, 'cmdname'));
+    t.equal(keycls.function, 'flag.main', get_notice(t, 'function'));
+    t.equal(keycls.typename, 'command', get_notice(t, 'typename'));
+    t.equal(keycls.prefix, 'flag', get_notice(t, 'prefix'));
+    t.equal(keycls.helpinfo, 'help for flag', get_notice(t, 'helpinfo'));
+    t.equal(keycls.flagname, null, get_notice(t, 'flagname'));
+    t.equal(keycls.shortflag, null, get_notice(t, 'shortflag'));
+    t.deepEqual(keycls.value, {}, get_notice(t, 'value'));
+    t.equal(keycls.iscmd, true, get_notice(t, 'iscmd'));
+    t.equal(keycls.isflag, false, get_notice(t, 'isflag'));
+    opt_fail_check(t, keycls);
+    t.end();
+});
+
+test('A005', function (t) {
+    'use strict';
+    var keycls;
+    var ok = false;
+    try {
+
+        keycls = keyparse.KeyParser('', 'flag<flag.main>##help for flag##', '', true);
+    } catch (e) {
+        keycls = e;
+        keycls = keycls;
+        ok = true;
+    }
+    t.equal(ok, true, get_notice(t, 'true no ok'));
+    t.end();
+});
+
+test('A006', function (t) {
+    'use strict';
+    var keycls;
+    keycls = keyparse.KeyParser('', 'flag+type<flag.main>##main', {
+        new: false
+    }, false);
+    t.equal(keycls.cmdname, 'flag', get_notice(t, 'cmdname'));
+    t.equal(keycls.prefix, 'flag', get_notice(t, 'prefix'));
+    t.equal(keycls.function, 'flag.main', get_notice(t, 'function'));
+    t.equal(keycls.helpinfo, null, get_notice(t, 'helpinfo'));
+    t.equal(keycls.flagname, null, get_notice(t, 'flagname'));
+    t.equal(keycls.shortflag, null, get_notice(t, 'shortflag'));
+    t.equal(keycls.isflag, false, get_notice(t, 'isflag'));
+    t.equal(keycls.iscmd, true, get_notice(t, 'iscmd'));
+    t.equal(keycls.typename, 'command', get_notice(t, 'typename'));
+    t.deepEqual(keycls.value, {
+        new: false
+    }, get_notice(t, 'value'));
+    opt_fail_check(t, keycls);
     t.end();
 });
