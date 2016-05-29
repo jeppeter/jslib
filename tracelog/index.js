@@ -78,7 +78,7 @@ function TraceLog(options) {
         var ws;
         self.finish_need_counts = self.writeStreams.length;
         self.finish_counts = 0;
-        self.real_finish_callback = callback;
+        self.real_finish_callback = callback || null;
         //var idx;
         while (self.writeStreams.length > 0) {
             ws = self.writeStreams[0];
@@ -86,7 +86,7 @@ function TraceLog(options) {
             ws.end('', self.finish_callback);
         }
 
-        if (self.finish_need_counts === 0) {
+        if (self.finish_need_counts === 0 && callback !== null && callback !== undefined) {
             /*nothing to wait*/
             callback(null);
         }
@@ -134,17 +134,30 @@ function TraceLog(options) {
 module.exports.Init = function (options) {
     'use strict';
     var inner_options;
+    var oldinner = null;
     inner_options = options || {};
+    oldinner = _innerLogger;
     _innerLogger = new TraceLog(inner_options);
+    return oldinner;
+};
+
+module.exports.Set = function (logger) {
+    'use strict';
+    var oldinner = _innerLogger;
+    if (logger === null || Array.isArray(logger.writeStreams)) {
+        _innerLogger = oldinner;
+    }
+    return oldinner;
 };
 
 var inner_init = function (options) {
     'use strict';
     var inner_options = options || {};
     if (_innerLogger) {
-        return;
+        return _innerLogger;
     }
     _innerLogger = new TraceLog(inner_options);
+    return null;
 };
 
 
@@ -184,7 +197,9 @@ module.exports.finish = function (callback) {
     if (_innerLogger !== null) {
         _innerLogger.finish(callback);
     } else {
-        callback(null);
+        if (callback !== undefined && callback !== null) {
+            callback(null);
+        }
     }
     _innerLogger = null;
 };

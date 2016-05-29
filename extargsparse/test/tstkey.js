@@ -1,5 +1,11 @@
 var test = require('tape');
-var KeyParser = require('../');
+var KeyParser = require('../keyparse');
+var tracelog = require('../../tracelog');
+var util = require('util');
+tracelog.Init({
+    level: 'trace'
+});
+
 
 var opt_fail_check = function (t, keycls) {
     'use strict';
@@ -39,17 +45,22 @@ var opt_fail_check = function (t, keycls) {
     return t;
 };
 
+var get_notice = function (t, name) {
+    'use strict';
+    return util.format('%s %s', t.name, name);
+};
+
 test('A001', function (t) {
     'use strict';
     var keycls;
-
     keycls = new KeyParser('', '$flag|f+type', 'string', false);
-    t.assert(keycls.flagname === 'flag');
-    t.assert(keycls.longopt === '--type-flag');
-    t.assert(keycls.shortopt === '-f');
-    t.assert(keycls.optdest === 'type_flag');
-    t.assert(keycls.value === 'string');
-    t.assert(keycls.type === 'string');
-    t.assert(keycls.shortflag === 'f');
-    t.assert(keycls.prefix === 'type');
+    t.equal(keycls.flagname, 'flag', get_notice(t, 'flag'));
+    t.equal(keycls.longopt, '--type-flag', get_notice(t, 'longopt'));
+    t.equal(keycls.shortopt, '-f', get_notice(t, 'shortopt'));
+    t.equal(keycls.optdest, 'type_flag', get_notice(t, 'optdest'));
+    t.equal(keycls.value, 'string', get_notice(t, 'value'));
+    t.equal(keycls.typename, 'string', get_notice(t, 'typename'));
+    t.equal(keycls.shortflag, 'f', get_notice(t, 'shortflag'));
+    t.equal(keycls.prefix, 'type', get_notice(t, 'prefix'));
+    t.end();
 });

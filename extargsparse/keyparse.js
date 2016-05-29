@@ -1,21 +1,26 @@
 var util = require('util');
 var assert = require('assert');
+//var tracelog = require('../tracelog');
 
 var set_words_access = function (words, self) {
     'use strict';
     words.forEach(function (elm) {
-        Object.defineProperty(self, elm, {
-            enumerable: true,
-            get: function () {
-                return self.get_word(elm);
-            },
-            set: function (v) {
-                var errstr;
-                v = v;
-                errstr = util.format('can not set (%s)', elm);
-                throw new Error(errstr);
-            }
-        });
+        var hasproperties;
+        hasproperties = Object.getOwnPropertyNames(self);
+        if (hasproperties.indexOf(elm) < 0) {
+            Object.defineProperty(self, elm, {
+                enumerable: true,
+                get: function () {
+                    return self.get_word(elm);
+                },
+                set: function (v) {
+                    var errstr;
+                    v = v;
+                    errstr = util.format('can not set (%s)', elm);
+                    throw new Error(errstr);
+                }
+            });
+        }
     });
     return;
 };
@@ -36,7 +41,7 @@ function CreateKeyParse(prefix, key, value, isflag) {
     var flagspecial = ['value', 'prefix'];
     var flagwords = ['flagname', 'helpinfo', 'shortflag', 'nargs'];
     var cmdwords = ['cmdname', 'function', 'helpinfo'];
-    var otherwords = ['origkey', 'iscmd', 'isflag', 'type'];
+    var otherwords = ['origkey', 'iscmd', 'isflag', 'typename'];
     var formwords = ['longopt', 'shortopt', 'optdest'];
     dict = {};
     self = {};
@@ -52,7 +57,7 @@ function CreateKeyParse(prefix, key, value, isflag) {
         var errstr;
         var retstr = '';
         if (elm === 'longopt') {
-            if (!dict.isflag || !dict.flagname || dict.type === 'args') {
+            if (!dict.isflag || !dict.flagname || dict.typename === 'args') {
                 errstr = util.format('can not set (%s) longopt', dict.origkey);
                 throw new Error(errstr);
             }
@@ -66,7 +71,7 @@ function CreateKeyParse(prefix, key, value, isflag) {
             return retstr;
         }
         if (elm === 'shortopt') {
-            if (!dict.isflag || !dict.flagname || dict.type === 'args') {
+            if (!dict.isflag || !dict.flagname || dict.typename === 'args') {
                 errstr = util.format('can not set (%s) shortopt', dict.origkey);
                 throw new Error(errstr);
             }
@@ -78,7 +83,7 @@ function CreateKeyParse(prefix, key, value, isflag) {
             return retstr;
         }
         if (elm === 'optdest') {
-            if (!dict.isflag || !dict.flagname || dict.type === 'args') {
+            if (!dict.isflag || !dict.flagname || dict.typename === 'args') {
                 errstr = util.format('can not set (%s) shortopt', dict.origkey);
                 throw new Error(errstr);
             }
@@ -97,7 +102,7 @@ function CreateKeyParse(prefix, key, value, isflag) {
 
     self.get_word = function (elm) {
         var errstr;
-        if (flagspecial.indexOf(elm) >= 0 || flagwords.indexOf(elm) >= 0 || cmdwords.indexOf(elm) >= 0) {
+        if (flagspecial.indexOf(elm) >= 0 || flagwords.indexOf(elm) >= 0 || cmdwords.indexOf(elm) >= 0 || otherwords.indexOf(elm) >= 0) {
             return dict[elm];
         }
 
@@ -105,10 +110,12 @@ function CreateKeyParse(prefix, key, value, isflag) {
             return self.form_words(elm);
         }
 
+
         errstr = util.format('unknown %s ', elm);
         throw new Error(errstr);
     };
 
+    set_words_access(flagspecial, self);
     set_words_access(flagwords, self);
     set_words_access(otherwords, self);
     set_words_access(cmdwords, self);
@@ -126,7 +133,7 @@ function CreateKeyParse(prefix, key, value, isflag) {
         dict.origkey = key;
         dict.isflag = false;
         dict.iscmd = false;
-        dict.type = null;
+        dict.typename = null;
         return self;
     };
 
@@ -138,12 +145,12 @@ function CreateKeyParse(prefix, key, value, isflag) {
                 errstr = util.format('(%s) flag include function(%s)', dict.origkey, dict.function);
                 throw new Error(errstr);
             }
-            if (dict.type === 'object' && dict.flagname !== null) {
-                errstr = util.format('(%s) flag type object', dict.origkey);
+            if (dict.typename === 'object' && dict.flagname !== null) {
+                errstr = util.format('(%s) flag typename object', dict.origkey);
                 throw new Error(errstr);
             }
-            if (dict.type !== get_value_type(dict.value) && dict.type !== 'count') {
-                errstr = util.format('(%s) (%s)not match type(%s)', dict.origkey, dict.type, get_value_type(dict.value));
+            if (dict.typename !== get_value_type(dict.value) && dict.typename !== 'count') {
+                errstr = util.format('(%s) (%s)not match typename(%s)', dict.origkey, dict.typename, get_value_type(dict.value));
                 throw new Error(errstr);
             }
 
@@ -152,9 +159,9 @@ function CreateKeyParse(prefix, key, value, isflag) {
                     errstr = util.format('(%s) not specified  prefix', dict.origkey);
                     throw new Error(errstr);
                 }
-                dict.type = 'prefix';
+                dict.typename = 'prefix';
                 if (get_value_type(dict.value) !== 'object') {
-                    errstr = util.format('(%s) prefix value is not type(object)', dict.origkey);
+                    errstr = util.format('(%s) prefix value is not typename(object)', dict.origkey);
                     throw new Error(errstr);
                 }
 
@@ -168,7 +175,7 @@ function CreateKeyParse(prefix, key, value, isflag) {
                     throw new Error(errstr);
                 }
             } else if (dict.flagname === '$') {
-                dict.type = 'args';
+                dict.typename = 'args';
                 if (dict.shortflag !== null) {
                     errstr = util.format('(%s) should not have shortflag', dict.origkey);
                     throw new Error(errstr);
@@ -187,13 +194,13 @@ function CreateKeyParse(prefix, key, value, isflag) {
                 }
             }
 
-            if (dict.type === 'boolean') {
+            if (dict.typename === 'boolean') {
                 if (dict.nargs !== null && dict.nargs !== 0) {
                     errstr = util.format('(%s) nargs not 0', dict.origkey);
                     throw new Error(errstr);
                 }
                 dict.nargs = 0;
-            } else if (dict.type !== 'prefix' && dict.flagname !== '$' && dict.type !== 'count') {
+            } else if (dict.typename !== 'prefix' && dict.flagname !== '$' && dict.typename !== 'count') {
                 if (dict.flagname !== '$' && dict.nargs !== 1 && dict.nargs !== null) {
                     errstr = util.format('(%s) should set nargs 1', dict.origkey);
                     throw new Error(errstr);
@@ -205,7 +212,6 @@ function CreateKeyParse(prefix, key, value, isflag) {
                     dict.nargs = '*';
                 }
             }
-
         } else {
             if (dict.cmdname === null || dict.cmdname.length === 0) {
                 errstr = util.format('(%s) cmdname is null or 0 length', dict.origkey);
@@ -222,13 +228,13 @@ function CreateKeyParse(prefix, key, value, isflag) {
                 throw new Error(errstr);
             }
 
-            if (dict.type !== 'object') {
+            if (dict.typename !== 'object') {
                 errstr = util.format('(%s) cmdname should value object', dict.origkey);
                 throw new Error(errstr);
             }
 
             dict.prefix = dict.cmdname;
-            dict.type = 'commnad';
+            dict.typename = 'commnad';
         }
         return self;
     };
@@ -241,13 +247,13 @@ function CreateKeyParse(prefix, key, value, isflag) {
         dict.iscmd = false;
         dict.origkey = key;
         if (typeof value !== 'object') {
-            errstr = util.format('(%s) not dict type value', self.origkey);
+            errstr = util.format('(%s) not object typename value', self.origkey);
             throw new Error(errstr);
         }
 
         if (value.value === undefined) {
             dict.value = null;
-            dict.type = 'string';
+            dict.typename = 'string';
         }
 
         keys = Object.keys(value);
@@ -282,7 +288,7 @@ function CreateKeyParse(prefix, key, value, isflag) {
                         throw new Error(errstr);
                     }
                     dict.value = value.value;
-                    dict.type = get_value_type(value.value);
+                    dict.typename = get_value_type(value.value);
                 }
             }
         }
@@ -320,14 +326,14 @@ function CreateKeyParse(prefix, key, value, isflag) {
 
         if (isflag) {
             m = self.flagexpr.exec(dict.origkey);
-            if (m !== undefined && m !== null) {
-                flags = m[0];
+            if (m !== undefined && m !== null && m.length > 1) {
+                flags = m[1];
             }
 
             if (flags === null) {
                 m = self.mustflagexpr.exec(dict.origkey);
-                if (m !== undefined && m !== null) {
-                    flags = m[0];
+                if (m !== undefined && m !== null && m.length > 1) {
+                    flags = m[1];
                 }
             }
 
@@ -353,8 +359,8 @@ function CreateKeyParse(prefix, key, value, isflag) {
 
         } else {
             m = self.mustflagexpr.exec(dict.origkey);
-            if (m !== undefined && m !== null) {
-                flags = m[0];
+            if (m !== undefined && m !== null && m.length > 1) {
+                flags = m[1];
                 if (flags.indexOf('|') >= 0) {
                     sarr = flags.split('|');
                     if (sarr.length > 2 || sarr[0].length <= 1 || sarr[1].length !== 1) {
@@ -373,10 +379,10 @@ function CreateKeyParse(prefix, key, value, isflag) {
             }
 
             m = self.cmdexpr.exec(dict.origkey);
-            if (m !== null && m !== undefined) {
+            if (m !== null && m !== undefined && m.length > 1) {
                 assert(!flagmod);
-                if (m[0].indexOf('|') >= 0) {
-                    flags = m[0];
+                if (m[1].indexOf('|') >= 0) {
+                    flags = m[1];
                     if (flags.indexOf('|') >= 0) {
                         sarr = flags.split('|');
                         if (sarr.length > 2 || sarr[0].length <= 1 || sarr[1].length !== 1) {
@@ -391,19 +397,19 @@ function CreateKeyParse(prefix, key, value, isflag) {
                     flagmod = true;
                 } else {
                     cmdmod = true;
-                    dict.cmdname = m[0];
+                    dict.cmdname = m[1];
                 }
             }
         }
 
         m = self.funcexpr.exec(dict.origkey);
-        if (m !== undefined && m !== null) {
-            dict.function = m[0];
+        if (m !== undefined && m !== null && m.length > 1) {
+            dict.function = m[1];
         }
 
         m = self.helpexpr.exec(dict.origkey);
-        if (m !== undefined && m !== null) {
-            dict.helpinfo = m[0];
+        if (m !== undefined && m !== null && m.length > 1) {
+            dict.helpinfo = m[1];
         }
 
         newprefix = '';
@@ -412,8 +418,8 @@ function CreateKeyParse(prefix, key, value, isflag) {
         }
 
         m = self.prefixexpr.exec(dict.origkey);
-        if (m !== undefined && m !== null) {
-            newprefix += m[0];
+        if (m !== undefined && m !== null && m.length > 1) {
+            newprefix += m[1];
             dict.prefix = newprefix;
         } else {
             if (prefix.length > 0) {
@@ -435,8 +441,8 @@ function CreateKeyParse(prefix, key, value, isflag) {
             dict.iscmd = false;
         }
         dict.value = value;
-        dict.type = get_value_type(value);
-        if (cmdmod && dict.type !== 'object') {
+        dict.typename = get_value_type(value);
+        if (cmdmod && dict.typename !== 'object') {
             /*flag mod is true we give the flag*/
             dict.isflag = true;
             dict.iscmd = false;
@@ -444,23 +450,23 @@ function CreateKeyParse(prefix, key, value, isflag) {
             dict.cmdname = null;
         }
 
-        if (dict.isflag && dict.type === 'string' && dict.value === '+' && dict.flagname !== '$') {
-            dict.type = 'count';
+        if (dict.isflag && dict.typename === 'string' && dict.value === '+' && dict.flagname !== '$') {
+            dict.typename = 'count';
             dict.value = 0;
             dict.nargs = 0;
         }
 
-        if (dict.isflag && dict.flagname === '$' && dict.type !== 'object') {
-            if (!((dict.type === 'string' && (dict.value === '+' || dict.value === '*' || dict.value === '?')) || dict.type === 'number')) {
+        if (dict.isflag && dict.flagname === '$' && dict.typename !== 'object') {
+            if (!((dict.typename === 'string' && (dict.value === '+' || dict.value === '*' || dict.value === '?')) || dict.typename === 'number')) {
                 errstr = util.format('(%s) not valid args description (%s)', dict.origkey, dict.value);
                 throw new Error(errstr);
             }
             dict.nargs = dict.value;
             dict.value = null;
-            dict.type = 'string';
+            dict.typename = 'string';
         }
 
-        if (dict.isflag && dict.type === 'object' && dict.flagname !== null) {
+        if (dict.isflag && dict.typename === 'object' && dict.flagname !== null) {
             self.set_flag();
         }
         return self.validate();
