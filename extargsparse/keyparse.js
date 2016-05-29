@@ -19,6 +19,11 @@ var set_words_access = function (words, self) {
     return;
 };
 
+var get_value_type = function (value) {
+    'use strict';
+    var typestr = 'unknown';
+};
+
 function CreateKeyParse(prefix, key, value, iskey) {
     'use strict';
     var dict;
@@ -120,8 +125,62 @@ function CreateKeyParse(prefix, key, value, iskey) {
 
     };
 
-    self.init_fn = function () {
+    self.set_flag = function () {
+        var errstr;
+        var k, keys;
+        var newprefix;
+        dict.isflag = true;
+        dict.iscmd = false;
+        dict.origkey = key;
+        if (typeof value !== 'object') {
+            errstr = util.format('(%s) not dict type value', self.origkey);
+            throw new Error(errstr);
+        }
 
+        if (value.value === undefined) {
+            dict.value = null;
+            dict.type = 'string';
+        }
+
+        keys = Object.keys(value);
+        for (k in keys) {
+            if (flagwords.indexOf(k) >= 0) {
+                if (dict[k] !== null && dict[k] !== value[k]) {
+                    errstr = util.format('(%s) key(%s) not set equal', dict.origkey, k);
+                    throw new Error(errstr);
+                }
+
+                if (!(typeof value[k] === 'number' || typeof value[k] === 'string')) {
+                    errstr = util.format('(%s) key(%s) not string or number', dict.origkey, k);
+                    throw new Error(errstr);
+                }
+                dict[k] = value[k];
+            } else if (flagspecial.indexOf(k) >= 0) {
+                if (k === 'prefix') {
+                    if (typeof value.prefix !== 'string' || value.prefix === null) {
+                        errstr = util.format('(%s) prefix can not valid', dict.origkey);
+                        throw new Error(errstr);
+                    }
+                    newprefix = '';
+                    if (prefix.length > 0) {
+                        newprefix += util.format('%s_', prefix);
+                    }
+                    newprefix += value.prefix;
+                    dict.prefix = newprefix;
+                } else if (k === 'value') {
+                    if (typeof value.value === 'object') {
+                        errstr = util.format('(%s) value is object', dict.origkey);
+                        throw new Error(errstr);
+                    }
+                    dict.value = value.value;
+
+                }
+            }
+        }
+    };
+
+    self.init_fn = function () {
+        self.reset_value();
     };
 
     return self;

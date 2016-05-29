@@ -86,7 +86,7 @@ var commandline=`
         "list|l" : [],
         "string|s" : "s_var",
         "$" : "+"
-    }
+    },
     "rdep" : {
        "list|L" : [],
        "string|S" : "s_rdep",
