@@ -31,10 +31,14 @@ var get_value_type = function (value) {
         return 'string';
     }
 
+    if (Array.isArray(value)) {
+        return 'array';
+    }
+
     return typeof value;
 };
 
-function CreateKeyParse(prefix, key, value, isflag) {
+function KeyParser(prefix, key, value, isflag) {
     'use strict';
     var dict;
     var self;
@@ -479,4 +483,5 @@ function CreateKeyParse(prefix, key, value, isflag) {
     return self.init_fn();
 }
 
-module.exports = CreateKeyParse;
+module.exports.KeyParser = KeyParser;
+module.exports.get_value_type = get_value_type;
