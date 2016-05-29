@@ -162,3 +162,73 @@ test('A006', function (t) {
     opt_fail_check(t, keycls);
     t.end();
 });
+
+test('A007', function (t) {
+    'use strict';
+    var keycls;
+    keycls = keyparse.KeyParser('', '+flag', {}, false);
+    t.equal(keycls.prefix, 'flag', get_notice(t, 'flag'));
+    t.deepEqual(keycls.value, {}, get_notice(t, 'value'));
+    t.equal(keycls.cmdname, null, get_notice(t, 'cmdname'));
+    t.equal(keycls.shortflag, null, get_notice(t, 'shortflag'));
+    t.equal(keycls.flagname, null, get_notice(t, 'flagname'));
+    t.equal(keycls.function, null, get_notice(t, 'function'));
+    t.equal(keycls.helpinfo, null, get_notice(t, 'helpinfo'));
+    t.equal(keycls.isflag, true, get_notice(t, 'isflag'));
+    t.equal(keycls.iscmd, false, get_notice(t, 'iscmd'));
+    t.equal(keycls.typename, 'prefix', get_notice(t, 'typename'));
+    opt_fail_check(t, keycls);
+    t.end();
+});
+
+test('A008', function (t) {
+    'use strict';
+    var ok = false;
+    try {
+        keyparse.KeyParser('', '+flag## help ##', null, false);
+    } catch (e) {
+        ok = e;
+        ok = true;
+    }
+    t.equal(ok, true, get_notice(t, 'flag without helpinfo'));
+    t.end();
+});
+
+test('A009', function (t) {
+    'use strict';
+    var ok = false;
+    try {
+        keyparse.KeyParser('', '+flag<flag.main>', null, false);
+    } catch (e) {
+        ok = e;
+        ok = true;
+    }
+    t.equal(ok, true, get_notice(t, 'flag without function'));
+    t.end();
+});
+
+test('A010', function (t) {
+    'use strict';
+    var ok = false;
+    try {
+        keyparse.KeyParser('', 'flag|f2', null, false);
+    } catch (e) {
+        ok = e;
+        ok = true;
+    }
+    t.equal(ok, true, get_notice(t, 'flag shortflag must 1 special size'));
+    t.end();
+});
+
+test('A011', function (t) {
+    'use strict';
+    var ok = false;
+    try {
+        keyparse.KeyParser('', 'f|f2', null, false);
+    } catch (e) {
+        ok = e;
+        ok = true;
+    }
+    t.equal(ok, true, get_notice(t, 'flag flag must > 1 size'));
+    t.end();
+});
