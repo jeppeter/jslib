@@ -21,7 +21,11 @@ var set_words_access = function (words, self) {
 
 var get_value_type = function (value) {
     'use strict';
-    var typestr = 'unknown';
+    if (value === undefined || value === null) {
+        return 'string';
+    }
+
+    return typeof value;
 };
 
 function CreateKeyParse(prefix, key, value, iskey) {
@@ -127,7 +131,7 @@ function CreateKeyParse(prefix, key, value, iskey) {
 
     self.set_flag = function () {
         var errstr;
-        var k, keys;
+        var k, keys, i;
         var newprefix;
         dict.isflag = true;
         dict.iscmd = false;
@@ -143,7 +147,8 @@ function CreateKeyParse(prefix, key, value, iskey) {
         }
 
         keys = Object.keys(value);
-        for (k in keys) {
+        for (i = 0; i < keys.length; i += 1) {
+            k = keys[i];
             if (flagwords.indexOf(k) >= 0) {
                 if (dict[k] !== null && dict[k] !== value[k]) {
                     errstr = util.format('(%s) key(%s) not set equal', dict.origkey, k);
@@ -173,9 +178,13 @@ function CreateKeyParse(prefix, key, value, iskey) {
                         throw new Error(errstr);
                     }
                     dict.value = value.value;
-
+                    dict.type = get_value_type(value.value);
                 }
             }
+        }
+
+        if (dict.prefix.length === 0 && prefix.length > 0) {
+            dict.prefix = prefix;
         }
     };
 
