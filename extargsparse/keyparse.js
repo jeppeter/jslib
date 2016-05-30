@@ -27,12 +27,24 @@ var set_words_access = function (words, self) {
 
 var get_value_type = function (value) {
     'use strict';
+    var reg;
+    var valstr;
     if (value === undefined || value === null) {
         return 'string';
     }
 
     if (Array.isArray(value)) {
         return 'array';
+    }
+
+    reg = new RegExp('^([\\d]+)$', 'i');
+    if (typeof value === 'number') {
+        valstr = util.format('%s', value);
+        if (reg.test(valstr)) {
+            return 'int';
+        } else {
+            return 'float';
+        }
     }
 
     return typeof value;
@@ -287,7 +299,7 @@ function KeyParser(prefix, key, value, isflag) {
                     newprefix += value.prefix;
                     dict.prefix = newprefix;
                 } else if (k === 'value') {
-                    if (typeof value.value === 'object') {
+                    if (get_value_type(value.value) === 'object') {
                         errstr = util.format('(%s) value is object', dict.origkey);
                         throw new Error(errstr);
                     }
