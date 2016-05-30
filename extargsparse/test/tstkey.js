@@ -232,3 +232,79 @@ test('A011', function (t) {
     t.equal(ok, true, get_notice(t, 'flag flag must > 1 size'));
     t.end();
 });
+
+test('A012', function (t) {
+    'use strict';
+    var ok = false;
+    try {
+        keyparse.KeyParser('', '$flag|f<flag.main>', {}, false);
+    } catch (e) {
+        ok = e;
+        ok = true;
+    }
+    t.equal(ok, true, get_notice(t, 'not flag with function'));
+    t.end();
+});
+
+test('A013', function (t) {
+    'use strict';
+    var ok = false;
+    try {
+        keyparse.KeyParser('', '$flag|f+cc<flag.main>', null, false);
+    } catch (e) {
+        ok = e;
+        ok = true;
+    }
+    t.equal(ok, true, get_notice(t, 'flag without prefix'));
+    t.end();
+});
+
+test('A014', function (t) {
+    'use strict';
+    var ok = false;
+    try {
+        keyparse.KeyParser('', 'c$', '', false);
+    } catch (e) {
+        ok = e;
+        ok = true;
+    }
+    t.equal(ok, true, get_notice(t, '$ must at lead'));
+    t.end();
+});
+
+test('A015', function (t) {
+    'use strict';
+    var ok = false;
+    try {
+        keyparse.KeyParser('', '$$', '', false);
+    } catch (e) {
+        ok = e;
+        ok = true;
+    }
+    t.equal(ok, true, get_notice(t, '$ can not be twice'));
+    t.end();
+});
+
+test('A016', function (t) {
+    'use strict';
+    var keycls;
+    var jsonstr = `{"nargs":"+"}`;
+    var jsonval;
+
+    jsonval = JSON.parse(jsonstr);
+
+    keycls = keyparse.KeyParser('', '$', jsonval, false);
+    t.equal(keycls.flagname, '$', get_notice(t, 'flagname'));
+    t.equal(keycls.prefix, '', get_notice(t, 'prefix'));
+    t.equal(keycls.typename, 'args', get_notice(t, 'typename'));
+    t.equal(keycls.value, null, get_notice(t, 'value'));
+    t.equal(keycls.nargs, '+', get_notice(t, 'nargs'));
+    t.equal(keycls.cmdname, null, get_notice(t, 'cmdname'));
+    t.equal(keycls.shortflag, null, get_notice(t, 'shortflag'));
+    t.equal(keycls.function, null, get_notice(t, 'function'));
+    t.equal(keycls.helpinfo, null, get_notice(t, 'helpinfo'));
+    t.equal(keycls.isflag, true, get_notice(t, 'isflag'));
+    t.equal(keycls.iscmd, false, get_notice(t, 'iscmd'));
+    opt_fail_check(t, keycls);
+    t.end();
+});
