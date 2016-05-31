@@ -497,3 +497,24 @@ test('A027', function (t) {
     t.equal(keycls.shortopt, '-v', get_notice(t, 'shortopt'));
     t.end();
 });
+
+test('A028', function (t) {
+    'use strict';
+    var keycls;
+    keycls = keyparse.KeyParser('', 'verbose|v## new help info ##', '+', false);
+    t.equal(keycls.flagname, 'verbose', get_notice(t, 'flagname'));
+    t.equal(keycls.shortflag, 'v', get_notice(t, 'shortflag'));
+    t.equal(keycls.prefix, '', get_notice(t, 'prefix'));
+    t.equal(keycls.typename, 'count', get_notice(t, 'typename'));
+    t.equal(keycls.value, 0, get_notice(t, 'value'));
+    t.equal(keycls.helpinfo, ' new help info ', get_notice(t, 'helpinfo'));
+    t.equal(keycls.nargs, 0, get_notice(t, 'nargs'));
+    t.equal(keycls.cmdname, null, get_notice(t, 'cmdname'));
+    t.equal(keycls.function, null, get_notice(t, 'function'));
+    t.equal(keycls.optdest, 'verbose', get_notice(t, 'optdest'));
+    t.equal(keycls.longopt, '--verbose', get_notice(t, 'longopt'));
+    t.equal(keycls.shortopt, '-v', get_notice(t, 'shortopt'));
+    t.equal(keycls.iscmd, false, get_notice(t, 'iscmd'));
+    t.equal(keycls.isflag, true, get_notice(t, 'isflag'));
+    t.end();
+});
