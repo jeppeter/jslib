@@ -459,3 +459,41 @@ test('A024', function (t) {
     t.equal(ok, true, get_notice(t, 'nargs can not be 2 in false'));
     t.end();
 });
+
+test('A026', function (t) {
+    'use strict';
+    var keycls;
+    keycls = keyparse.KeyParser('dep', '$', '+', true);
+    t.equal(keycls.flagname, '$', get_notice(t, 'flagname'));
+    t.equal(keycls.prefix, 'dep', get_notice(t, 'prefix'));
+    t.equal(keycls.value, null, get_notice(t, 'value'));
+    t.equal(keycls.typename, 'args', get_notice(t, 'args'));
+    t.equal(keycls.helpinfo, null, get_notice(t, 'helpinfo'));
+    t.equal(keycls.nargs, '+', get_notice(t, 'nargs'));
+    t.equal(keycls.shortflag, null, get_notice(t, 'shortflag'));
+    t.equal(keycls.cmdname, null, get_notice(t, 'cmdname'));
+    t.equal(keycls.function, null, get_notice(t, 'function'));
+    t.equal(keycls.isflag, true, get_notice(t, 'isflag'));
+    t.equal(keycls.iscmd, false, get_notice(t, 'iscmd'));
+    opt_fail_check(t, keycls);
+    t.end();
+});
+
+test('A027', function (t) {
+    'use strict';
+    var keycls;
+    keycls = keyparse.KeyParser('dep', 'verbose|v', '+', false);
+    t.equal(keycls.flagname, 'verbose', get_notice(t, 'flagname'));
+    t.equal(keycls.shortflag, 'v', get_notice(t, 'shortflag'));
+    t.equal(keycls.prefix, 'dep', get_notice(t, 'prefix'));
+    t.equal(keycls.typename, 'count', get_notice(t, 'typename'));
+    t.equal(keycls.value, 0, get_notice(t, 'value'));
+    t.equal(keycls.helpinfo, null, get_notice(t, 'helpinfo'));
+    t.equal(keycls.nargs, 0, get_notice(t, 'nargs'));
+    t.equal(keycls.cmdname, null, get_notice(t, 'cmdname'));
+    t.equal(keycls.function, null, get_notice(t, 'function'));
+    t.equal(keycls.optdest, 'dep_verbose', get_notice(t, 'optdest'));
+    t.equal(keycls.longopt, '--dep-verbose', get_notice(t, 'longopt'));
+    t.equal(keycls.shortopt, '-v', get_notice(t, 'shortopt'));
+    t.end();
+});
