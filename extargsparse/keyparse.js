@@ -78,6 +78,10 @@ function KeyParser(prefix, key, value, isflag) {
                 throw new Error(errstr);
             }
             retstr += '--';
+            if (dict.typename === 'boolean' && dict.value) {
+                retstr += 'no-';
+            }
+
             if (dict.prefix.length > 0) {
                 retstr += util.format('%s_', dict.prefix);
             }
