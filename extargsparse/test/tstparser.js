@@ -21,6 +21,17 @@ var delete_variable = function (name) {
     return;
 };
 
+var renew_variable = function (name, value) {
+    'use strict';
+    if (process.env[name] !== undefined) {
+        delete process.env[name];
+    }
+
+    process.env[name] = value;
+    return;
+};
+
+
 
 var setup_before = function (t) {
     'use strict';
@@ -217,6 +228,61 @@ test('A010', function (t) {
             t.deepEqual(args.subnargs, ['ww'], get_notice(t, 'subnargs'));
             fs.unlink(depjsonfile, function (err3) {
                 t.equal(err3, null, get_notice(t, util.format('delete %s', depjsonfile)));
+                t.end();
+            });
+
+        });
+    });
+});
+
+test('A011', function (t) {
+    'use strict';
+    var commandline = `{"verbose|v" : "+","$port|p" : {"value" : 3000,"type" : "int","nargs" : 1 ,"helpinfo" : "port to connect"},"dep" : { "list|l" : [], "string|s" : "s_var","$" : "+"}}`;
+    setup_before(t);
+    mktemp.createFile('parseXXXXXX.json', function (err, depjsonfile) {
+        t.equal(err, null, get_notice(t, 'create depjsonfile'));
+        fs.writeFile(depjsonfile, '{"list" : ["jsonval1","jsonval2"],"string" : "jsonstring"}\n', function (err2) {
+            var parser, args;
+            t.equal(err2, null, get_notice(t, util.format('write %s', depjsonfile)));
+            renew_variable('DEP_JSON', depjsonfile);
+            parser = extargsparse.ExtArgsParse();
+            parser.load_command_line_string(commandline);
+            args = parser.parse_command_line(['-vvvv', '-p', '9000', 'dep', '--dep-string', 'ee', 'ww']);
+            t.equal(args.verbose, 4, get_notice(t, 'verbose'));
+            t.equal(args.port, 9000, get_notice(t, 'port'));
+            t.equal(args.subcommand, 'dep', get_notice(t, 'subcommand'));
+            t.deepEqual(args.dep_list, ['jsonval1', 'jsonval2'], get_notice(t, 'dep_list'));
+            t.equal(args.dep_string, 'ee', get_notice(t, 'dep_string'));
+            t.deepEqual(args.subnargs, ['ww'], get_notice(t, 'subnargs'));
+            fs.unlink(depjsonfile, function (err3) {
+                t.equal(err3, null, get_notice(t, util.format('delete (%s)', depjsonfile)));
+                t.end();
+            });
+
+        });
+    });
+});
+
+test('A012', function (t) {
+    'use strict';
+    var commandline = `{"verbose|v" : "+","$port|p" : { "value" : 3000, "type" : "int","nargs" : 1 ,"helpinfo" : "port to connect"},"dep" : {"list|l" : [],"string|s" : "s_var","$" : "+"}}`;
+    setup_before(t);
+    mktemp.createFile('parseXXXXXX.json', function (err, jsonfile) {
+        t.equal(err, null, get_notice(t, 'make jsonfile'));
+        fs.writeFile(jsonfile, '{"dep":{"list" : ["jsonval1","jsonval2"],"string" : "jsonstring"},"port":6000,"verbose":3}\n', function (err2) {
+            var parser, args;
+            t.equal(err2, null, get_notice(t, util.format('write (%s)', jsonfile)));
+            parser = extargsparse.ExtArgsParse();
+            parser.load_command_line_string(commandline);
+            args = parser.parse_command_line(['-p', '9000', '--json', jsonfile, 'dep', '--dep-string', 'ee', 'ww']);
+            t.equal(args.verbose, 3, get_notice(t, 'verbose'));
+            t.equal(args.port, 9000, get_notice(t, 'port'));
+            t.equal(args.subcommand, 'dep', get_notice(t, 'subcommand'));
+            t.deepEqual(args.dep_list, ['jsonval1', 'jsonval2'], get_notice(t, 'dep_list'));
+            t.equal(args.dep_string, 'ee', get_notice(t, 'dep_string'));
+            t.deepEqual(args.subnargs, ['ww'], get_notice(t, 'subnargs'));
+            fs.unlink(jsonfile, function (err3) {
+                t.equal(err3, null, get_notice(t, util.format('delete (%s)', jsonfile)));
                 t.end();
             });
 
