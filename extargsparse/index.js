@@ -7,7 +7,13 @@ function NewExtArgsParse(opt) {
     var self;
 
     parser.flags = [];
+    parser.help_func = null;
     parser.subparsers = [];
+    if (process.argv > 1) {
+        parser.cmdname = process.argv[1];
+    } else {
+        parser.cmdname = process.argv[0];
+    }
     self = parser;
     parser.mapfuncs = {
         args: self.load_command_line_args,
@@ -24,6 +30,14 @@ function NewExtArgsParse(opt) {
     parser.priority = [];
     if (opt.priority !== undefined && opt.priority !== null) {
         parser.priority = opt.priority;
+    }
+
+    if (typeof opt.help_func === 'function') {
+        parser.help_func = opt.help_func;
+    }
+
+    if (typeof opt.cmdname === 'string') {
+        parser.cmdname = opt.cmdname;
     }
 
     self.check_flag_insert = function (keycls, curparser) {
@@ -146,6 +160,211 @@ function NewExtArgsParse(opt) {
     self.load_command_line_count = function (prefix, keycls, curparser) {
         prefix = prefix;
         return self.check_flag_insert_mustsucc(keycls, curparser);
+    };
+
+    self.subcommand_flag_maxlen = function (curparser) {
+        var maxlen = 0;
+        var curlen;
+        var shortopt = null;
+        var longopt;
+        curparser.flags.forEach(function (elm) {
+            if (elm.flagname !== '$') {
+                shortopt = elm.shortopt;
+                longopt = elm.longopt;
+                curlen = 0;
+                if (shortopt !== null) {
+                    curlen += shortopt.length;
+                    /*for , to do*/
+                    curlen += 1;
+                }
+
+                curlen += longopt.length;
+
+                if (curlen > maxlen) {
+                    maxlen = curlen;
+                }
+            }
+        });
+        return maxlen;
+    };
+
+    self.subcommand_maxlen = function () {
+        var maxlen = 0;
+
+        self.subparsers.forEach(function (elm) {
+            if (elm.cmdname.length > maxlen) {
+                maxlen = elm.cmdname.length;
+            }
+        });
+        return maxlen;
+    };
+
+    self.flag_maxlen = function () {
+        var maxlen = 0;
+        var curlen;
+        var shortopt, longopt, optdest;
+        self.flags.forEach(function (elm) {
+            if (elm.flagname !== '$') {
+                shortopt = elm.shortopt;
+                longopt = elm.longopt;
+                optdest = elm.optdest;
+                curlen = 0;
+                if (shortopt !== null) {
+                    curlen += shortopt.length;
+                    /*this is for ,*/
+                    curlen += 1;
+                }
+
+                curlen += longopt.length;
+                /*for space*/
+                curlen += 2;
+                curlen += optdest.length;
+
+                if (curlen > maxlen) {
+                    maxlen = curlen;
+                }
+
+            }
+        });
+
+        return maxlen;
+    };
+
+    self.get_help_info = function (tabs, maxsize, keycls) {
+        var s;
+        var optdest;
+        var longopt, shortopt;
+        var idx;
+        s = '';
+        for (idx = 0; idx < tabs; idx += 1) {
+            s += '  ';
+        }
+
+        optdest = keycls.optdest;
+        shortopt = keycls.shortopt;
+        longopt = keycls.longopt;
+
+        if (shortopt !== null) {
+            s += shortopt;
+            s += ',';
+        }
+        s += longopt;
+        s += '  ';
+        s += optdest.toUpperCase();
+
+        while (s.length < maxsize) {
+            s += ' ';
+        }
+
+        if (keycls.helpinfo) {
+            s += keycls.helpinfo;
+            s += '\n';
+        } else {
+            if (keycls.typename === 'string' || keycls.typename === 'int' || keycls.typename === 'float') {
+                s += util.format('set %s default(%s)\n', optdest.toLowerCase(), keycls.value);
+            } else if (keycls.typename === 'count') {
+                s += util.format('set %s count increment default(%d)\n', optdest.toLowerCase(), keycls.value);
+            } else if (keycls.typename === 'array') {
+                s += util.format('set %s list default(%s)\n', optdest.toLowerCase(), keycls.value);
+            }
+        }
+        return s;
+    };
+
+    self.subcommand_help = function (maxsize, curparser) {
+        var s;
+        var curlen;
+        var curs;
+        var subnargskeycls;
+        s = '';
+        s += util.format('%s ', keycls.cmdname);
+        subnargskeycls = null;
+
+        curparser.flags.forEach(function (elm) {
+            if (elm.flagname === '$') {
+                subnargskeycls = elm;
+            }
+        });
+
+
+
+        if (keycls.helpinfo === null) {
+            if (subnargskeycls !== null && subnargskeycls.helpinfo !== null) {
+                s += subnargskeycls.helpinfo;
+            } else {
+                if (subnargskeycls !== null) {
+                    if (subnargskeycls.value === '?') {
+                        s += '[subnargs]';
+                    } else if (subnargskeycls.value === '*' || subnargskeycls.value === '+') {
+                        s += '[subnargs]...';
+                    } else {
+                        s += util.format('%d args', subnargskeycls.value);
+                    }
+                }
+            }
+            s += '\n';
+        } else {
+            s += util.format('%s\n', keycls.helpinfo);
+        }
+
+        curparser.flags.forEach(function (elm) {
+            if (elm.flagname !== '$') {
+                s += self.get_help_info(1, maxsize, elm);
+            }
+        });
+
+        return s;
+    };
+
+    self.main_help = function (maxsize) {
+        var subnargskeycls;
+        var s;
+
+        subnargskeycls = null;
+
+        self.flags.forEach(function (elm) {
+            if (elm.flagname === '$') {
+                subnargskeycls = elm;
+            }
+        });
+
+        s = '';
+        s += self.cmdname;
+        s += ' ';
+        if (subnargskeycls === null) {
+            s += '[OPTIONS] ';
+            if (self.subparsers.length > 0) {
+                s += '{subcommand} ';
+            }
+            s += '\n';
+        } else {
+            if (subnargskeycls.helpinfo) {
+                s += subnargskeycls.helpinfo;
+                s += '\n';
+            } else {
+                if (subnargskeycls.value === '?') {
+                    s += util.format('[subnargs]\n');
+                } else if (subnargskeycls.value === '*' || subnargskeycls.value === '+') {
+                    s += util.format('[subnargs]...\n');
+                } else {
+                    s += util.format(' %s arguments\n', subnargskeycls.value);
+                }
+            }
+        }
+
+        self.flags.forEach(function (elm) {
+            if (elm.flagname !== '$') {
+                s += self.get_help_info(1, maxsize, elm);
+            }
+        });
+
+        return s;
+    };
+
+    self.print_help = function (ec, fmt) {
+        var s;
+        s = '';
+
     };
 
 
