@@ -556,3 +556,18 @@ test('A030', function (t) {
     opt_fail_check(t, keycls);
     t.end();
 });
+
+test('A031', function (t) {
+    'use strict';
+    var keycls;
+    keycls = keyparse.KeyParser('', '$', 2, false);
+    t.equal(keycls.flagname, '$', get_notice(t, 'flagname'));
+    t.equal(keycls.nargs, 2, get_notice(t, 'flagname'));
+    t.deepEqual(keycls.value, null, get_notice(t, 'value'));
+    t.equal(keycls.typename, 'args', get_notice(t, 'typename'));
+    t.equal(keycls.cmdname, null, get_notice(t, 'cmdname'));
+    t.equal(keycls.function, null, get_notice(t, 'function'));
+    t.equal(keycls.helpinfo, null, get_notice(t, 'helpinfo'));
+    opt_fail_check(t, keycls);
+    t.end();
+});

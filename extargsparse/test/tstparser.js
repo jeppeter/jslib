@@ -43,3 +43,19 @@ test('A002', function (t) {
     t.deepEqual(args.subnargs, ['cc', 'dd'], get_notice(t, 'subnargs'));
     t.end();
 });
+
+test('A003', function (t) {
+    'use strict';
+    var loads = `{"verbose|v" : "+","port|p" : 3000,"dep" : {"list|l" : [],"string|s" : "s_var","$" : "+"},"rdep" : {              "list|L" : [],"string|S" : "s_rdep","$" : 2}}`;
+    var parser, args;
+    parser = extargsparse.ExtArgsParse();
+    parser.load_command_line_string(loads);
+    args = parser.parse_command_line(['-vvvv', '-p', '5000', 'rdep', '-L', 'arg1', '--rdep-list', 'arg2', 'cc', 'dd']);
+    t.equal(args.verbose, 4, get_notice(t, 'verbose'));
+    t.equal(args.port, 5000, get_notice(t, 'port'));
+    t.equal(args.subcommand, 'rdep', get_notice(t, 'subcommand'));
+    t.deepEqual(args.rdep_list, ['arg1', 'arg2'], get_notice(t, 'rdep_list'));
+    t.equal(args.rdep_string, 's_rdep', get_notice(t, 'rdep_string'));
+    t.deepEqual(args.subnargs, ['cc', 'dd'], get_notice(t, 'subnargs'));
+    t.end();
+});

@@ -169,7 +169,7 @@ function KeyParser(prefix, key, value, isflag) {
                 errstr = util.format('(%s) flag typename object', dict.origkey);
                 throw new Error(errstr);
             }
-            if (dict.typename !== get_value_type(dict.value) && dict.typename !== 'count') {
+            if (dict.typename !== get_value_type(dict.value) && dict.typename !== 'count' && dict.typename !== 'args') {
                 errstr = util.format('(%s) (%s)not match typename(%s)', dict.origkey, dict.typename, get_value_type(dict.value));
                 throw new Error(errstr);
             }
@@ -477,13 +477,18 @@ function KeyParser(prefix, key, value, isflag) {
         }
 
         if (dict.isflag && dict.flagname === '$' && dict.typename !== 'object') {
-            if (!((dict.typename === 'string' && (dict.value === '+' || dict.value === '*' || dict.value === '?')) || dict.typename === 'number')) {
-                errstr = util.format('(%s) not valid args description (%s)', dict.origkey, dict.value);
+            if (dict.typename === 'string' && (dict.value === '+' || dict.value === '*' || dict.value === '?')) {
+                dict.nargs = dict.value;
+                dict.value = null;
+                dict.typename = 'args';
+            } else if (dict.typename === 'int') {
+                dict.nargs = dict.value;
+                dict.value = null;
+                dict.typename = 'args';
+            } else {
+                errstr = util.format('(%s) not valid args description (%s) typename (%s)', dict.origkey, dict.value, dict.typename);
                 throw new Error(errstr);
             }
-            dict.nargs = dict.value;
-            dict.value = null;
-            dict.typename = 'string';
         }
 
         if (dict.isflag && dict.typename === 'object' && dict.flagname !== null) {
