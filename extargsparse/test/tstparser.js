@@ -11,6 +11,7 @@ var get_notice = function (t, name) {
     return util.format('%s %s', t.name, name);
 };
 
+
 test('A001', function (t) {
     'use strict';
     var loads = `{ "verbose|v##increment verbose mode##": "+","flag|f## flag set##": false, "number|n": 0,"list|l": [],"string|s": "string_var","$": {"value": [],"nargs": "*","typename": "string"}}`;
@@ -115,5 +116,54 @@ test('A006', function (t) {
     t.deepEqual(args.rdep_list, ['foo1'], get_notice(t, 'rdep_list'));
     t.equal(args.rdep_string, 'new_var', get_notice(t, 'rdep_string'));
     t.deepEqual(args.subnargs, ['zz', '64'], get_notice(t, 'subnargs'));
+    t.end();
+});
+
+test('A007', function (t) {
+    'use strict';
+    var commandline = `{"verbose|v" : "+", "port|p+http" : 3000, "dep" : {"list|l" : [], "string|s" : "s_var", "$" : "+" } }`;
+    var parser, args;
+    parser = extargsparse.ExtArgsParse();
+    parser.load_command_line_string(commandline);
+    args = parser.parse_command_line(['-vvvv', 'dep', '-l', 'cc', '--dep-string', 'ee', 'ww']);
+    t.equal(args.verbose, 4, get_notice(t, 'verbose'));
+    t.equal(args.http_port, 3000, get_notice(t, 'http_port'));
+    t.equal(args.subcommand, 'dep', get_notice(t, 'subcommand'));
+    t.deepEqual(args.dep_list, ['cc'], get_notice(t, 'dep_list'));
+    t.equal(args.dep_string, 'ee', get_notice(t, 'dep_string'));
+    t.deepEqual(args.subnargs, ['ww'], get_notice(t, 'subnargs'));
+    t.end();
+});
+
+test('A008', function (t) {
+    'use strict';
+    var commandline = `{"verbose|v" : "+","+http" : {"port|p" : 3000,"visual_mode|V" : false},"dep" : {"list|l" : [],"string|s" : "s_var","$" : "+"}}`;
+    var parser, args;
+    parser = extargsparse.ExtArgsParse();
+    parser.load_command_line_string(commandline);
+    args = parser.parse_command_line(['-vvvv', '--http-port', '9000', '--http-visual-mode', 'dep', '-l', 'cc', '--dep-string', 'ee', 'ww']);
+    t.equal(args.verbose, 4, get_notice(t, 'verbose'));
+    t.equal(args.http_port, 9000, get_notice(t, 'http_port'));
+    t.equal(args.http_visual_mode, true, get_notice(t, 'http_visual_mode'));
+    t.equal(args.subcommand, 'dep', get_notice(t, 'subcommand'));
+    t.deepEqual(args.dep_list, ['cc'], get_notice(t, 'dep_list'));
+    t.equal(args.dep_string, 'ee', get_notice(t, 'dep_string'));
+    t.deepEqual(args.subnargs, ['ww'], get_notice(t, 'subnargs'));
+    t.end();
+});
+
+test('A009', function (t) {
+    'use strict';
+    var commandline = `{"verbose|v" : "+","$port|p" : { "value" : 3000, "type" : "int", "nargs" : 1 ,  "helpinfo" : "port to connect"},"dep" : {"list|l" : [], "string|s" : "s_var", "$" : "+"} }`;
+    var parser, args;
+    parser = extargsparse.ExtArgsParse();
+    parser.load_command_line_string(commandline);
+    args = parser.parse_command_line(['-vvvv', '-p', '9000', 'dep', '-l', 'cc', '--dep-string', 'ee', 'ww']);
+    t.equal(args.verbose, 4, get_notice(t, 'verbose'));
+    t.equal(args.port, 9000, get_notice(t, 'port'));
+    t.equal(args.subcommand, 'dep', get_notice(t, 'subcommand'));
+    t.deepEqual(args.dep_list, ['cc'], get_notice(t, 'dep_list'));
+    t.equal(args.dep_string, 'ee', get_notice(t, 'dep_string'));
+    t.deepEqual(args.subnargs, ['ww'], get_notice(t, 'subnargs'));
     t.end();
 });
