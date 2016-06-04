@@ -289,3 +289,32 @@ test('A012', function (t) {
         });
     });
 });
+
+test('A013', function (t) {
+    'use strict';
+    var commandline = `{"verbose|v" : "+","$port|p" : { "value" : 3000,"type" : "int", "nargs" : 1 , "helpinfo" : "port to connect"},"dep" : {"list|l" : [],"string|s" : "s_var","$" : "+"}}`;
+    setup_before(t);
+    mktemp.createFile('parseXXXXXX.json', function (err, jsonfile) {
+        t.equal(err, null, get_notice(t, 'create jsonfile'));
+        fs.writeFile(jsonfile, '{"dep":{"list" : ["jsonval1","jsonval2"],"string" : "jsonstring"},"port":6000,"verbose":3}\n', function (err2) {
+            var parser, args;
+            t.equal(err2, null, get_notice(t, util.format('write (%s)', jsonfile)));
+            renew_variable('EXTARGSPARSE_JSON', jsonfile);
+            parser = extargsparse.ExtArgsParse();
+            parser.load_command_line_string(commandline);
+            args = parser.parse_command_line(['-p', '9000', 'dep', '--dep-string', 'ee', 'ww']);
+            t.equal(args.verbose, 3, get_notice(t, 'verbose'));
+            t.equal(args.port, 9000, get_notice(t, 'port'));
+            t.equal(args.subcommand, 'dep', get_notice(t, 'subcommand'));
+            t.deepEqual(args.dep_list, ['jsonval1', 'jsonval2'], get_notice(t, 'dep_list'));
+            t.equal(args.dep_string, 'ee', get_notice(t, 'dep_string'));
+            t.deepEqual(args.subnargs, ['ww'], get_notice(t, 'subnargs'));
+            fs.unlink(jsonfile, function (err3) {
+                t.equal(err3, null, get_notice(t, util.format('delete %s', jsonfile)));
+                t.end();
+            });
+
+
+        });
+    });
+});
