@@ -24,8 +24,7 @@
     "commander": "latest",
     "keep-alive-agent": "latest",
     "tape": "latest",
-    "mocha": "latest",
-    "chai": "latest"
+    "mktemp": "latest"
   },
   "keywords": [],
   "author": "",

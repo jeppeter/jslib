@@ -611,6 +611,7 @@ function NewExtArgsParse(option) {
     };
 
 
+
     self.parse_shortopt = function (arg, nextarg, curparser) {
         var skip = 0;
         var i, j;
@@ -918,10 +919,12 @@ function NewExtArgsParse(option) {
             curk += keys[i];
             keyname = keys[i];
             curv = dict[keyname];
-            if (typeof curv === 'object') {
+            if (Array.isArray(curv)) {
+                self.set_flag_value(curk, curv);
+            } else if (typeof curv === 'object') {
                 self.load_json_file_inner(curk, curv);
             } else {
-                self.inner_set_value(curk, curv);
+                self.set_flag_value(curk, curv);
             }
         }
         return;
@@ -936,7 +939,8 @@ function NewExtArgsParse(option) {
         } catch (e) {
             jsonvalue = e;
             console.error('can not parse (%s) (%s)', jsonfile, JSON.stringify(e));
-            throw new Error(JSON.stringify(e));
+            self.error = 1;
+            return;
         }
         self.load_json_file_inner(prefix, jsonvalue);
         return;
@@ -1020,7 +1024,7 @@ function NewExtArgsParse(option) {
         self.add_args_command();
         self.parse_command_line_inner(arraylist);
 
-        for (i = 0; i < self.priority[i]; i += 1) {
+        for (i = 0; i < self.priority.length; i += 1) {
             priority = self.priority[i];
             self.set_priority_func[priority]();
         }

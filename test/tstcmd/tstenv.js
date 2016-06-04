@@ -24,6 +24,15 @@ var renew_variable = function (name, value) {
     return;
 };
 
+var delete_variable = function (name) {
+    'use strict';
+    if (process.env[name] !== undefined) {
+        console.log('[%d]%s = %s', process.pid, name, process.env[name]);
+        delete process.env[name];
+    }
+    return;
+};
+
 var new_process = function () {
     'use strict';
     const spawn = pm.spawn;
@@ -42,6 +51,8 @@ get_variable('EXTARGSPARSE_JSON');
 process.argv.forEach(function (elm, idx) {
     'use strict';
     if (idx >= 2) {
+        delete_variable('EXTARGSPARSE_JSON');
+        new_process();
         renew_variable('EXTARGSPARSE_JSON', elm);
         new_process();
     }
