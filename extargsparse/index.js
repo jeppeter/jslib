@@ -1,6 +1,8 @@
 var keyparse = require('./keyparse');
 var util = require('util');
 
+
+
 function NewExtArgsParse(opt) {
     'use strict';
     var parser = {};
@@ -405,6 +407,8 @@ function NewExtArgsParse(opt) {
         var keycls;
         var valid;
         var errstr;
+        /*we add json file value*/
+        self.add_json_file_subcommand(curparser);
         keys = Object.keys(opt);
         for (idx = 0; idx < keys.length; idx += 1) {
             curkey = keys[idx];
@@ -514,7 +518,7 @@ function NewExtArgsParse(opt) {
 
                 added = self.handle_args_value(nextarg, keycls);
                 if (added > 0 && keycls.shortopt !== arg) {
-                    return -1
+                    return -1;
                 }
                 skip += added;
             }
@@ -536,7 +540,7 @@ function NewExtArgsParse(opt) {
 
                 added = self.handle_args_value(nextarg, keycls);
                 if (added > 0 && keycls.shortopt !== arg) {
-                    return -1
+                    return -1;
                 }
                 skip += added;
             }
@@ -547,7 +551,6 @@ function NewExtArgsParse(opt) {
 
     self.parse_longopt = function (arg, nextarg, curparser) {
         var getkeycls;
-        var skip = 0;
 
         getkeycls = null;
         if (curparser) {
@@ -572,7 +575,7 @@ function NewExtArgsParse(opt) {
             return -1;
         }
 
-        self.args = self.handle_args_value(self.args, nextarg, getkeycls);
+        return self.handle_args_value(nextarg, getkeycls);
 
     };
 
@@ -591,6 +594,12 @@ function NewExtArgsParse(opt) {
             nextarg = null;
             if ((i + 1) < arglist.length) {
                 nextarg = arglist[(i + 1)];
+            }
+
+            if (curarg === '-h' || curarg === '--help') {
+                self.print_help(0, null, curparser);
+                self.error = 1;
+                return self.args;
             }
             if (curarg === '--') {
                 for (j = (i + 1); j < arglist.length; j += 1) {
@@ -636,7 +645,7 @@ function NewExtArgsParse(opt) {
                 }
             }
             i += added;
-            if (i >= arglist.length) {
+            if (i > arglist.length) {
                 self.error = 1;
                 self.print_help(3, util.format('need args for (%s)', curarg), curparser);
                 return self.args;
@@ -711,6 +720,28 @@ function NewExtArgsParse(opt) {
         return self.args;
     };
 
+    self.add_json_file_subcommand = function (subparser) {
+        var keycls;
+
+        if (subparser) {
+            keycls = keyparse.KeyParser(subparser.subparser.cmdname, 'json', null, true);
+        } else {
+            keycls = keyparse.KeyParser('', 'json', null, true);
+        }
+        return self.check_flag_insert(keycls, subparser);
+    };
+
+    self.add_args_command = function () {
+        var keycls;
+        keycls = keyparse.KeyParser('', '$', '*', true);
+        self.check_flag_insert(keycls, null);
+        self.subparsers.forEach(function (subparser) {
+            keycls = keyparse.KeyParser(subparser.cmdname, '$', '*', true);
+            self.check_flag_insert(keycls, subparser);
+        });
+        return;
+    };
+
     self.parse_command_line = function (arraylist, context) {
         var args;
         var arglist = [];
@@ -724,6 +755,9 @@ function NewExtArgsParse(opt) {
             arglist = arraylist;
         }
 
+        self.error = 0;
+        /*we add sub command args for every*/
+        self.add_args_command();
         args = self.parse_command_line_inner(arraylist);
 
         return args;
