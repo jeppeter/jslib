@@ -397,7 +397,58 @@ test('A015', function (t) {
 test('A016', function (t) {
     'use strict';
     var commandline = `{"verbose|v" : "+","$port|p" : {"value" : 3000,"type" : "int","nargs" : 1 ,"helpinfo" : "port to connect"},"dep" : {"list|l" : [],"string|s" : "s_var","$" : "+"}}`;
+    setup_before(t);
     mktemp.createFile('parseXXXXXX.json', function (err, jsonfile) {
         t.equal(err, null, get_notice(t, 'create jsonfile'));
+        fs.writeFile(jsonfile, '{"dep":{"list" : ["jsonval1","jsonval2"],"string" : "jsonstring"},"port":6000,"verbose":3}\n', function (err2) {
+            t.equal(err2, null, get_notice(t, util.format('write jsonfile(%s)', jsonfile)));
+            mktemp.createFile('parseXXXXXX.jsonfile', function (err3, depjsonfile) {
+                t.equal(err3, null, get_notice(t, 'create depjsonfile'));
+                fs.writeFile(depjsonfile, '{"list":["depjson1","depjson2"]}\n', function (err4) {
+                    var depstrval, depliststr, deplistval;
+                    var parser, args;
+                    t.equal(err4, null, get_notice(t, util.format('write depjsonfile(%s)', depjsonfile)));
+                    depstrval = 'newval';
+                    depliststr = '["depenv1","depenv2"]';
+                    deplistval = eval(depliststr);
+                    t.equal(err4, null, get_notice(t, util.format('write depjsonfile(%s)', depjsonfile)));
+                    renew_variable('EXTARGSPARSE_JSON', jsonfile);
+                    renew_variable('DEP_JSON', depjsonfile);
+                    renew_variable('DEP_STRING', depstrval);
+                    renew_variable('DEP_LIST', depliststr);
+                    parser = extargsparse.ExtArgsParse();
+                    parser.load_command_line_string(commandline);
+                    args = parser.parse_command_line(['-p', '9000', 'dep', '--dep-string', 'ee', 'ww']);
+                    t.equal(args.verbose, 3, get_notice(t, 'verbose'));
+                    t.equal(args.port, 9000, get_notice(t, 'port'));
+                    t.equal(args.subcommand, 'dep', get_notice(t, 'subcommand'));
+                    t.deepEqual(args.dep_list, deplistval, get_notice(t, 'dep_list'));
+                    t.equal(args.dep_string, 'ee', get_notice(t, 'dep_string'));
+                    t.deepEqual(args.subnargs, ['ww'], get_notice(t, 'subnargs'));
+                    fs.unlink(depjsonfile, function (err5) {
+                        t.equal(err5, null, get_notice(t, util.format('delete depjsonfile(%s)', depjsonfile)));
+                        fs.unlink(jsonfile, function (err6) {
+                            t.equal(err6, null, get_notice(t, util.format('delete jsonfile (%s)', jsonfile)));
+                            t.end();
+                        });
+                    });
+
+                });
+            });
+        });
     });
+});
+
+test('A017', function (t) {
+    'use strict';
+    var commandline = `{"+dpkg" : {"dpkg" : "dpkg"},"verbose|v" : "+","$port|p" : {"value" : 3000,"type" : "int","nargs" : 1 , "helpinfo" : "port to connect"}}`;
+    var parser, args;
+    setup_before(t);
+    parser = extargsparse.ExtArgsParse();
+    parser.load_command_line_string(commandline);
+    args = parser.parse_command_line([]);
+    t.equal(args.verbose, 0, get_notice(t, 'verbose'));
+    t.equal(args.port, 3000, get_notice(t, 'port'));
+    t.equal(args.dpkg_dpkg, 'dpkg', get_notice(t, 'dpkg_dpkg'));
+    t.end();
 });
