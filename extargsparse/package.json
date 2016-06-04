@@ -6,7 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["command","parameters","CLI"],
+  "devDependencies": {
+    "tape": "latest"
+  },
+  "keywords": ["command", "parameters", "CLI"],
   "author": "jeppeter@gmail.com",
   "license": "ISC"
 }

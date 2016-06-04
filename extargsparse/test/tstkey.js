@@ -537,3 +537,22 @@ test('A029', function (t) {
     t.equal(keycls.shortopt, '-R', get_notice(t, 'shortopt'));
     t.end();
 });
+
+test('A030', function (t) {
+    'use strict';
+    var keycls;
+    keycls = keyparse.KeyParser('', '$', {
+        value: [],
+        nargs: "*",
+        typename: "string"
+    }, false);
+    t.equal(keycls.flagname, '$', get_notice(t, 'flagname'));
+    t.equal(keycls.nargs, '*', get_notice(t, 'flagname'));
+    t.deepEqual(keycls.value, [], get_notice(t, 'value'));
+    t.equal(keycls.typename, 'args', get_notice(t, 'typename'));
+    t.equal(keycls.cmdname, null, get_notice(t, 'cmdname'));
+    t.equal(keycls.function, null, get_notice(t, 'function'));
+    t.equal(keycls.helpinfo, null, get_notice(t, 'helpinfo'));
+    opt_fail_check(t, keycls);
+    t.end();
+});
