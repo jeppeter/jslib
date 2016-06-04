@@ -9,6 +9,7 @@ function NewExtArgsParse(opt) {
     parser.flags = [];
     parser.help_func = null;
     parser.subparsers = [];
+    parser.error = 0;
     if (process.argv > 1) {
         parser.cmdname = process.argv[1];
     } else {
@@ -271,51 +272,6 @@ function NewExtArgsParse(opt) {
         return s;
     };
 
-    self.subcommand_help = function (maxsize, curparser) {
-        var s;
-        var curlen;
-        var curs;
-        var subnargskeycls;
-        s = '';
-        s += util.format('%s ', keycls.cmdname);
-        subnargskeycls = null;
-
-        curparser.flags.forEach(function (elm) {
-            if (elm.flagname === '$') {
-                subnargskeycls = elm;
-            }
-        });
-
-
-
-        if (keycls.helpinfo === null) {
-            if (subnargskeycls !== null && subnargskeycls.helpinfo !== null) {
-                s += subnargskeycls.helpinfo;
-            } else {
-                if (subnargskeycls !== null) {
-                    if (subnargskeycls.value === '?') {
-                        s += '[subnargs]';
-                    } else if (subnargskeycls.value === '*' || subnargskeycls.value === '+') {
-                        s += '[subnargs]...';
-                    } else {
-                        s += util.format('%d args', subnargskeycls.value);
-                    }
-                }
-            }
-            s += '\n';
-        } else {
-            s += util.format('%s\n', keycls.helpinfo);
-        }
-
-        curparser.flags.forEach(function (elm) {
-            if (elm.flagname !== '$') {
-                s += self.get_help_info(1, maxsize, elm);
-            }
-        });
-
-        return s;
-    };
-
     self.main_help = function (maxsize) {
         var subnargskeycls;
         var s;
@@ -361,10 +317,80 @@ function NewExtArgsParse(opt) {
         return s;
     };
 
+
+    self.subcommand_help = function (maxsize, curparser) {
+        var s;
+        var keycls;
+        var subnargskeycls;
+        if (curparser === null) {
+            return self.main_help(maxsize);
+        }
+
+        keycls = curparser.keycls;
+        s = '';
+        s += util.format('%s ', keycls.cmdname);
+        subnargskeycls = null;
+
+        curparser.flags.forEach(function (elm) {
+            if (elm.flagname === '$') {
+                subnargskeycls = elm;
+            }
+        });
+
+        if (keycls.helpinfo === null) {
+            if (subnargskeycls !== null && subnargskeycls.helpinfo !== null) {
+                s += subnargskeycls.helpinfo;
+            } else {
+                if (subnargskeycls !== null) {
+                    if (subnargskeycls.value === '?') {
+                        s += '[subnargs]';
+                    } else if (subnargskeycls.value === '*' || subnargskeycls.value === '+') {
+                        s += '[subnargs]...';
+                    } else {
+                        s += util.format('%d args', subnargskeycls.value);
+                    }
+                }
+            }
+            s += '\n';
+        } else {
+            s += util.format('%s\n', keycls.helpinfo);
+        }
+
+        curparser.flags.forEach(function (elm) {
+            if (elm.flagname !== '$') {
+                s += self.get_help_info(1, maxsize, elm);
+            }
+        });
+
+        return s;
+    };
+
+
     self.print_help = function (ec, fmt) {
         var s;
+        var maxlen;
+        var fp;
         s = '';
 
+        maxlen = self.flag_maxlen();
+
+        if (fmt !== undefined && fmt !== null) {
+            s += fmt;
+            s += '\n';
+        }
+        s += self.main_help(maxlen);
+        if (self.help_func !== null) {
+            self.help_func(s);
+        } else {
+            if (ec === 0) {
+                fp = process.stdout;
+            } else {
+                fp = process.stderr;
+            }
+            fp.write(s);
+            process.exit(ec);
+        }
+        return;
     };
 
 
@@ -416,6 +442,174 @@ function NewExtArgsParse(opt) {
             throw new Error('can not parse (%s) (%s)', cmdstr, JSON.stringify(e));
         }
         return self.load_command_line(cmdopt);
+    };
+
+    self.handle_args_value = function (args, nextarg, keycls) {
+        var destname = keycls.optdest.toLowerCase();
+        var errstr;
+        if (keycls.typename === 'boolean') {
+            if (keycls.value) {
+                args[destname] = false;
+            } else {
+                args[destname] = true;
+            }
+        } else if (keycls.typename === 'count') {
+            if (args[destname] === undefined) {
+                args[destname] = 1;
+            } else {
+                args[destname] += 1;
+            }
+        } else if (keycls.typename === 'float') {
+            args[destname] = parseFloat(nextarg);
+        } else if (keycls.typename === 'int') {
+            args[destname] = parseInt(nextarg);
+        } else if (keycls.typename === 'array') {
+            if (args[destname] === undefined) {
+                args[destname] = [];
+            }
+            args[destname].push(nextarg);
+        } else if (keycls.typename === 'string') {
+            args[destname] = nextarg;
+        } else {
+            errstr = util.format('unknown type (%s)', keycls.typename);
+            throw new Error(errstr);
+        }
+
+        return args;
+    };
+
+
+    self.parse_shortopt = function (arg, nextarg, curparser) {
+        var skip = 0;
+        var i, j;
+        var keycls;
+        var shortopt;
+        if (curparser) {
+            for (i = 1; i < arg.length; i += 1) {
+                keycls = null;
+                for (j = 0; j < curparser.flags.length; j += 1) {
+                    if (curparser.flags[j].flagname !== '$') {
+                        shortopt = curparser.flags[j].shortopt;
+                        if (shortopt !== null) {
+                            if (shortopt[1] === arg[i]) {
+                                keycls = curparser.flags[j];
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (keycls === null) {
+                    return -1;
+                }
+
+                if (keycls.typename === 'count' || keycls.typename === 'boolean') {
+                    self.args = self.handle_args_value(self.args, null, keycls);
+                } else {
+                    if (arg !== keycls.shortopt) {
+                        return -1;
+                    }
+                    self.args = self.handle_args_value(self.args, nextarg, keycls);
+                    skip += 1;
+                }
+            }
+        } else {
+            for (i = 1; i < arg.length; i += 1) {
+                keycls = null;
+                for (j = 0; j < self.flags; j += 1) {
+                    if (self.flags[j].flagname !== '$') {
+                        shortopt = self.flags[j].shortopt;
+                        if (shortopt && shortopt[1] === arg[i]) {
+                            keycls = self.flags[j];
+                            break;
+                        }
+                    }
+                }
+                if (keycls === null) {
+                    return -1;
+                }
+
+                if (keycls.typename === 'count' || keycls.typename === 'boolean') {
+                    self.args = self.handle_args_value(self.args, null, keycls);
+                } else {
+                    if (keycls.shortopt !== arg) {
+                        return -1;
+                    }
+                    self.args = self.handle_args_value(self.args, nextarg, keycls);
+                    skip += 1;
+                }
+            }
+        }
+
+        return skip;
+    };
+
+    self.parse_command_line_inner = function (arglist) {
+        var i, j;
+        var curparser = null;
+        var args;
+        var curarg;
+        var leftargs = [];
+        var added = 0;
+        var nextarg;
+        args = {};
+        for (i = 0; i < arglist.length; i += 1) {
+            curarg = arglist[i];
+            nextarg = null;
+            if ((i + 1) < arglist.length) {
+                nextarg = arglist[(i + 1)];
+            }
+            if (curarg === '--') {
+                for (j = (i + 1); j < arglist.length; j += 1) {
+                    leftargs.push(arglist[j]);
+                }
+                break;
+            } else if (curarg.length > 2 && curarg[0] === '-' && curarg[1] === '-') {
+
+            } else if (curarg.length >= 2 && curarg[0] === '-' && curarg[1] !== '-') {
+                added = self.parse_shortopt(curarg, nextarg, curparser);
+                if (added < 0) {}
+            } else {
+                if (curparser === null) {
+                    if (self.subparsers.length === 0) {
+                        for (j = i; j < arglist.length; i += 1) {
+                            leftargs.push(arglist[i]);
+                        }
+                        break;
+                    }
+
+                    for (j = 0; j < self.subparsers.length; j += 1) {
+                        if (self.subparsers[j].cmdname === curarg) {
+                            curparser = self.subparsers[j];
+                            break;
+                        }
+                    }
+
+                    if (curparser === null) {
+                        self.print_help(3, util.format('can not find (%s) as subcommand', curarg));
+                        self.error = 3;
+                        return args;
+                    }
+                }
+            }
+        }
+    };
+
+    self.parse_command_line(arraylist, context) {
+        var args;
+        var arglist = [];
+        var i;
+
+        if (arraylist === null || arraylist === undefined) {
+            for (i = 2; i < process.argv.length; i += 1) {
+                arglist.push(process.argv[i]);
+            }
+        } else {
+            arglist = arraylist;
+        }
+
+        args = self.parse_command_line_inner(arraylist);
+
+        return args;
     };
     return parser;
 }
