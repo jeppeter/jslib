@@ -1,7 +1,7 @@
 var keyparse = require('./keyparse');
 var util = require('util');
 var fs = require('fs');
-//var tracelog = require('../tracelog');
+var tracelog = require('../tracelog');
 
 var call_args_function = function (funcname, args, context) {
     'use strict';
@@ -221,7 +221,7 @@ function NewExtArgsParse(option) {
             errstr = util.format('can not make (%s) in another subcommand (%s)', keycls.command, curparser.cmdname);
             throw new Error(errstr);
         }
-        if (keycls.typename !== 'Object') {
+        if (keycls.typename !== 'command' || typeof keycls.value !== 'object') {
             errstr = util.format('(%s) not  object value', keycls.cmdname);
             throw new Error(errstr);
         }
@@ -702,6 +702,7 @@ function NewExtArgsParse(option) {
         args = {};
         for (i = 0; i < arglist.length; i += 1) {
             curarg = arglist[i];
+            added = 0;
             //tracelog.info('[%d] %s', i, curarg);
             nextarg = null;
             if ((i + 1) < arglist.length) {
@@ -837,7 +838,7 @@ function NewExtArgsParse(option) {
         var keycls;
 
         if (subparser) {
-            keycls = keyparse.KeyParser(subparser.subparser.cmdname, 'json', null, true);
+            keycls = keyparse.KeyParser(subparser.cmdname, 'json', null, true);
         } else {
             keycls = keyparse.KeyParser('', 'json', null, true);
         }

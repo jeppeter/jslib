@@ -27,3 +27,19 @@ test('A001', function (t) {
     t.deepEqual(args.args, ['var1', 'var2'], get_notice(t, 'args'));
     t.end();
 });
+
+test('A002', function (t) {
+    'use stirct';
+    var loads = `{"verbose|v" : "+","port|p" : 3000,"dep" : {"list|l" : [],"string|s" : "s_var","$" : "+"}}`;
+    var parser, args;
+    parser = extargsparse.ExtArgsParse();
+    parser.load_command_line_string(loads);
+    args = parser.parse_command_line(['-vvvv', '-p', '5000', 'dep', '-l', 'arg1', '--dep-list', 'arg2', 'cc', 'dd']);
+    t.equal(args.verbose, 4, get_notice(t, 'verbose'));
+    t.equal(args.port, 5000, get_notice(t, 'port'));
+    t.equal(args.subcommand, 'dep', get_notice(t, 'subcommand'));
+    t.deepEqual(args.dep_list, ['arg1', 'arg2'], get_notice(t, 'dep_list'));
+    t.equal(args.dep_string, 's_var', get_notice(t, 'dep_string'));
+    t.deepEqual(args.subnargs, ['cc', 'dd'], get_notice(t, 'subnargs'));
+    t.end();
+});
