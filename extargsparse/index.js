@@ -366,19 +366,23 @@ function NewExtArgsParse(opt) {
     };
 
 
-    self.print_help = function (ec, fmt) {
+    self.print_help = function (ec, fmt, curparser) {
         var s;
         var maxlen;
         var fp;
         s = '';
 
-        maxlen = self.flag_maxlen();
+        if (curparser) {
+            maxlen = self.subcommand_flag_maxlen();
+        } else {
+            maxlen = self.flag_maxlen();
+        }
 
         if (fmt !== undefined && fmt !== null) {
             s += fmt;
             s += '\n';
         }
-        s += self.main_help(maxlen);
+        s += self.subcommand_help(maxlen, curparser);
         if (self.help_func !== null) {
             self.help_func(s);
         } else {
@@ -444,38 +448,43 @@ function NewExtArgsParse(opt) {
         return self.load_command_line(cmdopt);
     };
 
-    self.handle_args_value = function (args, nextarg, keycls) {
+    self.handle_args_value = function (nextarg, keycls) {
         var destname = keycls.optdest.toLowerCase();
         var errstr;
+        var added = 0;
         if (keycls.typename === 'boolean') {
             if (keycls.value) {
-                args[destname] = false;
+                self.args[destname] = false;
             } else {
-                args[destname] = true;
+                self.args[destname] = true;
             }
         } else if (keycls.typename === 'count') {
-            if (args[destname] === undefined) {
-                args[destname] = 1;
+            if (self.args[destname] === undefined) {
+                self.args[destname] = 1;
             } else {
-                args[destname] += 1;
+                self.args[destname] += 1;
             }
         } else if (keycls.typename === 'float') {
-            args[destname] = parseFloat(nextarg);
+            self.args[destname] = parseFloat(nextarg);
+            added += 1;
         } else if (keycls.typename === 'int') {
-            args[destname] = parseInt(nextarg);
+            self.args[destname] = parseInt(nextarg);
+            added += 1;
         } else if (keycls.typename === 'array') {
-            if (args[destname] === undefined) {
-                args[destname] = [];
+            if (self.args[destname] === undefined) {
+                self.args[destname] = [];
             }
-            args[destname].push(nextarg);
+            self.args[destname].push(nextarg);
+            added += 1;
         } else if (keycls.typename === 'string') {
-            args[destname] = nextarg;
+            self.args[destname] = nextarg;
+            added += 1;
         } else {
             errstr = util.format('unknown type (%s)', keycls.typename);
             throw new Error(errstr);
         }
 
-        return args;
+        return added;
     };
 
 
@@ -484,6 +493,7 @@ function NewExtArgsParse(opt) {
         var i, j;
         var keycls;
         var shortopt;
+        var added;
         if (curparser) {
             for (i = 1; i < arg.length; i += 1) {
                 keycls = null;
@@ -502,15 +512,11 @@ function NewExtArgsParse(opt) {
                     return -1;
                 }
 
-                if (keycls.typename === 'count' || keycls.typename === 'boolean') {
-                    self.args = self.handle_args_value(self.args, null, keycls);
-                } else {
-                    if (arg !== keycls.shortopt) {
-                        return -1;
-                    }
-                    self.args = self.handle_args_value(self.args, nextarg, keycls);
-                    skip += 1;
+                added = self.handle_args_value(nextarg, keycls);
+                if (added > 0 && keycls.shortopt !== arg) {
+                    return -1
                 }
+                skip += added;
             }
         } else {
             for (i = 1; i < arg.length; i += 1) {
@@ -528,19 +534,46 @@ function NewExtArgsParse(opt) {
                     return -1;
                 }
 
-                if (keycls.typename === 'count' || keycls.typename === 'boolean') {
-                    self.args = self.handle_args_value(self.args, null, keycls);
-                } else {
-                    if (keycls.shortopt !== arg) {
-                        return -1;
-                    }
-                    self.args = self.handle_args_value(self.args, nextarg, keycls);
-                    skip += 1;
+                added = self.handle_args_value(nextarg, keycls);
+                if (added > 0 && keycls.shortopt !== arg) {
+                    return -1
                 }
+                skip += added;
             }
         }
 
         return skip;
+    };
+
+    self.parse_longopt = function (arg, nextarg, curparser) {
+        var getkeycls;
+        var skip = 0;
+
+        getkeycls = null;
+        if (curparser) {
+            curparser.flags.forEach(function (elm) {
+                if (elm.flagname !== '$') {
+                    if (elm.longopt === arg) {
+                        getkeycls = elm;
+                    }
+                }
+            });
+        } else {
+            self.flags.forEach(function (elm) {
+                if (elm.flagname !== '$') {
+                    if (elm.longopt === arg) {
+                        getkeycls = elm;
+                    }
+                }
+            });
+        }
+
+        if (getkeycls === null) {
+            return -1;
+        }
+
+        self.args = self.handle_args_value(self.args, nextarg, getkeycls);
+
     };
 
     self.parse_command_line_inner = function (arglist) {
@@ -551,6 +584,7 @@ function NewExtArgsParse(opt) {
         var leftargs = [];
         var added = 0;
         var nextarg;
+        var subnargskeycls;
         args = {};
         for (i = 0; i < arglist.length; i += 1) {
             curarg = arglist[i];
@@ -563,11 +597,21 @@ function NewExtArgsParse(opt) {
                     leftargs.push(arglist[j]);
                 }
                 break;
-            } else if (curarg.length > 2 && curarg[0] === '-' && curarg[1] === '-') {
-
+            }
+            if (curarg.length > 2 && curarg[0] === '-' && curarg[1] === '-') {
+                added = self.parse_longopt(curarg, nextarg, curparser);
+                if (added < 0) {
+                    self.error = 1;
+                    self.print_help(3, util.format('(%s) not recognize', curarg), curparser);
+                    return self.args;
+                }
             } else if (curarg.length >= 2 && curarg[0] === '-' && curarg[1] !== '-') {
                 added = self.parse_shortopt(curarg, nextarg, curparser);
-                if (added < 0) {}
+                if (added < 0) {
+                    self.error = 1;
+                    self.print_help(3, util.format('can not parse %s', curarg), curparser);
+                    return self.args;
+                }
             } else {
                 if (curparser === null) {
                     if (self.subparsers.length === 0) {
@@ -585,16 +629,89 @@ function NewExtArgsParse(opt) {
                     }
 
                     if (curparser === null) {
-                        self.print_help(3, util.format('can not find (%s) as subcommand', curarg));
+                        self.print_help(3, util.format('can not find (%s) as subcommand', curarg), null);
                         self.error = 3;
                         return args;
                     }
                 }
             }
+            i += added;
+            if (i >= arglist.length) {
+                self.error = 1;
+                self.print_help(3, util.format('need args for (%s)', curarg), curparser);
+                return self.args;
+            }
         }
+
+        if (curparser) {
+            self.args.subnargs = leftargs;
+            /*now test for the subnargs*/
+            subnargskeycls = null;
+            curparser.flags.forEach(function (elm) {
+                if (elm.flagname === '$') {
+                    subnargskeycls = elm;
+                }
+            });
+
+            if (subnargskeycls) {
+                if (subnargskeycls.value === '+') {
+                    if (leftargs.length === 0) {
+                        self.print_help(3, util.format('need a args for (%s)', curparser.cmdname), curparser);
+                        self.error = 1;
+                        return self.args;
+                    }
+                } else if (subnargskeycls.value === '?') {
+                    if (leftargs.length > 1) {
+                        self.print_help(3, util.format('no more args than 1'), curparser);
+                        self.error = 1;
+                        return self.args;
+                    }
+                } else if (subnargskeycls.value !== '*') {
+                    if (leftargs.length !== subnargskeycls.value) {
+                        self.print_help(3, util.format('args count (%d) != need count %d', leftargs.length, subnargskeycls.value), curparser);
+                        self.error = 1;
+                        return self.args;
+                    }
+                }
+            }
+
+        } else {
+            self.args.args = leftargs;
+
+            subnargskeycls = null;
+            self.flags.forEach(function (elm) {
+                if (elm.flagname === '$') {
+                    subnargskeycls = elm;
+                }
+            });
+
+            if (subnargskeycls) {
+                if (subnargskeycls.value === '+') {
+                    if (leftargs.length === 0) {
+                        self.print_help(3, util.format('need a args '), curparser);
+                        self.error = 1;
+                        return self.args;
+                    }
+                } else if (subnargskeycls.value === '?') {
+                    if (leftargs.length > 1) {
+                        self.print_help(3, util.format('no more args than 1'), curparser);
+                        self.error = 1;
+                        return self.args;
+                    }
+                } else if (subnargskeycls.value !== '*') {
+                    if (leftargs.length !== subnargskeycls.value) {
+                        self.print_help(3, util.format('args count (%d) != need count %d', leftargs.length, subnargskeycls.value), curparser);
+                        self.error = 1;
+                        return self.args;
+                    }
+                }
+            }
+        }
+
+        return self.args;
     };
 
-    self.parse_command_line(arraylist, context) {
+    self.parse_command_line = function (arraylist, context) {
         var args;
         var arglist = [];
         var i;
