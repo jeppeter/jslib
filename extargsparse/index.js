@@ -1,13 +1,90 @@
 var keyparse = require('./keyparse');
 var util = require('util');
+var fs = require('fs');
+
+var call_args_function = function (funcname, args, context) {
+    'use strict';
+    var pkgname;
+    var fname;
+    var reg;
+    var reqpkg;
+    var sarr, idx;
+
+    reg = new RegExp('\\.', 'i');
+
+    if (reg.test(funcname)) {
+        sarr = funcname.split('.');
+        pkgname = '';
+        for (idx = 0; idx < (sarr.length - 1); idx += 1) {
+            if (sarr[idx].length === 0) {
+                pkgname += './';
+            } else {
+                pkgname += sarr[idx];
+            }
+        }
+
+        fname = sarr[(sarr.length - 1)];
+    } else {
+        pkgname = process.argv[1];
+        fname = funcname;
+    }
+
+    try {
+        reqpkg = require(pkgname);
+    } catch (e) {
+        reqpkg = e;
+        console.error('can not load pkg (%s)', pkgname);
+        return args;
+    }
+    if (typeof reqpkg[fname] !== 'function') {
+        console.error('%s not function in (%s)', fname, pkgname);
+        return args;
+    }
+
+    Function.prototype.call.call(reqpkg[fname], context, args);
+    return args;
+};
 
 
+var set_property_value = function (self, name, value) {
+    'use strict';
+    var hasproperties;
+    var added = 0;
+    hasproperties = Object.getOwnPropertyNames(self);
+    if (hasproperties.indexOf(name) < 0) {
+        Object.defineProperty(self, name, {
+            enumerable: true,
+            get: function () {
+                return value;
+            },
+            set: function (v) {
+                var errstr;
+                v = v;
+                errstr = util.format('can not set (%s) value', name);
+                throw new Error(errstr);
+            }
+        });
+        added = 1;
+    }
+    return added;
+};
+
+set_property_value(exports, 'COMMAND_SET', 'COMMAND_SET');
+set_property_value(exports, 'SUB_COMMAND_JSON_SET', 'SUB_COMMAND_JSON_SET');
+set_property_value(exports, 'COMMAND_JSON_SET', 'COMMAND_JSON_SET');
+set_property_value(exports, 'ENVIRONMENT_SET', 'ENVIRONMENT_SET');
+set_property_value(exports, 'ENV_SUB_COMMAND_JSON_SET', 'ENV_SUB_COMMAND_JSON_SET');
+set_property_value(exports, 'ENV_COMMAND_JSON_SET', 'ENV_COMMAND_JSON_SET');
+set_property_value(exports, 'DEFAULT_SET', 'DEFAULT_SET');
 
 function NewExtArgsParse(opt) {
     'use strict';
     var parser = {};
     var self;
+    var errstr2;
+    var retparser;
 
+    retparser = {};
     parser.flags = [];
     parser.help_func = null;
     parser.subparsers = [];
@@ -30,8 +107,22 @@ function NewExtArgsParse(opt) {
         count: self.load_command_line_count
     };
 
-    parser.priority = [];
+    parser.set_priority_func = {
+        ENVIRONMENT_SET: self.args_environment_set,
+        ENV_COMMAND_JSON_SET: self.args_env_command_json_set,
+        ENV_SUB_COMMAND_JSON_SET: self.args_env_sub_command_json_set,
+        COMMAND_JSON_SET: self.args_command_json_set,
+        SUB_COMMAND_JSON_SET: self.args_sub_command_json_set
+    };
+
+    parser.priority = [exports.SUB_COMMAND_JSON_SET, exports.COMMAND_JSON_SET, exports.ENVIRONMENT_SET, exports.ENV_SUB_COMMAND_JSON_SET, exports.ENV_COMMAND_JSON_SET];
     if (opt.priority !== undefined && opt.priority !== null) {
+        opt.priority.forEach(function (elm, idx) {
+            if (parser.priority.indexOf(elm) < 0) {
+                errstr2 = util.format('[%d]elm (%s) not valid', idx, elm);
+                throw new Error(errstr2);
+            }
+        });
         parser.priority = opt.priority;
     }
 
@@ -442,7 +533,7 @@ function NewExtArgsParse(opt) {
     };
 
 
-    self.load_command_line_string = function (cmdstr) {
+    retparser.load_command_line_string = function (cmdstr) {
         var cmdopt;
         try {
             cmdopt = JSON.parse(cmdstr);
@@ -489,6 +580,61 @@ function NewExtArgsParse(opt) {
         }
 
         return added;
+    };
+
+    self.inner_set_value = function (keycls, value) {
+        var reg;
+        var valstr;
+        if (keycls.typename === 'boolean') {
+            if (typeof value !== 'boolean') {
+                console.log('(%s) value not boolean', keycls.optdest);
+                return;
+            }
+            if (self.args[keycls.optdest] === undefined) {
+                self.args[keycls.optdest] = value;
+            }
+        } else if (keycls.typename === 'float') {
+            reg = new RegExp('^[\\d]+\\.[\\d]*$', 'i');
+            valstr = util.format('%s', value);
+            if (typeof value !== 'number' || !reg.test(valstr)) {
+                console.log('(%s) value (%s) not float', keycls.optdest, value);
+                return;
+            }
+            if (self.args[keycls.optdest] === undefined) {
+                self.args[keycls.optdest] = value;
+            }
+        } else if (keycls.typename === 'count' || keycls.typename === 'int') {
+            reg = new RegExp('^[\\d]+$', 'i');
+            valstr = util.format('%s', value);
+            if (typeof value !== 'number' || !reg.test(valstr)) {
+                console.log('(%s) value (%s) not integer', keycls.optdest, value);
+                return;
+            }
+            if (self.args[keycls.optdest] === undefined) {
+                self.args[keycls.optdest] = value;
+            }
+        } else if (keycls.typename === 'string') {
+            if (typeof value !== 'string') {
+                console.log('(%s) value (%s) not string', keycls.optdest, value);
+                return;
+            }
+            if (self.args[keycls.optdest] === undefined) {
+                self.args[keycls.optdest] = value;
+            }
+        } else if (keycls.typename === 'array') {
+            if (!Array.isArray(value)) {
+                console.log('(%s) value (%s) not array', keycls.optdest, value);
+                return;
+            }
+            if (self.args[keycls.optdest] === undefined) {
+                self.args[keycls.optdest] = value;
+            }
+        } else {
+            console.log('(%s) value type(%s) not valid', keycls.optdest, keycls.typename);
+            return;
+        }
+
+        return;
     };
 
 
@@ -652,8 +798,16 @@ function NewExtArgsParse(opt) {
             }
         }
 
+        if (self.subparsers.length > 0 && curparser === null) {
+            self.print_help(3, util.format('you should specify a command'), curparser);
+            self.error = 1;
+            return self.args;
+        }
+
+
         if (curparser) {
             self.args.subnargs = leftargs;
+            self.args.subcommand = curparser.cmdname;
             /*now test for the subnargs*/
             subnargskeycls = null;
             curparser.flags.forEach(function (elm) {
@@ -742,10 +896,163 @@ function NewExtArgsParse(opt) {
         return;
     };
 
-    self.parse_command_line = function (arraylist, context) {
-        var args;
+    self.set_flag_value = function (key, value) {
+        var i, j, curparser;
+        var keycls;
+        var optdest;
+        for (i = 0; i < self.flags.length; i += 1) {
+            keycls = self.flags[i];
+            if (keycls.flagname !== '$') {
+                optdest = keycls.optdest;
+                if (optdest === key) {
+                    self.inner_set_value(keycls, value);
+                    return;
+                }
+            }
+        }
+
+        for (i = 0; i < self.subparsers.length; i += 1) {
+            curparser = self.subparsers[i];
+            for (j = 0; j < curparser.flags.length; j += 1) {
+                keycls = curparser.flags[j];
+                if (keycls.flagname !== '$') {
+                    optdest = keycls.optdest;
+                    optdest = optdest.toLowerCase();
+                    if (optdest === key) {
+                        self.inner_set_value(keycls, value);
+                        return;
+                    }
+                }
+            }
+        }
+        return;
+    };
+
+    self.args_environment_set = function () {
+        var optdest;
+        var envname, value, envstr;
+        var envs;
+        var i;
+        envs = Object.keys(process.env);
+        for (i = 0; i < envs.length; i += 1) {
+            envname = envs[i];
+            envstr = process.env[envname];
+            try {
+                value = eval(envstr);
+                optdest = envname;
+                optdest = optdest.toLowerCase();
+                optdest = optdest.replace(/-/g, '_');
+                self.set_flag_value(optdest, value);
+            } catch (e) {
+                envname = e;
+            }
+        }
+        return;
+    };
+    self.load_json_file_inner = function (prefix, dict) {
+        var keys;
+        var curk, keyname, curv;
+        var i;
+        keys = Object.keys(dict);
+        for (i = 0; i < keys.length; i += 1) {
+            curk = '';
+            if (prefix.length > 0) {
+                curk += util.format('%s_', prefix);
+            }
+            curk += keys[i];
+            keyname = keys[i];
+            curv = dict[keyname];
+            if (typeof curv === 'object') {
+                self.load_json_file_inner(curk, curv);
+            } else {
+                self.inner_set_value(curk, curv);
+            }
+        }
+        return;
+    };
+
+    self.args_load_json = function (prefix, jsonfile) {
+        var jsonvalue;
+        var jsondata;
+        try {
+            jsondata = fs.readFileSync(jsonfile);
+            jsonvalue = JSON.parse(jsondata);
+        } catch (e) {
+            jsonvalue = e;
+            console.error('can not parse (%s) (%s)', jsonfile, JSON.stringify(e));
+            throw new Error(JSON.stringify(e));
+        }
+        self.load_json_file_inner(prefix, jsonvalue);
+        return;
+    };
+
+    self.args_command_json_set = function () {
+        if (self.args.json !== undefined) {
+            self.args_load_json('', self.args.json);
+        }
+    };
+
+    self.args_sub_command_json_set = function () {
+        var optdest;
+        if (typeof self.args.subcommand === 'string') {
+            optdest = util.format('%s_json', self.args.subcommand);
+            if (typeof self.args[optdest] === 'string') {
+                self.args_load_json(self.args.subcommand, self.args[optdest]);
+            }
+        }
+        return;
+    };
+
+    self.args_env_command_json_set = function () {
+        var optdest;
+        optdest = 'EXTARGSPARSE_JSON';
+        if (typeof process.env[optdest] === 'string') {
+            self.args_load_json('', process.env[optdest]);
+        }
+        return;
+    };
+
+    self.args_env_sub_command_json_set = function () {
+        var optdest;
+        var envstr;
+        if (typeof self.args.subcommand === 'string') {
+            optdest = util.format('%s_json', self.args.subcommand);
+            optdest = optdest.toUpperCase();
+            if (typeof process.env[optdest] === 'string') {
+                envstr = process.env[optdest];
+                self.args_load_json(self.args.subcommand, envstr);
+            }
+        }
+        return;
+    };
+
+    self.args_set_default = function () {
+        var i, j;
+        var curparser;
+        var keycls;
+        for (i = 0; i < self.subparsers.length; i += 1) {
+            curparser = self.subparsers[i];
+            for (j = 0; j < curparser.flags.length; j += 1) {
+                keycls = curparser.flags[j];
+                if (keycls.flagname !== '$') {
+                    self.inner_set_value(keycls, keycls.value);
+                }
+            }
+        }
+
+        for (i = 0; i < self.flags.length; i += 1) {
+            keycls = self.flags[i];
+            if (keycls.flagname !== '$') {
+                self.inner_set_value(keycls, keycls.value);
+            }
+        }
+    };
+    retparser.parse_command_line = function (arraylist, context) {
         var arglist = [];
         var i;
+        var priority;
+        var curparser;
+        var keycls;
 
         if (arraylist === null || arraylist === undefined) {
             for (i = 2; i < process.argv.length; i += 1) {
@@ -758,11 +1065,33 @@ function NewExtArgsParse(opt) {
         self.error = 0;
         /*we add sub command args for every*/
         self.add_args_command();
-        args = self.parse_command_line_inner(arraylist);
+        self.parse_command_line_inner(arraylist);
 
-        return args;
+        for (i = 0; i < self.priority[i]; i += 1) {
+            priority = self.priority[i];
+            self.set_priority_func[priority]();
+        }
+
+        /*now if we have the function so we call it*/
+        if (self.args.subcommand !== undefined) {
+            curparser = null;
+            for (i = 0; i < self.subparsers.length; i += 1) {
+                if (self.subparsers[i].cmdname === self.args.subcommand) {
+                    curparser = self.subparsers[i];
+                    break;
+                }
+            }
+
+            if (curparser) {
+                keycls = curparser.keycls;
+                if (keycls.function !== null) {
+                    call_args_function(keycls.function, self.args, context);
+                }
+            }
+        }
+        return self.args;
     };
-    return parser;
+    return retparser;
 }
 
 module.exports.ExtArgsParse = NewExtArgsParse;
