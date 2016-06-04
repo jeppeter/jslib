@@ -1038,7 +1038,7 @@ function NewExtArgsParse(option) {
             }
 
             if (curparser) {
-                keycls = curparser.keycls;
+                keycls = curparser.cmdkeycls;
                 if (keycls.function !== null) {
                     call_args_function(keycls.function, self.args, context);
                 }

@@ -75,3 +75,45 @@ test('A004', function (t) {
     t.deepEqual(args.subnargs, ['cc', 'dd'], get_notice(t, 'subnargs'));
     t.end();
 });
+
+var call_args_function = function (args) {
+    'use strict';
+    var context = this;
+    context.has_called_args = args.subcommand;
+    return;
+};
+exports.call_args_function = call_args_function;
+
+test('A005', function (t) {
+    'use strict';
+    var context = {};
+    var loads = `{"verbose|v" : "+","port|p" : 3000,"dep<call_args_function>" : {"list|l" : [],"string|s" : "s_var","$" : "+"},"rdep" : {"list|L" : [],"string|S" : "s_rdep","$" : 2}}`;
+    var parser, args;
+    parser = extargsparse.ExtArgsParse();
+    parser.load_command_line_string(loads);
+    args = parser.parse_command_line(['-p', '7003', '-vvvvv', 'dep', '-l', 'foo1', '-s', 'new_var', 'zz'], context);
+    t.equal(args.port, 7003, get_notice(t, 'port'));
+    t.equal(args.verbose, 5, get_notice(t, 'verbose'));
+    t.deepEqual(args.dep_list, ['foo1'], get_notice(t, 'dep_list'));
+    t.equal(args.dep_string, 'new_var', get_notice(t, 'dep_string'));
+    t.deepEqual(args.subnargs, ['zz'], get_notice(t, 'subnargs'));
+    t.equal(context.has_called_args, 'dep', get_notice(t, 'has_called_args'));
+    t.end();
+});
+
+test('A006', function (t) {
+    'use strict';
+    var loads1 = `{"verbose|v" : "+","port|p" : 3000,"dep" : {"list|l" : [],"string|s" : "s_var","$" : "+"}}`;
+    var loads2 = `{"rdep" : {"list|L" : [],"string|S" : "s_rdep","$" : 2}}`;
+    var parser, args;
+    parser = extargsparse.ExtArgsParse();
+    parser.load_command_line_string(loads1);
+    parser.load_command_line_string(loads2);
+    args = parser.parse_command_line(['-p', '7003', '-vvvvv', 'rdep', '-L', 'foo1', '-S', 'new_var', 'zz', '64']);
+    t.equal(args.port, 7003, get_notice(t, 'port'));
+    t.equal(args.verbose, 5, get_notice(t, 'verbose'));
+    t.deepEqual(args.rdep_list, ['foo1'], get_notice(t, 'rdep_list'));
+    t.equal(args.rdep_string, 'new_var', get_notice(t, 'rdep_string'));
+    t.deepEqual(args.subnargs, ['zz', '64'], get_notice(t, 'subnargs'));
+    t.end();
+});
