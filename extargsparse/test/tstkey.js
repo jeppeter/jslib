@@ -1,10 +1,6 @@
 var test = require('tape');
 var keyparse = require('../keyparse');
-var tracelog = require('../../tracelog');
 var util = require('util');
-tracelog.Init({
-    level: 'trace'
-});
 
 var get_notice = function (t, name) {
     'use strict';

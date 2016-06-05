@@ -1,7 +1,6 @@
 var keyparse = require('./keyparse');
 var util = require('util');
 var fs = require('fs');
-var tracelog = require('../tracelog');
 
 var call_args_function = function (funcname, args, context) {
     'use strict';

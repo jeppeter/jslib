@@ -1,12 +1,8 @@
 var extargsparse = require('../');
 var test = require('tape');
-var tracelog = require('../../tracelog');
 var util = require('util');
 var fs = require('fs');
 var mktemp = require('mktemp');
-tracelog.Init({
-    level: 'trace'
-});
 
 var get_notice = function (t, name) {
     'use strict';
