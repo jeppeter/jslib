@@ -1,10 +1,23 @@
-var commander = require('commander');
 var tracelog = require('../../tracelog');
+var extargsparse = require('../../extargsparse');
+var commander = extargsparse.ExtArgsParse();
 //var util = require('util');
-commander.subname = '';
-commander.subopt = {};
-commander.subargs = [];
-
+var command_line = `
+    {
+        "match<re_match>## match restr instr ##" : {
+            "$" : 2
+        },
+        "imatch<re_imatch>## imatch restr instr ##" : {
+            "$" : 2
+        },
+        "find<re_find>## find restr instr ##" : {
+            "$" : 2
+        },
+        "ifind<re_ifind>## ifind restr instr ##" : {
+            "$" : 2
+        }
+    }
+`;
 
 var trace_exit = function (ec) {
     'use strict';
@@ -18,103 +31,99 @@ var trace_exit = function (ec) {
 };
 
 
-commander
-    .version('0.2.0');
-
+commander.load_command_line_string(command_line);
 tracelog.init_commander(commander);
 
-commander
-    .command('match [restr] [instr]')
-    .action(function (restr, instr, options) {
-        'use strict';
-        var reg;
-        commander.subname = 'match';
-        tracelog.set_commander(options.parent);
-        tracelog.info('restr (%s) instr (%s)', restr, instr);
+var re_match = function (args) {
+    'use strict';
+    var reg;
+    var restr, instr;
+    restr = args.subnargs[0];
+    instr = args.subnargs[1];
+    tracelog.set_commander(args);
+    tracelog.info('restr (%s) instr (%s)', restr, instr);
 
-        reg = new RegExp(restr);
-        if (reg.test(instr)) {
-            console.log('%s match (%s)', instr, restr);
-        } else {
-            console.log('%s not match (%s)', instr, restr);
-        }
-        trace_exit(0);
-    });
+    reg = new RegExp(restr);
+    if (reg.test(instr)) {
+        console.log('%s match (%s)', instr, restr);
+    } else {
+        console.log('%s not match (%s)', instr, restr);
+    }
+    trace_exit(0);
+};
 
-commander
-    .command('imatch [restr] [instr]')
-    .action(function (restr, instr, options) {
-        'use strict';
-        var reg;
-        commander.subname = 'match';
-        tracelog.set_commander(options.parent);
-        tracelog.info('restr (%s) instr (%s)', restr, instr);
-
-        reg = new RegExp(restr, 'i');
-        if (reg.test(instr)) {
-            console.log('%s match (%s)', instr, restr);
-        } else {
-            console.log('%s not match (%s)', instr, restr);
-        }
-        trace_exit(0);
-    });
-
-commander
-    .command('find [restr] [instr]')
-    .action(function (restr, instr, options) {
-        'use strict';
-        var reg;
-        var m;
-        commander.subname = 'ifind';
-        tracelog.set_commander(options.parent);
-        tracelog.info('args %s %s', restr, instr);
-
-        reg = new RegExp(restr, 'i');
-        m = reg.exec(instr);
-        if (m !== null && m !== undefined) {
-            console.log('%s find (%s)', instr, restr);
-            m.forEach(function (elm, idx) {
-                console.log('[%d] (%s)', idx, elm);
-            });
-        } else {
-            console.log('%s not find (%s)', instr, restr);
-        }
-        trace_exit(0);
-    });
-
-commander
-    .command('ifind [restr] [instr]')
-    .action(function (restr, instr, options) {
-        'use strict';
-        var reg;
-        var m;
-        commander.subname = 'ifind';
-        tracelog.set_commander(options.options);
-        tracelog.info('args %s %s', restr, instr);
-
-        reg = new RegExp(restr, 'i');
-        m = reg.exec(instr);
-        if (m !== null && m !== undefined) {
-            console.log('(%s) ifind (%s)', instr, restr);
-            m.forEach(function (elm, idx) {
-                console.log('[%d] (%s)', idx, elm);
-            });
-        } else {
-            console.log('(%s) not ifind (%s)', instr, restr);
-        }
-        trace_exit(0);
-    });
+exports.re_match = re_match;
 
 
-commander.parse(process.argv);
+var re_imatch = function (args) {
+    'use strict';
+    var reg;
+    var restr, instr;
+    restr = args.subnargs[0];
+    instr = args.subnargs[1];
+    tracelog.set_commander(args);
+    tracelog.info('restr (%s) instr (%s)', restr, instr);
 
-if (commander.subname.length === 0) {
-    commander.outputHelp(function (cb) {
-        'use strict';
-        var s;
-        s = 'please specified sub command\n';
-        s += cb;
-        return cb;
-    });
-    process.exit(3);
-}
+    reg = new RegExp(restr, 'i');
+    if (reg.test(instr)) {
+        console.log('%s match (%s)', instr, restr);
+    } else {
+        console.log('%s not match (%s)', instr, restr);
+    }
+    trace_exit(0);
+};
+
+exports.re_imatch = re_imatch;
+
+var re_find = function (args) {
+    'use strict';
+    var reg;
+    var m;
+    var restr, instr;
+    restr = args.subnargs[0];
+    instr = args.subnargs[1];
+    tracelog.set_commander(args);
+    tracelog.info('args %s %s', restr, instr);
+
+    reg = new RegExp(restr, 'i');
+    m = reg.exec(instr);
+    if (m !== null && m !== undefined) {
+        console.log('%s find (%s)', instr, restr);
+        m.forEach(function (elm, idx) {
+            console.log('[%d] (%s)', idx, elm);
+        });
+    } else {
+        console.log('%s not find (%s)', instr, restr);
+    }
+    trace_exit(0);
+};
+exports.re_find = re_find;
+
+var re_ifind = function (args) {
+    'use strict';
+    var reg;
+    var m;
+    var restr, instr;
+    restr = args.subnargs[0];
+    instr = args.subnargs[1];
+    tracelog.set_commander(args);
+    tracelog.info('args %s %s', restr, instr);
+
+    reg = new RegExp(restr, 'i');
+    m = reg.exec(instr);
+    if (m !== null && m !== undefined) {
+        console.log('(%s) ifind (%s)', instr, restr);
+        m.forEach(function (elm, idx) {
+            console.log('[%d] (%s)', idx, elm);
+        });
+    } else {
+        console.log('(%s) not ifind (%s)', instr, restr);
+    }
+    trace_exit(0);
+};
+
+exports.re_ifind = re_ifind;
+
+
+
+commander.parse_command_line();

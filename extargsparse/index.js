@@ -319,7 +319,7 @@ function NewExtArgsParse(option) {
         var idx;
         s = '';
         for (idx = 0; idx < tabs; idx += 1) {
-            s += '  ';
+            s += '    ';
         }
 
         optdest = keycls.optdest;
@@ -342,7 +342,7 @@ function NewExtArgsParse(option) {
             s += keycls.helpinfo;
             s += '\n';
         } else {
-            if (keycls.typename === 'string' || keycls.typename === 'int' || keycls.typename === 'float') {
+            if (keycls.typename === 'string' || keycls.typename === 'int' || keycls.typename === 'float' || keycls.typename === 'boolean') {
                 s += util.format('set %s default(%s)\n', optdest.toLowerCase(), keycls.value);
             } else if (keycls.typename === 'count') {
                 s += util.format('set %s count increment default(%d)\n', optdest.toLowerCase(), keycls.value);
@@ -1021,7 +1021,7 @@ function NewExtArgsParse(option) {
         self.args = {};
         /*we add sub command args for every*/
         self.add_args_command();
-        self.parse_command_line_inner(arraylist);
+        self.parse_command_line_inner(arglist);
 
         for (i = 0; i < self.priority.length; i += 1) {
             priority = self.priority[i];
@@ -1073,4 +1073,30 @@ function NewExtArgsParse(option) {
     return retparser;
 }
 
+var set_attr_self = function (self, args, prefix) {
+    'use strict';
+    var keys;
+    var curkey;
+    var i;
+    var prefixnew;
+
+    if (typeof prefix !== 'string' || prefix.length === 0) {
+        throw new Error('not valid prefix');
+    }
+
+    prefixnew = util.format('%s_', prefix);
+    prefixnew = prefixnew.toLowerCase();
+
+    keys = Object.keys(args);
+    for (i = 0; i < keys.length; i += 1) {
+        curkey = keys[i];
+        if (curkey.substring(0, prefixnew.length).toLowerCase() === prefixnew) {
+            self[curkey] = args[curkey];
+        }
+    }
+
+    return self;
+};
+
 module.exports.ExtArgsParse = NewExtArgsParse;
+module.exports.set_attr_self = set_attr_self;

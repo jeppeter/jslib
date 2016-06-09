@@ -2,6 +2,7 @@
 var tracer = require('tracer');
 var util = require('util');
 var fs = require('fs');
+var extargsparse = require('../extargsparse');
 
 var _innerLogger = null;
 
@@ -92,23 +93,23 @@ function TraceLog(options) {
         }
     };
     this.format = "<{{title}}>:{{file}}:{{line}} {{message}}\n";
-    if (typeof options.format === 'string' && options.format.length > 0) {
-        this.format = options.format;
+    if (typeof options.log_format === 'string' && options.log_format.length > 0) {
+        this.format = options.log_format;
     }
 
     if (typeof options.level === 'string') {
         this.level = options.level;
     }
 
-    if (util.isArray(options.files)) {
-        add_write_streams(self, options.files, false);
+    if (util.isArray(options.log_files)) {
+        add_write_streams(self, options.log_files, false);
     }
 
-    if (util.isArray(options.appendfiles)) {
-        add_write_streams(self, options.appendfiles, true);
+    if (util.isArray(options.log_appends)) {
+        add_write_streams(self, options.log_appends, true);
     }
 
-    if (options.noconsole) {
+    if (typeof options.log_console === 'boolean' && !options.log_console) {
         this.noconsole = true;
     }
 
@@ -206,24 +207,18 @@ module.exports.finish = function (callback) {
 
 module.exports.init_commander = function (commander) {
     'use strict';
-    commander
-        .option('--logappends <appends>', 'log append files', function (v, t) {
-            t.push(v);
-            return t;
-        }, [])
-        .option('--logfiles <files>', 'log files truncated', function (v, t) {
-            t.push(v);
-            return t;
-        }, [])
-        .option('--lognoconsole', 'set no console for output as log', function (v, t) {
-            v = v;
-            t = t;
-            return true;
-        }, false)
-        .option('-v --verbose', 'verbose mode', function (v, t) {
-            v = v;
-            return t + 1;
-        }, 0);
+    var tracelog_options = `
+    {
+        "+log" : {
+            "appends" : [],
+            "files" : [],
+            "console" : true,
+            "format" : "<{{title}}>:{{file}}:{{line}} {{message}}\\n"
+        },
+        "verbose|v" : "+"
+    }
+    `;
+    commander.load_command_line_string(tracelog_options);
     return commander;
 };
 
@@ -242,17 +237,7 @@ module.exports.set_commander = function (options) {
         logopt.level = 'error';
     }
 
-    if (options.logappends !== null && options.logappends !== undefined && options.logappends.length > 0) {
-        logopt.appendfiles = options.logappends;
-    }
-
-    if (options.logfiles !== null && options.logfiles !== undefined && options.logfiles.length >= 0) {
-        logopt.files = options.logfiles;
-    }
-
-    if (options.lognoconsole !== null && options.lognoconsole !== undefined && options.lognoconsole) {
-        logopt.noconsole = true;
-    }
+    extargsparse.set_attr_self(logopt, options, 'log');
     console.log('logopt (%s)', util.inspect(logopt, {
         showHidden: true,
         depth: null
