@@ -4,16 +4,16 @@ var commander = extargsparse.ExtArgsParse();
 //var util = require('util');
 var command_line = `
     {
-        "match<re_match>## match restr instr ##" : {
+        "match<re_match>## restr instr call re.match ##" : {
             "$" : 2
         },
-        "imatch<re_imatch>## imatch restr instr ##" : {
+        "imatch<re_imatch>## restr instr call re.imatch ##" : {
             "$" : 2
         },
-        "find<re_find>## find restr instr ##" : {
+        "find<re_find>## restr instr call re.findall ##" : {
             "$" : 2
         },
-        "ifind<re_ifind>## ifind restr instr ##" : {
+        "ifind<re_ifind>## ifind restr instr call re.ifindall ##" : {
             "$" : 2
         }
     }

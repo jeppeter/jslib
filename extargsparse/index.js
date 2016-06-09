@@ -91,6 +91,7 @@ function NewExtArgsParse(option) {
     parser.subparsers = [];
     parser.error = 0;
     parser.keycls = null;
+    parser.tabwidth = 4;
     //tracelog.info('argv (%s)', process.argv);
     if (process.argv.length > 1) {
         parser.cmdname = process.argv[1];
@@ -248,12 +249,19 @@ function NewExtArgsParse(option) {
         return self.check_flag_insert_mustsucc(keycls, curparser);
     };
 
-    self.subcommand_flag_maxlen = function (curparser) {
+    self.opt_maxlen = function (curparser) {
         var maxlen = 0;
         var curlen;
         var shortopt = null;
         var longopt;
-        curparser.flags.forEach(function (elm) {
+        var flagarray;
+        if (curparser === undefined || curparser === null) {
+            flagarray = self.flags;
+        } else {
+            flagarray = curparser.flags;
+        }
+
+        flagarray.forEach(function (elm) {
             shortopt = elm.shortopt;
             longopt = elm.longopt;
             curlen = 0;
@@ -265,6 +273,29 @@ function NewExtArgsParse(option) {
 
             curlen += longopt.length;
 
+
+            if (curlen > maxlen) {
+                maxlen = curlen;
+            }
+        });
+        return maxlen;
+    };
+
+    self.dest_maxlen = function (curparser) {
+        var optdest;
+        var flagarray;
+        var maxlen = 0;
+        var curlen;
+
+        if (curparser === undefined || curparser === null) {
+            flagarray = self.flags;
+        } else {
+            flagarray = curparser.flags;
+        }
+        flagarray.forEach(function (elm) {
+            curlen = 0;
+            optdest = elm.optdest;
+            curlen += optdest.length;
             if (curlen > maxlen) {
                 maxlen = curlen;
             }
@@ -283,43 +314,18 @@ function NewExtArgsParse(option) {
         return maxlen;
     };
 
-    self.flag_maxlen = function () {
-        var maxlen = 0;
-        var curlen;
-        var shortopt, longopt, optdest;
-        self.flags.forEach(function (elm) {
-            shortopt = elm.shortopt;
-            longopt = elm.longopt;
-            optdest = elm.optdest;
-            curlen = 0;
-            if (shortopt !== null) {
-                curlen += shortopt.length;
-                /*this is for ,*/
-                curlen += 1;
-            }
 
-            curlen += longopt.length;
-            /*for space*/
-            curlen += 2;
-            curlen += optdest.length;
-
-            if (curlen > maxlen) {
-                maxlen = curlen;
-            }
-
-        });
-
-        return maxlen;
-    };
-
-    self.get_help_info = function (tabs, maxsize, keycls) {
+    self.get_help_info = function (tabs, optmaxsize, destmaxsize, keycls) {
         var s;
         var optdest;
         var longopt, shortopt;
-        var idx;
+        var idx, j;
+        var tabwidth = self.tabwidth;
         s = '';
         for (idx = 0; idx < tabs; idx += 1) {
-            s += '    ';
+            for (j = 0; j < tabwidth; j += 1) {
+                s += ' ';
+            }
         }
 
         optdest = keycls.optdest;
@@ -331,10 +337,19 @@ function NewExtArgsParse(option) {
             s += ',';
         }
         s += longopt;
-        s += '  ';
+        while ((s.length - tabs * tabwidth) < optmaxsize) {
+            s += ' ';
+        }
+        for (j = 0; j < tabwidth; j += 1) {
+            s += ' ';
+        }
         s += optdest.toUpperCase();
 
-        while (s.length < maxsize) {
+        while ((s.length - (tabs + 1) * tabwidth) < (optmaxsize + destmaxsize)) {
+            s += ' ';
+        }
+
+        for (j = 0; j < tabwidth; j += 1) {
             s += ' ';
         }
 
@@ -353,7 +368,34 @@ function NewExtArgsParse(option) {
         return s;
     };
 
-    self.main_help = function (maxsize) {
+    self.subcommand_helpinfo = function (tabs, subcmdmax, cmdkeycls) {
+        var j, i;
+        var s;
+        var tabwidth = self.tabwidth;
+
+        s = '';
+        for (i = 0; i < tabs; i += 1) {
+            for (j = 0; j < tabwidth; j += 1) {
+                s += ' ';
+            }
+        }
+
+        s += cmdkeycls.cmdname;
+        while ((s.length - (tabs * tabwidth)) < subcmdmax) {
+            s += ' ';
+        }
+        s += ' ';
+
+        if (cmdkeycls.helpinfo) {
+            s += cmdkeycls.helpinfo;
+        } else {
+            s += util.format('make %s', cmdkeycls.cmdname);
+        }
+        s += '\n';
+        return s;
+    };
+
+    self.main_help = function (optmaxsize, destmaxsize, subcmdmax) {
         var subnargskeycls;
         var s;
 
@@ -362,12 +404,19 @@ function NewExtArgsParse(option) {
         s = '';
         s += self.cmdname;
         s += ' ';
-        if (subnargskeycls === null) {
+        if (self.subparsers.length > 0) {
             s += '[OPTIONS] ';
             if (self.subparsers.length > 0) {
                 s += '{subcommand} ';
             }
             s += '\n';
+
+            s += '\nsubcommands:\n';
+
+            self.subparsers.forEach(function (elm) {
+                s += self.subcommand_helpinfo(1, subcmdmax, elm.cmdkeycls);
+            });
+
         } else {
             if (subnargskeycls.helpinfo) {
                 s += subnargskeycls.helpinfo;
@@ -383,23 +432,26 @@ function NewExtArgsParse(option) {
             }
         }
 
+        if (self.flags.length > 0) {
+            s += '\n[OPTIONS]:\n';
+        }
         self.flags.forEach(function (elm) {
-            s += self.get_help_info(1, maxsize, elm);
+            s += self.get_help_info(1, optmaxsize, destmaxsize, elm);
         });
 
         return s;
     };
 
 
-    self.subcommand_help = function (maxsize, curparser) {
+    self.subcommand_help = function (optmaxsize, destmaxsize, subcmdmax, curparser) {
         var s;
         var keycls;
         var subnargskeycls;
         if (curparser === null) {
-            return self.main_help(maxsize);
+            return self.main_help(optmaxsize, destmaxsize, subcmdmax);
         }
 
-        keycls = curparser.keycls;
+        keycls = curparser.cmdkeycls;
         s = '';
         s += util.format('%s ', keycls.cmdname);
         subnargskeycls = curparser.keycls;
@@ -423,8 +475,12 @@ function NewExtArgsParse(option) {
             s += util.format('%s\n', keycls.helpinfo);
         }
 
+        s += '\n';
+        if (curparser.flags.length > 0) {
+            s += '[OPTIONS]:\n';
+        }
         curparser.flags.forEach(function (elm) {
-            s += self.get_help_info(1, maxsize, elm);
+            s += self.get_help_info(1, optmaxsize, destmaxsize, elm);
         });
 
         return s;
@@ -433,21 +489,19 @@ function NewExtArgsParse(option) {
 
     self.print_help = function (ec, fmt, curparser) {
         var s;
-        var maxlen;
+        var optmaxsize, destmaxsize, subcmdmax;
         var fp;
         s = '';
 
-        if (curparser) {
-            maxlen = self.subcommand_flag_maxlen();
-        } else {
-            maxlen = self.flag_maxlen();
-        }
+        optmaxsize = self.opt_maxlen(curparser);
+        destmaxsize = self.dest_maxlen(curparser);
+        subcmdmax = self.subcommand_maxlen();
 
         if (fmt !== undefined && fmt !== null) {
             s += fmt;
             s += '\n';
         }
-        s += self.subcommand_help(maxlen, curparser);
+        s += self.subcommand_help(optmaxsize, destmaxsize, subcmdmax, curparser);
         if (self.help_func !== null) {
             self.help_func(s);
         } else {
@@ -847,12 +901,15 @@ function NewExtArgsParse(option) {
 
     self.add_args_command = function () {
         var keycls;
-        keycls = keyparse.KeyParser('', '$', '*', true);
-        self.load_command_line_args('', keycls, null);
-        self.subparsers.forEach(function (subparser) {
-            keycls = keyparse.KeyParser(subparser.cmdname, '$', '*', true);
-            self.load_command_line_args('', keycls, subparser);
-        });
+        if (self.subparsers.length === 0) {
+            keycls = keyparse.KeyParser('', '$', '*', true);
+            self.load_command_line_args('', keycls, null);
+        } else {
+            self.subparsers.forEach(function (subparser) {
+                keycls = keyparse.KeyParser(subparser.cmdname, '$', '*', true);
+                self.load_command_line_args('', keycls, subparser);
+            });
+        }
         return;
     };
 
