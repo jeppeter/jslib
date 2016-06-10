@@ -2,7 +2,6 @@
 var tracer = require('tracer');
 var util = require('util');
 var fs = require('fs');
-var extargsparse = require('../extargsparse');
 
 var _innerLogger = null;
 
@@ -205,7 +204,7 @@ module.exports.finish = function (callback) {
     _innerLogger = null;
 };
 
-module.exports.init_commander = function (commander) {
+module.exports.init_args = function (commander) {
     'use strict';
     var tracelog_options = `
     {
@@ -222,7 +221,32 @@ module.exports.init_commander = function (commander) {
     return commander;
 };
 
-module.exports.set_commander = function (options) {
+var set_attr_self_inner = function (self, args, prefix) {
+    'use strict';
+    var keys;
+    var curkey;
+    var i;
+    var prefixnew;
+
+    if (typeof prefix !== 'string' || prefix.length === 0) {
+        throw new Error('not valid prefix');
+    }
+
+    prefixnew = util.format('%s_', prefix);
+    prefixnew = prefixnew.toLowerCase();
+
+    keys = Object.keys(args);
+    for (i = 0; i < keys.length; i += 1) {
+        curkey = keys[i];
+        if (curkey.substring(0, prefixnew.length).toLowerCase() === prefixnew) {
+            self[curkey] = args[curkey];
+        }
+    }
+
+    return self;
+};
+
+module.exports.set_args = function (options) {
     'use strict';
     var logopt = {};
     if (options.verbose >= 4) {
@@ -237,11 +261,11 @@ module.exports.set_commander = function (options) {
         logopt.level = 'error';
     }
 
-    extargsparse.set_attr_self(logopt, options, 'log');
-    console.log('logopt (%s)', util.inspect(logopt, {
+    set_attr_self_inner(logopt, options, 'log');
+    /*console.log('logopt (%s)', util.inspect(logopt, {
         showHidden: true,
         depth: null
-    }));
+    }));*/
     module.exports.Init(logopt);
     return;
 };

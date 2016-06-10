@@ -32,7 +32,7 @@ var trace_exit = function (ec) {
 
 
 commander.load_command_line_string(command_line);
-tracelog.init_commander(commander);
+tracelog.init_args(commander);
 
 var re_match = function (args) {
     'use strict';
