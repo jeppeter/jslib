@@ -204,7 +204,7 @@ module.exports.finish = function (callback) {
     _innerLogger = null;
 };
 
-module.exports.init_args = function (commander) {
+module.exports.init_args = function (parser) {
     'use strict';
     var tracelog_options = `
     {
@@ -217,8 +217,8 @@ module.exports.init_args = function (commander) {
         "verbose|v" : "+"
     }
     `;
-    commander.load_command_line_string(tracelog_options);
-    return commander;
+    parser.load_command_line_string(tracelog_options);
+    return parser;
 };
 
 var set_attr_self_inner = function (self, args, prefix) {

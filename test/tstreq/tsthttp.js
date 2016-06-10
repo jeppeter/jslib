@@ -2,13 +2,14 @@ var tracelog = require('../../tracelog');
 var extargsparse = require('../../extargsparse');
 //var keepagent = require('keep-alive-agent');
 var http = require('http');
+http.globalAgent.keepAlive = 1;
 var url = 'http://127.0.0.1:9000/';
 var util = require('util');
 var URL = require('url');
 var parser, args;
 var command_line = `
 {
-    "$" : "+"
+    "$" : "?"
 }
 `;
 

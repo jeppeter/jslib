@@ -21,7 +21,6 @@
     "express": "latest",
     "formidable": "latest",
     "ejs": "latest",
-    "commander": "latest",
     "keep-alive-agent": "latest",
     "tape": "latest",
     "mktemp": "latest"

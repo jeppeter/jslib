@@ -1,6 +1,6 @@
 var tracelog = require('../../tracelog');
 var extargsparse = require('../../extargsparse');
-var commander = extargsparse.ExtArgsParse();
+var parser = extargsparse.ExtArgsParse();
 //var util = require('util');
 var command_line = `
     {
@@ -31,8 +31,8 @@ var trace_exit = function (ec) {
 };
 
 
-commander.load_command_line_string(command_line);
-tracelog.init_args(commander);
+parser.load_command_line_string(command_line);
+tracelog.init_args(parser);
 
 var re_match = function (args) {
     'use strict';
@@ -126,4 +126,4 @@ exports.re_ifind = re_ifind;
 
 
 
-commander.parse_command_line();
+parser.parse_command_line();
