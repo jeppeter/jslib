@@ -65,13 +65,19 @@ var getOptions = {
     hostname: hostname,
     port: portnum,
     path: parserurl.pathname,
-    agent: hagent,
+    //agent: hagent,
     headers: {
         connection: 'Keep-Alive'
     }
 };
 
-http.get(getOptions, function (reps) {
+tracelog.info('getOptions (%s)', util.inspect(getOptions, {
+    showHidden: true,
+    depth: null
+}));
+
+var req;
+req = http.get(getOptions, function (reps) {
     'use strict';
     tracelog.info('resp %s', util.inspect(reps, {
         showHidden: true,
@@ -84,4 +90,9 @@ http.get(getOptions, function (reps) {
         }));
         trace_exit(0);
     });
+});
+
+req.on('error', function (err) {
+    'use strict';
+    tracelog.error('error (%s)', JSON.stringify(err));
 });
