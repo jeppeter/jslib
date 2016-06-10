@@ -428,12 +428,12 @@ function NewExtArgsParse(option) {
                 s += subnargskeycls.helpinfo;
                 s += '\n';
             } else {
-                if (subnargskeycls.value === '?') {
-                    s += util.format('[subnargs]\n');
-                } else if (subnargskeycls.value === '*' || subnargskeycls.value === '+') {
-                    s += util.format('[subnargs]...\n');
+                if (subnargskeycls.nargs === '?') {
+                    s += util.format('[args]\n');
+                } else if (subnargskeycls.nargs === '*' || subnargskeycls.nargs === '+') {
+                    s += util.format('[args]...\n');
                 } else {
-                    s += util.format(' %s arguments\n', subnargskeycls.value);
+                    s += util.format(' %s arguments\n', subnargskeycls.nargs);
                 }
             }
         }
