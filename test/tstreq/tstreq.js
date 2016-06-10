@@ -1,15 +1,18 @@
 var request = require('request');
 var tracelog = require('../../tracelog');
-var commander = require('commander');
+var extargsparse = require('../../extargsparse');
 var keepagent = require('keep-alive-agent');
 var agent = new keepagent();
 var url = 'http://127.0.0.1:9000/';
 var util = require('util');
 var req = null;
+var parser, args;
+var command_line = `
+{
+    "$" : "+"
+}
+`;
 
-commander
-    .version('0.2.0')
-    .usage('[options] <url>');
 
 var trace_exit = function (ec) {
     'use strict';
@@ -22,32 +25,28 @@ var trace_exit = function (ec) {
     return;
 };
 
-var usage = function (ec, cmd, fmt) {
-    'use strict';
-    var fp = process.stderr;
-    if (ec === 0) {
-        fp = process.stdout;
+
+parser = extargsparse.ExtArgsParse({
+    help_func: function (ec, s) {
+        'use strict';
+        var fp;
+        if (ec === 0) {
+            fp = process.stdout;
+        } else {
+            fp = process.stderr;
+        }
+        fp.write(s);
+        trace_exit(ec);
     }
+});
+tracelog.init_args(parser);
+parser.load_command_line_string(command_line);
+args = parser.parse_command_line();
+tracelog.set_args(args);
 
-    if (fmt !== undefined && typeof fmt === 'string' && fmt.length > 0) {
-        fp.write(util.format('%s\n', fmt));
-    }
 
-    cmd.outputHelp(function (txt) {
-        fp.write(txt);
-        return '';
-    });
-    trace_exit(ec);
-    return;
-};
-
-tracelog.init_commander(commander);
-
-commander.parse(process.argv);
-tracelog.set_commander(commander);
-
-if (commander.args !== undefined && Array.isArray(commander.args) && typeof commander.args[0] === 'string' && commander.args[0].length > 0) {
-    url = commander.args[0];
+if (args.args !== undefined && Array.isArray(args.args) && typeof args.args[0] === 'string' && args.args[0].length > 0) {
+    url = args.args[0];
 }
 
 tracelog.info('request (%s)', url);
@@ -64,7 +63,6 @@ request({
     'use strict';
     if (error) {
         tracelog.error('request (%s) error (%s)', url, JSON.stringify(error));
-        usage(3, commander, util.format('can not connect (%s)', url));
         return;
     }
     response = response;

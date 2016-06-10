@@ -1,24 +1,48 @@
 var express = require('express');
-var commander = require('commander');
+var extargsparse = require('../../extargsparse');
 var tracelog = require('../../tracelog');
 var util = require('util');
 var app;
 
-commander
-    .version('0.2.0')
-    .option('-p --port <port>', 'set port to listen', function (t, v) {
-        'use strict';
-        v = v;
-        return parseInt(t);
-    }, 9000)
-    .option('-t --timeout <timemills>', 'set timeout mills', function (t, v) {
-        'use strict';
-        v = v;
-        return parseInt(t);
-    }, 5000);
+var command_line = `
+    {
+        "port|p"  : 9000,
+        "timeout|t" : 5000,
+        "$" : 0
+    }
+`;
+var parser, args;
+
+var trace_exit = function (ec) {
+    'use strict';
+    tracelog.finish(function (err) {
+        if (err) {
+            return;
+        }
+        process.exit(ec);
+    });
+    return;
+};
 
 
-tracelog.init_commander(commander);
+parser = extargsparse.ExtArgsParse({
+    help_func: function (ec, s) {
+        'use strict';
+        var fp;
+        if (ec === 0) {
+            fp = process.stdout;
+        } else {
+            fp = process.stderr;
+        }
+        fp.write(s);
+        trace_exit(ec);
+    }
+});
+tracelog.init_args(parser);
+parser.load_command_line_string(command_line);
+
+args = parser.parse_command_line();
+tracelog.set_args(args);
 
 var handler_request = function (req, res, next) {
     'use strict';
@@ -55,16 +79,13 @@ var handler_request = function (req, res, next) {
             clearTimeout(req.gettimeout);
         }
         req.gettimeout = null;
-    }, commander.timeout);
+    }, args.timeout);
     return;
 };
 
 
-commander.parse(process.argv);
-tracelog.set_commander(commander);
-
 app = express();
 app.use(handler_request);
 
-tracelog.info('listen on %d', commander.port);
-app.listen(commander.port);
+tracelog.info('listen on %d', args.port);
+app.listen(args.port);

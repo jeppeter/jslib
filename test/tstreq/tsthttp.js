@@ -1,15 +1,17 @@
 var tracelog = require('../../tracelog');
-var commander = require('commander');
+var extargsparse = require('../../extargsparse');
 //var keepagent = require('keep-alive-agent');
 var http = require('http');
 var url = 'http://127.0.0.1:9000/';
 var util = require('util');
 var URL = require('url');
-var req = null;
+var parser, args;
+var command_line = `
+{
+    "$" : "+"
+}
+`;
 
-commander
-    .version('0.2.0')
-    .usage('[options] <url>');
 
 var trace_exit = function (ec) {
     'use strict';
@@ -23,39 +25,52 @@ var trace_exit = function (ec) {
 };
 
 
-tracelog.init_commander(commander);
+parser = extargsparse.ExtArgsParse({
+    help_func: function (ec, s) {
+        'use strict';
+        var fp;
+        if (ec === 0) {
+            fp = process.stdout;
+        } else {
+            fp = process.stderr;
+        }
+        fp.write(s);
+        trace_exit(ec);
+    }
+});
+tracelog.init_args(parser);
+parser.load_command_line_string(command_line);
+args = parser.parse_command_line();
+tracelog.set_args(args);
 
-commander.parse(process.argv);
-tracelog.set_commander(commander);
-
-if (commander.args !== undefined && Array.isArray(commander.args) && typeof commander.args[0] === 'string' && commander.args[0].length > 0) {
-    url = commander.args[0];
+if (args.args !== undefined && Array.isArray(args.args) && typeof args.args[0] === 'string' && args.args[0].length > 0) {
+    url = args.args[0];
 }
 
 var hostname;
 var portnum;
-var parser;
+var parserurl;
 var hagent;
 
-parser = URL.parse(url);
-hostname = parser.hostname;
-portnum = parser.port;
+parserurl = URL.parse(url);
+hostname = parserurl.hostname;
+portnum = parserurl.port;
 hagent = new http.Agent({
     keepAlive: true,
     keepAliveMsecs: 3000
 });
-tracelog.info('hostname %s portnum %d pathname %s', hostname, portnum, parser.pathname);
+tracelog.info('hostname %s portnum %d pathname %s', hostname, portnum, parserurl.pathname);
 var getOptions = {
     hostname: hostname,
     port: portnum,
-    path: parser.pathname,
+    path: parserurl.pathname,
     agent: hagent,
     headers: {
         connection: 'Keep-Alive'
     }
 };
 
-req = http.get(getOptions, function (reps) {
+http.get(getOptions, function (reps) {
     'use strict';
     tracelog.info('resp %s', util.inspect(reps, {
         showHidden: true,

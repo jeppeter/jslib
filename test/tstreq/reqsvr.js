@@ -1,19 +1,43 @@
 var express = require('express');
-var commander = require('commander');
+var extargsparse = require('../../extargsparse');
 var tracelog = require('../../tracelog');
 var util = require('util');
 var app;
+var command_line = `
+    {
+        "port|p" : 9000,
+        "$" : 0
+    }
+`;
+var parser, args;
 
-commander
-    .version('0.2.0')
-    .option('-p --port <port>', 'set port to listen', function (v, t) {
+var trace_exit = function (ec) {
+    'use strict';
+    tracelog.finish(function (err) {
+        if (err) {
+            return;
+        }
+        process.exit(ec);
+    });
+    return;
+};
+
+
+parser = extargsparse.ExtArgsParse({
+    help_func: function (ec, s) {
         'use strict';
-        t = t;
-        return parseInt(v);
-    }, 9000);
-
-
-tracelog.init_commander(commander);
+        var fp;
+        if (ec === 0) {
+            fp = process.stdout;
+        } else {
+            fp = process.stderr;
+        }
+        fp.write(s);
+        trace_exit(ec);
+    }
+});
+tracelog.init_args(parser);
+parser.load_command_line_string(command_line);
 
 var handler_request = function (req, res, next) {
     'use strict';
@@ -60,12 +84,12 @@ var session_request = function (req, res, next) {
     return;
 };
 
-commander.parse(process.argv);
-tracelog.set_commander(commander);
+args = parser.parse_command_line();
+tracelog.set_args(args);
 
 app = express();
 app.use(handler_request);
 app.use(session_request);
 
-tracelog.info('listen on %d', commander.port);
-app.listen(commander.port);
+tracelog.info('listen on %d', args.port);
+app.listen(args.port);
