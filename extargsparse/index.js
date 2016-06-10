@@ -503,7 +503,7 @@ function NewExtArgsParse(option) {
         }
         s += self.subcommand_help(optmaxsize, destmaxsize, subcmdmax, curparser);
         if (self.help_func !== null) {
-            self.help_func(s);
+            self.help_func(ec, s);
         } else {
             if (ec === 0) {
                 fp = process.stdout;
@@ -1105,6 +1105,10 @@ function NewExtArgsParse(option) {
             }
         }
         return self.args;
+    };
+    retparser.print_help = function (ec, fmt) {
+        self.print_help(ec, fmt, null);
+        return;
     };
 
     parser.mapfuncs = {

@@ -40,7 +40,7 @@ var re_match = function (args) {
     var restr, instr;
     restr = args.subnargs[0];
     instr = args.subnargs[1];
-    tracelog.set_commander(args);
+    tracelog.set_args(args);
     tracelog.info('restr (%s) instr (%s)', restr, instr);
 
     reg = new RegExp(restr);
@@ -61,7 +61,7 @@ var re_imatch = function (args) {
     var restr, instr;
     restr = args.subnargs[0];
     instr = args.subnargs[1];
-    tracelog.set_commander(args);
+    tracelog.set_args(args);
     tracelog.info('restr (%s) instr (%s)', restr, instr);
 
     reg = new RegExp(restr, 'i');
@@ -82,7 +82,7 @@ var re_find = function (args) {
     var restr, instr;
     restr = args.subnargs[0];
     instr = args.subnargs[1];
-    tracelog.set_commander(args);
+    tracelog.set_args(args);
     tracelog.info('args %s %s', restr, instr);
 
     reg = new RegExp(restr, 'i');
@@ -106,7 +106,7 @@ var re_ifind = function (args) {
     var restr, instr;
     restr = args.subnargs[0];
     instr = args.subnargs[1];
-    tracelog.set_commander(args);
+    tracelog.set_args(args);
     tracelog.info('args %s %s', restr, instr);
 
     reg = new RegExp(restr, 'i');

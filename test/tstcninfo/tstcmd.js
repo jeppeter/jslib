@@ -8,7 +8,7 @@ var cninfomain = require('./cninfo_main');
 var cninfoquery = require('./cninfo_query');
 var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('../../grabwork/random_delay');
-var commander = require('commander');
+var extargsparse = require('../../extargsparse');
 var curdate;
 var d = new Date();
 
@@ -17,10 +17,6 @@ curdate += baseop.number_format_length(4, d.getFullYear());
 curdate += baseop.number_format_length(2, d.getMonth() + 1);
 curdate += baseop.number_format_length(2, d.getDate());
 
-
-commander.subname = '';
-commander.subopt = {};
-commander.subargs = [];
 
 
 var trace_exit = function (ec) {
@@ -34,85 +30,41 @@ var trace_exit = function (ec) {
     return;
 };
 
-var usage = function (ec, cmd, fmt) {
-    'use strict';
-    var fp = process.stderr;
-    if (ec === 0) {
-        fp = process.stdout;
+var command_line_format = `
+    {
+        "grabmaxsock|m" : 10,
+        "grabtimeout|t" : 10000,
+        "startdate|S" : "19990101",
+        "enddate|E" : "%s",
+        "stockcode|s" : "600000",
+        "topdir|P" : "%s",
+        "watermark|w" : 20,
+        "url|U" : "http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/"
     }
+`;
+var command_line;
+var parser;
+var args;
 
-    if (fmt !== undefined && typeof fmt === 'string' && fmt.length > 0) {
-        fp.write(util.format('%s\n', fmt));
+parser = extargsparse.ExtArgsParse({
+    help_func: function (ec, s) {
+        'use strict';
+        var fp;
+        if (ec === 0) {
+            fp = process.stdout;
+        } else {
+            fp = process.stderr;
+        }
+        fp.write(s);
+        trace_exit(ec);
     }
+});
 
-    cmd.outputHelp(function (txt) {
-        fp.write(txt);
-        return '';
-    });
-    trace_exit(ec);
-    return;
-};
-
-
-commander
-    .version('0.2.0')
-    .option('-m --grabmaxsock <num>', 'grab max socket in one default(10)', function (t, v) {
-        'use strict';
-        v = v;
-        return parseInt(t);
-    }, 10)
-    .option('-t --grabtimeout <time>', 'grab timeout in one deafult(10000)', function (t, v) {
-        'use strict';
-        v = v;
-        return parseInt(t);
-    }, 10000)
-    .option('-S --startdate <date>', 'startdate search for deafult(19990101)', function (t, v) {
-        'use strict';
-        if (baseop.is_valid_date(t)) {
-            return t;
-        }
-        usage(3, commander, util.format('<%s> not valid date', t));
-        return v;
-    }, '19990101')
-    .option('-E --enddate <date>', util.format('enddate search for default(%s)', curdate), function (t, v) {
-        'use strict';
-        if (baseop.is_valid_date(t)) {
-            return t;
-        }
-        usage(3, commander, util.format('<%s> not valid date', t));
-        return v;
-    }, curdate)
-    .option('-s --stockcode <code>', 'stock code for china stock 6 bytes default(600000)', function (t, v) {
-        'use strict';
-        if (typeof t === 'string' && t.length === 6 && baseop.match_expr_i(t, '[0-9]+')) {
-            return t;
-        }
-        usage(3, commander, util.format('<%s> not valid stockcode', t));
-        return v;
-    }, '600000')
-    .option('-P --topdir <dir>', util.format('stock file store directory default(%s)', __dirname), function (t, v) {
-        'use strict';
-        v = v;
-        return t;
-    }, __dirname)
-    .option('-w --watermark <watermark>', 'watermark to delay default is (20)', function (t, v) {
-        'use strict';
-        var tmpval;
-        if (typeof t === 'string' && t.length === 5 && baseop.match_expr_i(t, '[0-9]+')) {
-            tmpval = parseInt(t);
-            if (tmpval < 256) {
-                return tmpval;
-            }
-        }
-        usage(3, commander, util.format('<%s> not valid watermark', t));
-        return v;
-    }, 20)
-    .option('-U --url <url>', 'specify url default format(http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/%s)', function (t, v) {
-        'use strict';
-        v = v;
-        return t;
-    }, 'http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/%s');
-tracelog.init_commander(commander);
+var curdir = __dirname;
+curdir = curdir.replace(/\\/g, '\\\\');
+command_line = util.format(command_line_format, curdate, curdir);
+parser.load_command_line_string(command_line);
+tracelog.init_args(parser);
 
 process.on('uncaughtException', function (err) {
     'use struct';
@@ -125,19 +77,19 @@ process.on('SIGINT', function () {
     trace_exit(0);
 });
 
-commander.parse(process.argv);
-tracelog.set_commander(commander);
+args = parser.parse_command_line();
+tracelog.set_args(args);
 
 
 grab.add_pre(random_delay());
-grab.add_pre(download_pre(commander));
-grab.add_post(random_delay(commander));
-grab.add_post(cninfomain(commander));
-grab.add_post(cninfoquery(commander));
+grab.add_pre(download_pre(args));
+grab.add_post(random_delay(args));
+grab.add_post(cninfomain(args));
+grab.add_post(cninfoquery(args));
+var mainurl;
+mainurl = args.url + args.stockcode;
+tracelog.info('url (%s)', mainurl);
 
-commander.url = util.format(commander.url, commander.stockcode);
-tracelog.info('url (%s)', commander.url);
-
-grab.queue(commander.url, {
-    cninfomain: commander.stockcode
+grab.queue(mainurl, {
+    cninfomain: args.stockcode
 });
