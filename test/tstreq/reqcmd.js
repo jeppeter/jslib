@@ -1,28 +1,31 @@
 var request = require('request');
 var tracelog = require('../../tracelog');
-var commander = require('commander');
+var extargsparse = require('../../extargsparse');
 var util = require('util');
 var URL = require('url');
 var path = require('path');
 var baseop = require('../../baseop');
 var fs = require('fs');
-commander.subname = '';
-commander.subopt = {};
-commander.subargs = [];
+var parser;
 
-commander
-    .version('0.2.0')
-    .option('-t --timeout <timeout>', 'timeout value', function (v, t) {
-        'use strict';
-        t = t;
-        return parseInt(v);
-    }, 5000)
-    .option('-j --jsonfile <jsonfile>', 'jsonfile to set for the request option default (\'\')', function (v, t) {
-        'use strict';
-        t = t;
-        return v;
-    }, '')
-    .usage('[options] <url...>');
+var command_line = `
+    {
+        "timeout|t" : 5000,
+        "jsonfile|j" : "",
+        "get<get_command>## urls... : to get url by request ##" : {
+            "$" : "+"
+        },
+        "pipe<pipe_command>## url [file] : to download url to file ##" : {
+            "$" : "+"
+        },
+        "post<post_command>## urls... : to post data to urls ##" : {
+            "$" : "+",
+            "data" : "",
+            "file" : ""
+        }
+    }
+`;
+
 
 var trace_exit = function (ec) {
     'use strict';
@@ -35,189 +38,107 @@ var trace_exit = function (ec) {
     return;
 };
 
-var usage = function (ec, cmd, fmt) {
+
+var get_command = function (args) {
     'use strict';
-    var fp = process.stderr;
-    if (ec === 0) {
-        fp = process.stdout;
-    }
-
-    if (fmt !== undefined && typeof fmt === 'string' && fmt.length > 0) {
-        fp.write(util.format('%s\n', fmt));
-    }
-
-    cmd.outputHelp(function (txt) {
-        fp.write(txt);
-        return '';
+    var errcode = 0;
+    var urls = args.subnargs;
+    tracelog.set_args(args);
+    tracelog.info('urls(%d) %s', urls.length, urls);
+    baseop.read_json_parse(args.jsonfile, function (err, opt) {
+        if (err) {
+            tracelog.error('can not read (%s)', args.jsonfile);
+            trace_exit(3);
+            return;
+        }
+        urls.forEach(function (elm, idx) {
+            request.get(elm, opt, function (err2, resp2, body2) {
+                if (err2) {
+                    errcode = 3;
+                } else {
+                    console.log('<%d:%s> htmls(%s)', idx, elm, body2);
+                    tracelog.info('<%d:%s> htmls(%s)', idx, elm, body2);
+                }
+                resp2 = resp2;
+                if (idx === (urls.length - 1)) {
+                    trace_exit(errcode);
+                }
+            });
+        });
     });
-    trace_exit(ec);
+};
+exports.get_command = get_command;
+
+var pipe_command = function (args) {
+    'use strict';
+    var ws;
+    var url = args.subnargs[0];
+    var outfile = null;
+
+    if (args.subnargs.length > 1) {
+        outfile = args.subnargs[1];
+    }
+
+    if (outfile === null) {
+        parser = URL.parse(url);
+        outfile = parser.pathname;
+        outfile = path.basename(outfile);
+        outfile = __dirname + path.sep + outfile;
+    }
+    tracelog.set_args(args);
+
+    baseop.read_json_parse(args.jsonfile, function (err, opt) {
+        if (err) {
+            console.error('can not parse (%s) error(%s)', args.jsonfile, JSON.stringify(err));
+            trace_exit(3);
+            return;
+        }
+
+        ws = fs.createWriteStream(outfile);
+        ws.on('error', function (err) {
+            tracelog.error('parse <%s> error(%s)', outfile, JSON.stringify(err));
+            trace_exit(3);
+            return;
+        });
+        ws.on('close', function () {
+            tracelog.info('<%s> closed', url);
+            trace_exit(0);
+            return;
+        });
+        request.get(url, opt, function (err2) {
+            if (err2) {
+                tracelog.error('<%s> error(%s)', url, JSON.stringify(err2));
+                trace_exit(3);
+                return;
+            }
+        }).pipe(ws);
+    });
     return;
 };
+exports.pipe_command = pipe_command;
 
-
-commander
-    .command('get <url...>')
-    .description(' get htmldata from url')
-    .action(function (args, options) {
-        'use strict';
-        var errcode = 0;
-        commander.subname = 'get';
-        tracelog.set_commander(options.parent);
-        tracelog.info('args(%d) %s', args.length, args);
-        if (args.length === 0) {
-            usage(3, commander, 'please specify at lease one url');
-        }
-        baseop.read_json_parse(options.jsonfile, function (err, opt) {
-            if (err) {
-                tracelog.error('can not read (%s)', options.jsonfile);
+var post_command = function (args) {
+    'use strict';
+    var errcode = 0;
+    var postdata = '';
+    var urls = args.subnargs;
+    tracelog.set_args(args);
+    tracelog.info('urls(%d) %s', urls.length, urls);
+    postdata = '';
+    if (baseop.is_valid_string(args, 'post_data')) {
+        postdata = args.post_data;
+    }
+    if (baseop.is_valid_string(args, 'post_file')) {
+        fs.readFile(args.post_file, function (err2, data) {
+            if (err2) {
+                tracelog.error('can not read (%s) (%s)', args.post_file, JSON.stringify(err2));
                 trace_exit(3);
                 return;
             }
-            args.forEach(function (elm, idx) {
-                request.get(elm, opt, function (err2, resp2, body2) {
-                    if (err2) {
-                        errcode = 3;
-                    } else {
-                        console.log('<%d:%s> htmls(%s)', idx, elm, body2);
-                        tracelog.info('<%d:%s> htmls(%s)', idx, elm, body2);
-                    }
-                    resp2 = resp2;
-                    if (idx === (args.length - 1)) {
-                        trace_exit(errcode);
-                    }
-                });
-            });
-        });
-    });
-
-commander
-    .command('pipe <url> [outfile]')
-    .option('--timeout <timemills>', 'time mills for download', function (t, v) {
-        'use strict';
-        if (baseop.is_valid_number(t) && !baseop.is_valid_float(t)) {
-            return baseop.parse_num(t);
-        }
-        return v;
-    }, 30000)
-    .description(' downfile to file')
-    .action(function (url, outfile, options) {
-        'use strict';
-        var parser;
-        var ws;
-        commander.subname = 'pipe';
-        if (options === null || options === undefined) {
-            options = outfile;
-            outfile = null;
-        }
-
-        if (outfile === null || outfile === undefined) {
-            parser = URL.parse(url);
-            outfile = parser.pathname;
-            outfile = path.basename(outfile);
-            outfile = __dirname + path.sep + outfile;
-        }
-        tracelog.set_commander(options.parent);
-
-        baseop.read_json_parse(options.parent.jsonfile, function (err, opt) {
-            if (err) {
-                console.error('can not parse (%s) error(%s)', options.parent.jsonfile, JSON.stringify(err));
-                trace_exit(3);
-                return;
-            }
-
-            ws = fs.createWriteStream(outfile);
-            ws.on('error', function (err) {
-                tracelog.error('parse <%s> error(%s)', outfile, JSON.stringify(err));
-                trace_exit(3);
-                return;
-            });
-            ws.on('close', function () {
-                tracelog.info('<%s> closed', url);
-                trace_exit(0);
-                return;
-            });
-            request.get(url, opt, function (err2) {
-                if (err2) {
-                    tracelog.error('<%s> error(%s)', url, JSON.stringify(err2));
-                    trace_exit(3);
-                    return;
-                }
-            }).pipe(ws);
-        });
-        return;
-
-    });
-
-commander
-    .command('post <url...>')
-    .option('--postdata <postdata>', 'specify postdata', function (t, v) {
-        'use strict';
-        v = v;
-        return t;
-    }, null)
-    .option('--postfile <postfile>', 'specify postdata from file', function (t, v) {
-        'use strict';
-        v = v;
-        return t;
-    }, null)
-    .description(' post file')
-    .action(function (args, options) {
-        'use strict';
-        var errcode = 0;
-        var postdata = '';
-        commander.subname = 'post';
-        tracelog.set_commander(options.parent);
-        tracelog.info('args(%d) %s', args.length, args);
-        if (args.length === 0) {
-            usage(3, commander, 'please specify at lease one url');
-        }
-        postdata = '';
-        if (baseop.is_valid_string(options, 'postdata')) {
-            postdata = options.postdata;
-        }
-        if (baseop.is_valid_string(options, 'postfile')) {
-            fs.readFile(options.postfile, function (err2, data) {
-                if (err2) {
-                    tracelog.error('can not read (%s) (%s)', options.postfile, JSON.stringify(err2));
-                    trace_exit(3);
-                    return;
-                }
-                postdata = data;
-                baseop.read_json_parse(options.parent.jsonfile, function (err, opt) {
-                    if (err) {
-                        tracelog.error('can not read (%s) (%s)', options.parent.jsonfile, JSON.stringify(err));
-                        trace_exit(3);
-                        return;
-                    }
-                    if (!baseop.is_non_null(opt, 'body')) {
-                        opt.body = postdata;
-                    }
-                    if (postdata.length > 0) {
-                        opt.body = postdata;
-                    }
-                    args.forEach(function (elm, idx) {
-                        request.post(elm, opt, function (err2, resp2, body2) {
-                            if (err2) {
-                                errcode = 3;
-                            } else {
-                                tracelog.info('<%d:%s> htmls(%s)', idx, elm, body2);
-                                tracelog.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp2.headers, {
-                                    showHidden: true,
-                                    depth: null
-                                }));
-                            }
-                            resp2 = resp2;
-                            if (idx === (args.length - 1)) {
-                                trace_exit(errcode);
-                            }
-                        });
-                    });
-                });
-            });
-        } else {
-            baseop.read_json_parse(options.parent.jsonfile, function (err, opt) {
+            postdata = data;
+            baseop.read_json_parse(args.jsonfile, function (err, opt) {
                 if (err) {
-                    tracelog.error('can not read (%s) (%s)', options.parent.jsonfile, JSON.stringify(err));
+                    tracelog.error('can not read (%s) (%s)', args.jsonfile, JSON.stringify(err));
                     trace_exit(3);
                     return;
                 }
@@ -227,31 +148,76 @@ commander
                 if (postdata.length > 0) {
                     opt.body = postdata;
                 }
-                args.forEach(function (elm, idx) {
-                    request.post(elm, opt, function (err2, resp2, body2) {
-                        if (err2) {
+                urls.forEach(function (elm, idx) {
+                    request.post(elm, opt, function (err3, resp3, body3) {
+                        if (err3) {
                             errcode = 3;
                         } else {
-                            tracelog.info('<%d:%s> htmls(%s)', idx, elm, body2);
-                            tracelog.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp2.headers, {
+                            tracelog.info('<%d:%s> htmls(%s)', idx, elm, body3);
+                            tracelog.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp3.headers, {
                                 showHidden: true,
                                 depth: null
                             }));
                         }
-                        resp2 = resp2;
-                        if (idx === (args.length - 1)) {
+                        resp3 = resp3;
+                        if (idx === (urls.length - 1)) {
                             trace_exit(errcode);
                         }
                     });
                 });
             });
+        });
+    } else {
+        baseop.read_json_parse(args.jsonfile, function (err, opt) {
+            if (err) {
+                tracelog.error('can not read (%s) (%s)', args.jsonfile, JSON.stringify(err));
+                trace_exit(3);
+                return;
+            }
+            if (!baseop.is_non_null(opt, 'body')) {
+                opt.body = postdata;
+            }
+            if (postdata.length > 0) {
+                opt.body = postdata;
+            }
+            urls.forEach(function (elm, idx) {
+                request.post(elm, opt, function (err4, resp4, body4) {
+                    if (err4) {
+                        errcode = 3;
+                    } else {
+                        tracelog.info('<%d:%s> htmls(%s)', idx, elm, body4);
+                        tracelog.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp4.headers, {
+                            showHidden: true,
+                            depth: null
+                        }));
+                    }
+                    resp4 = resp4;
+                    if (idx === (urls.length - 1)) {
+                        trace_exit(errcode);
+                    }
+                });
+            });
+        });
+    }
+};
+exports.post_command = post_command;
+
+
+
+parser = extargsparse.ExtArgsParse({
+    help_func: function (ec, s) {
+        'use strict';
+        var fp;
+        if (ec === 0) {
+            fp = process.stdout;
+        } else {
+            fp = process.stderr;
         }
-    });
+        fp.write(s);
+        trace_exit(ec);
+    }
+});
 
-
-tracelog.init_commander(commander);
-commander.parse(process.argv);
-
-if (commander.subname.length === 0) {
-    usage(3, commander, 'please specify a command');
-}
+parser.load_command_line_string(command_line);
+tracelog.init_args(parser);
+parser.parse_command_line();

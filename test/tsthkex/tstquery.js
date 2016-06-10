@@ -1,14 +1,9 @@
 var grabcheerio = require('./grabcheerio');
 var fs = require('fs');
-var commander = require('commander');
+var extargsparse = require('../../extargsparse');
 var tracelog = require('../../tracelog');
 var util = require('util');
-
-commander.subname = '';
-
-commander
-    .version('0.2.0')
-    .usage('[options] ');
+var parser;
 
 
 
@@ -23,85 +18,86 @@ var trace_exit = function (ec) {
     return;
 };
 
-
-
-var usage = function (ec, cmd, fmt) {
+var query_command = function (args) {
     'use strict';
-    var fp = process.stderr;
-    if (ec === 0) {
-        fp = process.stdout;
-    }
-
-    if (fmt !== undefined && typeof fmt === 'string' && fmt.length > 0) {
-        fp.write(util.format('%s\n', fmt));
-    }
-
-    cmd.outputHelp(function (txt) {
-        fp.write(txt);
-        return '';
+    var html = args.subnargs[0];
+    tracelog.set_args(args);
+    fs.readFile(html, function (err, data) {
+        var list_result;
+        if (err) {
+            tracelog.error('read %s (%s)', html, JSON.stringify(err));
+            trace_exit(3);
+            return;
+        }
+        list_result = grabcheerio.find_query_result(data);
+        tracelog.info('list_result (%s)', util.inspect(list_result));
+        trace_exit(0);
+        return;
     });
-    trace_exit(ec);
-    return;
 };
 
-commander
-    .command('query <html>')
-    .action(function (html, options) {
-        'use strict';
-        commander.subname = 'query';
-        tracelog.set_commander(options.parent);
-        fs.readFile(html, function (err, data) {
-            var list_result;
-            if (err) {
-                tracelog.error('read %s (%s)', html, JSON.stringify(err));
-                trace_exit(3);
-                return;
-            }
-            list_result = grabcheerio.find_query_result(data);
-            tracelog.info('list_result (%s)', util.inspect(list_result));
-            trace_exit(0);
+exports.query_command = query_command;
+
+var morequery_command = function (args) {
+    'use strict';
+    var html = args.subnargs[0];
+    tracelog.set_args(args);
+    fs.readFile(html, function (err, data) {
+        var list_result;
+        if (err) {
+            tracelog.error('read %s (%s)', html, JSON.stringify(err));
+            trace_exit(3);
             return;
-        });
+        }
+        list_result = grabcheerio.more_query_html(data);
+        tracelog.info('list_result (%s)', util.inspect(list_result));
+        trace_exit(0);
+        return;
     });
+};
 
-commander
-    .command('morequery <html>')
-    .action(function (html, options) {
+exports.morequery_command = morequery_command;
+
+var combind_command = function (args) {
+    'use strict';
+    var retval;
+    var url = args.subnargs[0];
+    var pdf = args.subnargs[1];
+    tracelog.set_args(args);
+    retval = grabcheerio.combine_dir(url, pdf);
+    console.log('<%s> <%s> = <%s>', url, pdf, retval);
+};
+
+exports.combind_command = combind_command;
+
+var command_line = `
+    {
+        "query<query_command>## html : to get the query ##" : {
+            "$" : 1
+        },
+        "morequery<morequery_command>## html : to get more query ##" : {
+            "$" : 1
+        },
+        "combind<combind_command>## url pdf : to combind ##" : {
+            "$" : 2
+        }
+    }
+`;
+
+parser = extargsparse.ExtArgsParse({
+    help_func: function (ec, s) {
         'use strict';
-        commander.subname = 'morequery';
-        tracelog.set_commander(options.parent);
-        fs.readFile(html, function (err, data) {
-            var list_result;
-            if (err) {
-                tracelog.error('read %s (%s)', html, JSON.stringify(err));
-                trace_exit(3);
-                return;
-            }
-            list_result = grabcheerio.more_query_html(data);
-            tracelog.info('list_result (%s)', util.inspect(list_result));
-            trace_exit(0);
-            return;
-        });
-    });
+        var fp;
+        if (ec === 0) {
+            fp = process.stdout;
+        } else {
+            fp = process.stderr;
+        }
+        fp.write(s);
+        trace_exit(ec);
+    }
+});
 
-
-commander
-    .command('combind <url> <pdf>')
-    .description('to combind url and pdf')
-    .action(function (url, pdf, options) {
-        'use strict';
-        var retval;
-        commander.subname = 'combind';
-        tracelog.set_commander(options.parent);
-
-        retval = grabcheerio.combine_dir(url, pdf);
-        console.log('<%s> <%s> = <%s>', url, pdf, retval);
-    });
-
-tracelog.init_commander(commander);
-commander.parse(process.argv);
-
-
-if (commander.subname.length === 0) {
-    usage(3, commander, 'please call a subcommand');
-}
+parser.load_command_line_string(command_line);
+tracelog.init_args(parser);
+parser.parse_command_line();

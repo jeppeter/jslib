@@ -357,12 +357,18 @@ function NewExtArgsParse(option) {
             s += keycls.helpinfo;
             s += '\n';
         } else {
-            if (keycls.typename === 'string' || keycls.typename === 'int' || keycls.typename === 'float' || keycls.typename === 'boolean') {
+            if (keycls.typename === 'string' || keycls.typename === 'int' || keycls.typename === 'float') {
                 s += util.format('set %s default(%s)\n', optdest.toLowerCase(), keycls.value);
             } else if (keycls.typename === 'count') {
                 s += util.format('set %s count increment default(%d)\n', optdest.toLowerCase(), keycls.value);
             } else if (keycls.typename === 'array') {
                 s += util.format('set %s list default(%s)\n', optdest.toLowerCase(), keycls.value);
+            } else if (keycls.typename === 'boolean') {
+                if (keycls.value) {
+                    s += util.format('set %s false default(true)\n', optdest.toLowerCase());
+                } else {
+                    s += util.format('set %s true default(false)\n', optdest.toLowerCase());
+                }
             }
         }
         return s;
