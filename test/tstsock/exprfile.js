@@ -1,89 +1,33 @@
 var express = require('express');
-var yargs = require('yargs');
 var util = require('util');
-var tracelog = require('./lib/tracelog');
+var tracelog = require('../../tracelog');
 var path = require('path');
 var filehdl = require('./expr_filedir');
 module.exports = express();
 var app = module.exports;
 var newapp = express();
-var args = yargs.usage(util.format('Usage %s [OPTIONS]', process.argv[1]))
-    .option('verbose', {
-        count: true,
-        description: 'log level 0 for error 1 for warn 2 for info 3 for debug 4 for trace',
-        default: -1,
-        alias: 'v'
-    })
-    .option('noconsole', {
-        boolean: true,
-        description: 'set no console output for log',
-        default: false,
-        alias: 'N'
-    })
-    .help('h')
-    .alias('h', 'help')
-    .option('appendlog', {
-        array: true,
-        description: 'log file that append',
-        default: [],
-        alias: 'A'
-    })
-    .option('createlog', {
-        array: true,
-        description: 'log file that created',
-        default: [],
-        alias: 'C'
-    })
-    .option('path', {
-        string: true,
-        description: 'path that map into server root',
-        default: __dirname,
-        alias: 'P'
-    })
-    .option('port', {
-        number: true,
-        description: 'port to listen one',
-        default: 9000,
-        alias: 'p'
-    })
-    .option('format', {
-        string: true,
-        description: 'log format',
-        default: '<{{title}}>:{{file}}:{{line}} {{message}}\n',
-        alias: 'F'
-    }).argv;
+var extargsparse = require('../../extargsparse');
+var parser, args;
+var command_line_fmt = `
+    {
+        "path|P": "%s",
+        "port|p": 9000
+    }
+`;
+
+var command_line = util.format(command_line_fmt, __dirname.replace(/\\/g, '\\\\'));
+parser = extargsparse.ExtArgsParse();
+parser.load_command_line_string(command_line);
+tracelog.init_args(parser);
+args = parser.parse_command_line();
+
 
 var directory = args.path;
 var lport = args.port;
-var logopt = {};
 var jsdir = __dirname;
 var indexejs = jsdir + path.sep + 'index.ejs';
 
-if (args.verbose >= 4) {
-    logopt.level = 'trace';
-} else if (args.verbose >= 3) {
-    logopt.level = 'debug';
-} else if (args.verbose >= 2) {
-    logopt.level = 'info';
-} else if (args.verbose >= 1) {
-    logopt.level = 'warn';
-} else {
-    logopt.level = 'error';
-}
-
-if (args.C.length > 0) {
-    logopt.files = args.C;
-}
-
-if (args.A.length > 0) {
-    logopt.appendfiles = args.A;
-}
-if (args.noconsole) {
-    logopt.noconsole = true;
-}
-
-logopt.format = args.format;
-tracelog.Init(logopt);
+tracelog.set_args(args);
 
 
 process.on('SIGINT', function () {

@@ -11,11 +11,10 @@
     "express": "latest",
     "connect": "latest",
     "tracer": "latest",
-    "yargs": "latest",
     "formidable": "latest",
-    "ejs" : "latest",
-    "emitter" : "latest",
-    "variadic" : "latest"
+    "ejs": "latest",
+    "emitter": "latest",
+    "variadic": "latest"
   },
   "keywords": [],
   "author": "",

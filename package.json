@@ -14,7 +14,7 @@
     "url": ""
   },
   "dependencies": {
-    "yargs": "latest",
+    "extargsparse": "latest",
     "request": "latest",
     "tracer": "latest",
     "cheerio": "latest",

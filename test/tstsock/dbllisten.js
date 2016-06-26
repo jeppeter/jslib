@@ -1,11 +1,16 @@
 var http = require('http');
-var yargs = require('yargs');
+var extargsparse = require('../../extargsparse');
+var command_line = `
+    {
+        "port|p" : 3000
+    }
+`;
 
-var args = yargs.help('h')
-    .alias('h', 'help')
-    .default('port', 3000)
-    .alias('port', 'p')
-    .argv;
+var parser, args;
+
+parser = extargsparse.ExtArgsParse();
+parser.load_command_line_string(command_line);
+args = parser.parse_command_line();
 
 var lport = args.port;
 
