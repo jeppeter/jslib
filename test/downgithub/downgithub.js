@@ -10,12 +10,13 @@ var command_line = ` {
 }
 `;
 
-function list_handler() {
+exports.list_handler = function list_handler() {
+	'use strict';
+};
 
-}
+
 
 var parser;
-var args;
-parser = extargsparse.ExtArgsParse(opt);
+parser = extargsparse.ExtArgsParse();
 parser.load_command_line_string(command_line);
-args = parser.parse_command_line(process.argv[2: ], parser);
+parser.parse_command_line(null, parser);
