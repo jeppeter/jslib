@@ -1,0 +1,17 @@
+{
+  "name": "downgithub",
+  "version": "1.0.0",
+  "description": "download github project dirs",
+  "main": "downgithub.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cheerio": "latest",
+    "request": "latest",
+    "extargsparse": "latest"
+  },
+  "keywords": ["github", "scrawler"],
+  "author": "jeppeter@gmail.com",
+  "license": "ISC"
+}
