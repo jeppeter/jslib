@@ -47,7 +47,7 @@ function createDownloadPre(options) {
             downloadpre.workingfiles.push(fname);
             baseop.mkdir_safe(fdir, function (err) {
                 if (err) {
-                    tracelog.error('can not mkdir(%s)', fdir);
+                    tracelog.error('can not mkdir(%s) (%s)', fdir, err);
                     worker.url = '';
                     next(false, err);
                     return;
