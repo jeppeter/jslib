@@ -242,6 +242,7 @@ var output_traverse = function (parser, tabs, pathname, idx, curchild, travers_s
 var command_line = `
     {
         "selector|s" : "",
+        "nextselector|n" : [],
         "text<text_command>## htmlfile : get text from selector ##" : {
             "$" : 1
         },
