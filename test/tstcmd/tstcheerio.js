@@ -573,15 +573,15 @@ var childrens_command = function (args) {
     }
 
     tracelog.info('htmlfile %s', htmlfile);
-    call_cheerparser(htmlfile, htmlfile.selector, function (parser, content, exit_fn) {
+    call_cheerparser(htmlfile, args.selector, function (parser, content, exit_fn) {
         var children;
         var curelm;
         var idx, jdx;
         var s;
         var curchild; //, siblings;
         parser = parser;
-        if (content.length === 0) {
-            tracelog.info('length %d', content.length);
+        if (content === null || content === undefined) {
+            tracelog.info('nocontent %s', args.selector);
             exit_fn(0);
             return;
         }

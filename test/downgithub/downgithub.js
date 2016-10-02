@@ -18,7 +18,6 @@ var curdir = __dirname;
 curdir = curdir.replace(/\\/g, '\\\\');
 
 var command_line = util.format(command_line_fmt, curdir);
-console.log('cmdline %s', command_line);
 
 var trace_exit = function (ec) {
     'use strict';
