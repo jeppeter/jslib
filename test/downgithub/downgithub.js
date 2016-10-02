@@ -3,6 +3,8 @@ var extargsparse = require('extargsparse');
 var tracelog = require('../../tracelog');
 var download_pre = require('../../grabwork/download_pre');
 var util = require('util');
+var fs = require('fs');
+var gitcheerio = require('./gitcheerio');
 
 var grab = grabwork();
 var command_line_fmt = `{
@@ -10,6 +12,9 @@ var command_line_fmt = `{
     "input|i" : null,
     "output|o" : null,
     "list<list_handler>" : {
+        "$" : "+"
+    },
+    "dump<dump_handler>" : {
         "$" : "+"
     }
 
@@ -49,6 +54,27 @@ process.on('uncaughtException', function (err) {
 
 
 exports.list_handler = function (args, parser) {
+    'use strict';
+    parser = parser;
+    tracelog.set_args(args);
+    args.subnargs.forEach(function (elm) {
+        fs.readFile(elm, function (err, cont) {
+            var listdirs;
+            if (err !== null) {
+                tracelog.error("can not read (%s) error(%s)", elm, err);
+                trace_exit(3);
+                return;
+            }
+            listdirs = gitcheerio.get_list_dirs(cont);
+            listdirs.forEach(function (elm, idx) {
+                tracelog.info('[%d] <%s> %s', idx, elm.type, elm.href);
+            });
+        });
+    });
+    return;
+};
+
+exports.dump_handler = function (args, parser) {
     'use strict';
     var i, url;
     tracelog.set_args(args);

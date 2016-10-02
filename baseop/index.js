@@ -209,6 +209,15 @@ var match_expr_i = function (value, expr) {
 
 module.exports.match_expr_i = match_expr_i;
 
+var has_sub_string = function (mainstr, substr) {
+    'use strict';
+    if (mainstr.indexOf(substr) > -1) {
+        return true;
+    }
+    return false;
+};
+module.exports.has_sub_string = has_sub_string;
+
 var monthday_least = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 var is_valid_date = function (datestr) {

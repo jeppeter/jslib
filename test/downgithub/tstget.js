@@ -50,6 +50,8 @@ args.args.forEach(function (elm) {
             return;
         }
         listdirs = gitcheerio.get_list_dirs(cont);
-
+        listdirs.forEach(function (elm, idx) {
+            tracelog.info('[%d] <%s> %s', idx, elm.type, elm.href);
+        });
     });
 });
