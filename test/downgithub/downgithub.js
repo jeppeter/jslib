@@ -16,8 +16,10 @@ var command_line_fmt = `{
     },
     "dump<dump_handler>" : {
         "$" : "+"
+    },
+    "url<url_handler>" : {
+        "$" : "+"
     }
-
 }`;
 var curdir = __dirname;
 curdir = curdir.replace(/\\/g, '\\\\');
@@ -87,7 +89,23 @@ exports.dump_handler = function (args, parser) {
     return;
 };
 
-
+exports.url_handler = function (args, parser) {
+    'use strict';
+    parser = parser;
+    tracelog.set_args(args);
+    args.subnargs.forEach(function (elm, idx) {
+        fs.readFile(elm, function (err, cont) {
+            var url;
+            if (err !== null) {
+                tracelog.error("can not read (%s) error(%s)", elm, err);
+                trace_exit(3);
+                return;
+            }
+            url = gitcheerio.get_raw_url(cont);
+            tracelog.info('[%d] %s', idx, url);
+        });
+    });
+};
 
 var parser;
 parser = extargsparse.ExtArgsParse({
