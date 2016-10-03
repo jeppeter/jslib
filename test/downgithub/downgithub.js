@@ -5,19 +5,24 @@ var download_pre = require('../../grabwork/download_pre');
 var util = require('util');
 var fs = require('fs');
 var gitcheerio = require('./gitcheerio');
+var githubdir_post = require('./githubdir_post');
+var githubfile_post = require('./githubfile_post');
 
-var grab = grabwork();
 var command_line_fmt = `{
     "path|P" : "%s",
     "input|i" : null,
     "output|o" : null,
-    "list<list_handler>" : {
+    "maxerrors|e" : 5,
+    "list<list_handler>##html... : to get github dir tree from html##" : {
         "$" : "+"
     },
-    "dump<dump_handler>" : {
+    "dump<dump_handler>##urls... to dump urls##" : {
         "$" : "+"
     },
-    "url<url_handler>" : {
+    "url<url_handler>##html... : to parse github url in html##" : {
+        "$" : "+"
+    },
+    "download<download_handler>##urls... : to download github part dir##" : {
         "$" : "+"
     }
 }`;
@@ -78,6 +83,7 @@ exports.list_handler = function (args, parser) {
 
 exports.dump_handler = function (args, parser) {
     'use strict';
+    var grab = grabwork(args);
     var i, url;
     tracelog.set_args(args);
     parser = parser;
@@ -104,6 +110,25 @@ exports.url_handler = function (args, parser) {
             url = gitcheerio.get_raw_url(cont);
             tracelog.info('[%d] %s', idx, url);
         });
+    });
+};
+
+exports.download_handler = function (args, parser) {
+    'use strict';
+    var grab = grabwork(args);
+    parser = parser;
+    tracelog.set_args(args);
+    grab.add_post(githubdir_post(args));
+    grab.add_post(githubfile_post(args));
+    grab.add_pre(download_pre(args));
+    args.subnargs.forEach(function (elm) {
+        var opt;
+        opt = {};
+        opt.githubdir = {};
+        opt.githubdir.localdir = args.path;
+        opt.githubdir.url = elm;
+        opt.githubdir.errors = 0;
+        grab.queue(elm, opt);
     });
 };
 

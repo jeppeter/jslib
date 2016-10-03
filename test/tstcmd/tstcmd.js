@@ -3,6 +3,7 @@ var util = require('util');
 var tracelog = require('../../tracelog');
 var baseop = require('../../baseop');
 var parser;
+var URL = require('url');
 var command_line = `
     {
         "mkdir<mkdir_command>## dirs... : to make directory ##" : {
@@ -38,6 +39,9 @@ var command_line = `
         },
         "testdownloadfile<testdownloadfile_command>## : to test download file ##" : {
             "$" : 0
+        },
+        "parseurl<parseurl_command>## urls : to parse url ##" :{
+            "$" : "+"
         }
     }
 `;
@@ -440,6 +444,23 @@ var testdownloadfile_command = function (args) {
 exports.testdownloadfile_command = testdownloadfile_command;
 
 
+var parseurl_command = function (args, parser) {
+    'use strict';
+    tracelog.set_args(args);
+    parser = parser;
+    args.subnargs.forEach(function (elm) {
+        var urlparse;
+        urlparse = URL.parse(elm);
+        tracelog.info('protocol (%s)', urlparse.protocol);
+        tracelog.info('auth (%s)', urlparse.auth);
+        tracelog.info('host (%s)', urlparse.host);
+        tracelog.info('path (%s)', urlparse.path);
+        tracelog.info('hash (%s)', urlparse.hash);
+    });
+    return;
+};
+
+exports.parseurl_command = parseurl_command;
 
 tracelog.init_args(parser);
 parser.parse_command_line();
