@@ -54,6 +54,9 @@ exports.get_raw_url = function (content) {
             if (baseop.match_expr_i(ahrefs.eq(j).text(), '^raw$')) {
                 return ahrefs.eq(j).attr('href');
             }
+            if (baseop.match_expr_i(ahrefs.eq(j).text(), '^download$')) {
+                return ahrefs.eq(j).attr('href');
+            }
         }
     }
     return null;

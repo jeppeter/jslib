@@ -57,7 +57,7 @@ var creategithubfilePost = function (opt) {
             }
             url += urlparse.host;
             url += rawurl;
-            tracelog.info('url (%s) => dir(%s)', url, worker.reqopt.githubfile.localdir);
+            //tracelog.info('url (%s) => dir(%s)', url, worker.reqopt.githubfile.localdir);
             worker.parent.download_queue(url, worker.reqopt.githubfile.localdir);
         } else {
             tracelog.warn('(%s) no elementfile raw', worker.url);
