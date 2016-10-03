@@ -3,7 +3,7 @@ var urlparse = require('url');
 var path = require('path');
 var fs = require('fs');
 var baseop = require('../baseop');
-//var util = require('util');
+var util = require('util');
 
 function createDownloadPre(options) {
     'use strict';
@@ -17,6 +17,7 @@ function createDownloadPre(options) {
     downloadpre.state.failed_download = 0;
     downloadpre.state.complete_download = 0;
     downloadpre.state.queued_download = 0;
+    downloadpre.output_str = '';
 
     if (baseop.is_non_null(options, 'downloadmax')) {
         downloadpre.downloadmax = options.downloadmax;
@@ -86,6 +87,7 @@ function createDownloadPre(options) {
 
     downloadpre.finish_callback = function (worker, err, next) {
         var sendreqopt;
+        var i;
         if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || !baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir')) {
             next(err);
             return;
@@ -118,6 +120,13 @@ function createDownloadPre(options) {
             downloadpre.state.failed_download += 1;
         } else {
             downloadpre.state.success_download += 1;
+            if (downloadpre.output_str.length > 0) {
+                for (i = 0; i < downloadpre.output_str.length; i += 1) {
+                    process.stdout.write('\b');
+                }
+            }
+            downloadpre.output_str = util.format('[%d]%s', downloadpre.state.success_download, worker.reqopt.downloadoption.downloadfile);
+            process.stdout.write(downloadpre.output_str);
         }
 
         downloadpre.state.complete_download += 1;
