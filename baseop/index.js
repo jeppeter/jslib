@@ -298,9 +298,20 @@ var is_valid_number = function (v, is16) {
         }
     }
     return isvalid;
+
 };
 
 module.exports.is_valid_number = is_valid_number;
+
+var check_valid_number = function (opt, name) {
+    'use strict';
+    var isvalid = false;
+    if (opt[name] !== null && opt[name] !== undefined && typeof opt[name] === 'number') {
+        isvalid = true;
+    }
+    return isvalid;
+};
+module.exports.check_valid_number = check_valid_number;
 
 var parse_number = function (valstr) {
     'use strict';

@@ -13,6 +13,7 @@ var command_line_fmt = `{
     "input|i" : null,
     "output|o" : null,
     "maxerrors|e" : 5,
+    "maxdepth|d" : 0,
     "list<list_handler>##html... : to get github dir tree from html##" : {
         "$" : "+"
     },
@@ -128,6 +129,7 @@ exports.download_handler = function (args, parser) {
         opt.githubdir.localdir = args.path;
         opt.githubdir.url = elm;
         opt.githubdir.errors = 0;
+        opt.githubdir.depth = 0;
         grab.queue(elm, opt);
     });
 };

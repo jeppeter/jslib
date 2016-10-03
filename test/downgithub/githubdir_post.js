@@ -14,8 +14,13 @@ var creategithubdirPost = function (opt) {
     githubdirpost.state.failed = 0;
     githubdirpost.maxconnect = 30;
     githubdirpost.maxerror = 5;
-    if (baseop.is_valid_number(opt, 'maxerror')) {
+    githubdirpost.maxdepth = 0;
+    if (baseop.check_valid_number(opt, 'maxerror')) {
         githubdirpost.maxerror = opt.maxerror;
+    }
+
+    if (baseop.check_valid_number(opt, 'maxdepth')) {
+        githubdirpost.maxdepth = opt.maxdepth;
     }
 
     githubdirpost.try_again = function (worker) {
@@ -24,7 +29,6 @@ var creategithubdirPost = function (opt) {
         }
         return;
     };
-
 
     githubdirpost.post_handler = function (err, worker, next) {
         var listdirs;
@@ -53,13 +57,31 @@ var creategithubdirPost = function (opt) {
                 var fileopt;
                 var url;
                 var parent = worker.parent;
+                var pathname;
+                var j = 0;
                 if (elm.type === 'dir') {
                     diropt = {};
                     diropt.githubdir = {};
                     urlparse = URL.parse(worker.url);
-                    setdir = path.basename(elm.href);
+                    pathname = urlparse.pathname;
+                    diropt.githubdir.depth = worker.reqopt.githubdir.depth;
+                    setdir = '';
+                    if (elm.href.startsWith(pathname)) {
+                        var elmarr, patharr;
+                        elmarr = elm.href.split("/");
+                        patharr = pathname.split("/");
+                        for (j = patharr.length; j < elmarr.length; j += 1) {
+                            diropt.githubdir.depth += 1;
+                            setdir += path.sep;
+                            setdir += elmarr[j];
+                        }
+                    } else {
+                        tracelog.warn('(%s) not startsWith (%s)', elm.href, pathname);
+                        setdir += path.sep;
+                        setdir += path.basename(elm.href);
+                        diropt.githubdir.depth += 1;
+                    }
                     curdir = worker.reqopt.githubdir.localdir;
-                    curdir += path.sep;
                     curdir += setdir;
                     diropt.githubdir.localdir = curdir;
                     url = urlparse.protocol;
@@ -74,14 +96,18 @@ var creategithubdirPost = function (opt) {
                     /*we start 0 errors*/
                     diropt.githubdir.errors = 0;
                     //tracelog.info('url(%s) dir(%s)', diropt.githubdir.url, diropt.githubdir.localdir);
-                    baseop.mkdir_safe(curdir, function (err2) {
-                        if (err2) {
-                            tracelog.error('can not create(%s) error(%s)', curdir, err2);
+                    if (githubdirpost.maxdepth === 0 || diropt.githubdir.depth < githubdirpost.maxdepth) {
+                        baseop.mkdir_safe(curdir, function (err2) {
+                            if (err2) {
+                                tracelog.error('can not create(%s) error(%s)', curdir, err2);
+                                return;
+                            }
+                            parent.queue(diropt.githubdir.url, diropt);
                             return;
-                        }
-                        parent.queue(diropt.githubdir.url, diropt);
-                        return;
-                    });
+                        });
+                    } else {
+                        tracelog.warn('%s exceed maxdepth (%d)', diropt.githubdir.url, githubdirpost.maxdepth);
+                    }
                 } else {
                     fileopt = {};
                     fileopt.githubfile = {};
