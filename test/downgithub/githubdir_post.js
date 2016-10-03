@@ -59,6 +59,7 @@ var creategithubdirPost = function (opt) {
                 var parent = worker.parent;
                 var pathname;
                 var j = 0;
+                var elmarr, patharr;
                 if (elm.type === 'dir') {
                     diropt = {};
                     diropt.githubdir = {};
@@ -67,7 +68,6 @@ var creategithubdirPost = function (opt) {
                     diropt.githubdir.depth = worker.reqopt.githubdir.depth;
                     setdir = '';
                     if (elm.href.startsWith(pathname)) {
-                        var elmarr, patharr;
                         elmarr = elm.href.split("/");
                         patharr = pathname.split("/");
                         for (j = patharr.length; j < elmarr.length; j += 1) {
@@ -112,6 +112,13 @@ var creategithubdirPost = function (opt) {
                     fileopt = {};
                     fileopt.githubfile = {};
                     urlparse = URL.parse(worker.url);
+                    patharr = elm.href.split('/');
+                    elmarr = [];
+                    for (j = 0; j < patharr.length; j += 1) {
+                        if (patharr[j].length > 0) {
+                            elmarr.push(patharr[j]);
+                        }
+                    }
                     url = urlparse.protocol;
                     url += '//';
                     if (baseop.is_valid_string(urlparse, 'auth')) {
@@ -119,12 +126,25 @@ var creategithubdirPost = function (opt) {
                         url += '@';
                     }
                     url += urlparse.host;
-                    url += elm.href;
+                    for (j = 0; j < elmarr.length; j += 1) {
+                        url += '/';
+                        if (j === 2) {
+                            if (elmarr[j] !== 'tree' && elmarr[j] !== 'blob') {
+                                tracelog.info('(%s[%d]) (%s) ', elm.href, j, elmarr[j]);
+                                url += elmarr[j];
+                            } else {
+                                url += 'raw';
+                            }
+                        } else {
+                            url += elmarr[j];
+                        }
+                    }
+                    //url += elm.href;
                     fileopt.githubfile.url = url;
                     fileopt.githubfile.errors = 0;
                     fileopt.githubfile.localdir = worker.reqopt.githubdir.localdir;
                     //tracelog.info('url (%s) filedir(%s)', fileopt.githubfile.url, fileopt.githubfile.localdir);
-                    parent.queue(fileopt.githubfile.url, fileopt);
+                    parent.download_queue(fileopt.githubfile.url, fileopt.githubfile.localdir);
                 }
             });
         } else {
