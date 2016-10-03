@@ -63,7 +63,7 @@ var creategithubdirPost = function (opt) {
                     curdir = worker.reqopt.githubdir.localdir;
                     curdir += path.sep;
                     curdir += setdir;
-                    tracelog.info('setdir (%s)', curdir);
+                    tracelog.info('setdir (%s)', setdir);
                     diropt.githubdir.localdir = curdir;
                     tracelog.info('after set (%s)', diropt.githubdir.localdir);
                     url = urlparse.protol;
@@ -79,7 +79,7 @@ var creategithubdirPost = function (opt) {
                     diropt.githubdir.errors = 0;
                     tracelog.info('url(%s) dir(%s)', diropt.githubdir.url, diropt.githubdir.localdir);
                     baseop.mkdir_safe(curdir, function (err2) {
-                        if (err) {
+                        if (err2) {
                             tracelog.error('can not create(%s) error(%s)', curdir, err2);
                             return;
                         }
