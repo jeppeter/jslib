@@ -49,7 +49,7 @@ var creategithubfilePost = function (opt) {
             var url;
 
             urlparse = URL.parse(worker.url);
-            url = urlparse.protol;
+            url = urlparse.protocol;
             url += '//';
             if (baseop.is_valid_string(urlparse, 'auth')) {
                 url += urlparse.auth;
@@ -57,6 +57,7 @@ var creategithubfilePost = function (opt) {
             }
             url += urlparse.host;
             url += rawurl;
+            tracelog.info('url (%s) => dir(%s)', url, worker.reqopt.githubfile.localdir);
             worker.parent.download_queue(url, worker.reqopt.githubfile.localdir);
         } else {
             tracelog.warn('(%s) no elementfile raw', worker.url);

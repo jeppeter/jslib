@@ -48,7 +48,6 @@ var creategithubdirPost = function (opt) {
             listdirs.forEach(function (elm) {
                 var curdir;
                 var urlparse;
-                var pathname;
                 var setdir;
                 var diropt;
                 var fileopt;
@@ -58,16 +57,11 @@ var creategithubdirPost = function (opt) {
                     diropt = {};
                     diropt.githubdir = {};
                     urlparse = URL.parse(worker.url);
-                    pathname = urlparse.pathname;
-                    setdir = path.basename(pathname);
+                    setdir = path.basename(elm.href);
                     curdir = worker.reqopt.githubdir.localdir;
-                    tracelog.info('url (%s)  localdir(%s) ', worker.url, worker.reqopt.githubdir.localdir);
-                    tracelog.info('worker.reqopt.githubdir.localdir (%s)', worker.reqopt.githubdir.localdir);
                     curdir += path.sep;
                     curdir += setdir;
-                    tracelog.info('setdir (%s)', setdir);
                     diropt.githubdir.localdir = curdir;
-                    tracelog.info('after set (%s)', diropt.githubdir.localdir);
                     url = urlparse.protocol;
                     url += '//';
                     if (baseop.is_valid_string(urlparse, 'auth')) {
@@ -78,9 +72,8 @@ var creategithubdirPost = function (opt) {
                     url += elm.href;
                     diropt.githubdir.url = url;
                     /*we start 0 errors*/
-                    tracelog.info('worker.reqopt.githubdir.localdir (%s)', worker.reqopt.githubdir.localdir);
                     diropt.githubdir.errors = 0;
-                    tracelog.info('url(%s) dir(%s)', diropt.githubdir.url, diropt.githubdir.localdir);
+                    //tracelog.info('url(%s) dir(%s)', diropt.githubdir.url, diropt.githubdir.localdir);
                     baseop.mkdir_safe(curdir, function (err2) {
                         if (err2) {
                             tracelog.error('can not create(%s) error(%s)', curdir, err2);
@@ -93,7 +86,7 @@ var creategithubdirPost = function (opt) {
                     fileopt = {};
                     fileopt.githubfile = {};
                     urlparse = URL.parse(worker.url);
-                    url = urlparse.protol;
+                    url = urlparse.protocol;
                     url += '//';
                     if (baseop.is_valid_string(urlparse, 'auth')) {
                         url += urlparse.auth;
@@ -104,8 +97,8 @@ var creategithubdirPost = function (opt) {
                     fileopt.githubfile.url = url;
                     fileopt.githubfile.errors = 0;
                     fileopt.githubfile.localdir = worker.reqopt.githubdir.localdir;
-                    tracelog.info('url (%s) filedir(%s)', fileopt.githubfile.url, fileopt.githubfile.localdir);
-                    parent.queue(fileopt.githubdir.url, fileopt);
+                    //tracelog.info('url (%s) filedir(%s)', fileopt.githubfile.url, fileopt.githubfile.localdir);
+                    parent.queue(fileopt.githubfile.url, fileopt);
                 }
             });
         } else {
