@@ -21,11 +21,11 @@ exports.get_list_dirs = function (content) {
         svg = selects.eq(i).find('svg');
         a = selects.eq(i).find('a');
         if (baseop.is_valid_string(svg[0].attribs, 'class')) {
-            if (baseop.has_sub_string(svg[0].attribs.class, 'octicon-file-directory') || baseop.has_sub_string(svg[0].attribs.class, 'octicon-file-text')) {
+            if (baseop.has_sub_string(svg.attr('class'), 'octicon-file-directory') || baseop.has_sub_string(svg.attr('class'), 'octicon-file-text')) {
                 item = {};
                 if (baseop.has_sub_string(svg[0].attribs.class, 'octicon-file-directory')) {
                     item.type = 'dir';
-                } else {
+                } else if (baseop.has_sub_string(svg.attr('class'), 'octicon-file-text')) {
                     item.type = 'file';
                 }
                 item.href = a[0].attribs.href;
