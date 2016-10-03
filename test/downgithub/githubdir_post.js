@@ -56,17 +56,19 @@ var creategithubdirPost = function (opt) {
                 var parent = worker.parent;
                 if (elm.type === 'dir') {
                     diropt = {};
-                    diropt.githubdir = worker.reqopt.githubdir;
+                    diropt.githubdir = {};
                     urlparse = URL.parse(worker.url);
                     pathname = urlparse.pathname;
                     setdir = path.basename(pathname);
                     curdir = worker.reqopt.githubdir.localdir;
+                    tracelog.info('url (%s)  localdir(%s) ', worker.url, worker.reqopt.githubdir.localdir);
+                    tracelog.info('worker.reqopt.githubdir.localdir (%s)', worker.reqopt.githubdir.localdir);
                     curdir += path.sep;
                     curdir += setdir;
                     tracelog.info('setdir (%s)', setdir);
                     diropt.githubdir.localdir = curdir;
                     tracelog.info('after set (%s)', diropt.githubdir.localdir);
-                    url = urlparse.protol;
+                    url = urlparse.protocol;
                     url += '//';
                     if (baseop.is_valid_string(urlparse, 'auth')) {
                         url += urlparse.auth;
@@ -76,6 +78,7 @@ var creategithubdirPost = function (opt) {
                     url += elm.href;
                     diropt.githubdir.url = url;
                     /*we start 0 errors*/
+                    tracelog.info('worker.reqopt.githubdir.localdir (%s)', worker.reqopt.githubdir.localdir);
                     diropt.githubdir.errors = 0;
                     tracelog.info('url(%s) dir(%s)', diropt.githubdir.url, diropt.githubdir.localdir);
                     baseop.mkdir_safe(curdir, function (err2) {
