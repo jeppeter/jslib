@@ -9,6 +9,8 @@ var githubdir_post = require('./githubdir_post');
 var githubfile_post = require('./githubfile_post');
 
 var command_line_fmt = `{
+    "grabmaxsock|M" : 100,
+    "downloadmax|D" : 100,
     "path|P" : "%s",
     "input|i" : null,
     "output|o" : null,
