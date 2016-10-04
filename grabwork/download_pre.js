@@ -120,7 +120,7 @@ function createDownloadPre(options) {
             downloadpre.state.failed_download += 1;
         } else {
             downloadpre.state.success_download += 1;
-            if ((downloadpre.state.success_download % 100) == 0) {
+            if ((downloadpre.state.success_download % 100) === 0) {
                 if (downloadpre.output_str.length > 0) {
                     for (i = 0; i < downloadpre.output_str.length; i += 1) {
                         process.stdout.write('\b');
