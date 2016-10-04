@@ -120,13 +120,15 @@ function createDownloadPre(options) {
             downloadpre.state.failed_download += 1;
         } else {
             downloadpre.state.success_download += 1;
-            if (downloadpre.output_str.length > 0) {
-                for (i = 0; i < downloadpre.output_str.length; i += 1) {
-                    process.stdout.write('\b');
+            if ((downloadpre.state.success_download % 100) == 0) {
+                if (downloadpre.output_str.length > 0) {
+                    for (i = 0; i < downloadpre.output_str.length; i += 1) {
+                        process.stdout.write('\b');
+                    }
                 }
+                downloadpre.output_str = util.format('[%d]%s', downloadpre.state.success_download, worker.reqopt.downloadoption.downloadfile);
+                process.stdout.write(downloadpre.output_str);
             }
-            downloadpre.output_str = util.format('[%d]%s', downloadpre.state.success_download, worker.reqopt.downloadoption.downloadfile);
-            process.stdout.write(downloadpre.output_str);
         }
 
         downloadpre.state.complete_download += 1;
