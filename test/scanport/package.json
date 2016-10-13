@@ -1,0 +1,17 @@
+{
+  "name": "scanport",
+  "version": "1.0.0",
+  "description": "",
+  "main": "scanport.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "extargsparse": "latest"
+  },
+
+  "keywords": ["network", "scanport"],
+  "author": "jeppeter",
+  "email": "jeppeter@gmail.com",
+  "license": "ISC"
+}
