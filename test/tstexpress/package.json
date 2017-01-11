@@ -15,7 +15,9 @@
     "ejs" : "latest" ,
     "morgan" : "latest" ,
     "jade" : "latest" ,
-    "cookie-parser" : "latest"
+    "cookie-parser" : "latest",
+    "extargsparse" : "latest",
+    "tracer" : "latest"
     },
   "keywords": [],
   "author": "",
