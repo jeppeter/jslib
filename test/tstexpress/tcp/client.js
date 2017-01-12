@@ -114,10 +114,17 @@ var write_file_process = function (client, wstream, endcallback) {
     'use strict';
     var writed = 0;
     client.paused = false;
+    client.actpaused = false;
 
-    wstream.on('writable', function () {
-        if (client.paused !== true) {
+    wstream.on('drain', function () {
+        if (client.paused !== true && client.actpaused === true) {
             client.resume();
+            client.actpaused = false;
+            tracelog.info('act paused resume');
+        } else if (client.paused === true) {
+            tracelog.info('paused not resume');
+        } else {
+            tracelog.info('no reason drain');
         }
     });
 
@@ -135,9 +142,11 @@ var write_file_process = function (client, wstream, endcallback) {
         if (!bret) {
             tracelog.info('client pause (%d)', writed);
             client.pause();
+            client.actpaused = true;
         } else if (args.timesleep > 0) {
             client.paused = true;
             client.pause();
+            tracelog.info('pause [%d](%d)', args.timesleep, writed);
             setTimeout(function () {
                 if (client.paused === true) {
                     client.paused = false;

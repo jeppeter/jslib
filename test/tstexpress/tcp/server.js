@@ -34,6 +34,7 @@ var write_sock_process = function (sock, rstream, endcallback) {
     'use strict';
     var writed = 0;
     sock.paused = false;
+    sock.actpaused = false;
     rstream.on('data', function (chunk) {
         var bret;
         bret = sock.write(chunk, 'binary');
@@ -41,8 +42,10 @@ var write_sock_process = function (sock, rstream, endcallback) {
         if (!bret) {
             tracelog.info('pause read [%s] (%d)', args.files[0], writed);
             rstream.pause();
+            sock.actpaused = true;
         } else if (args.timesleep !== 0) {
             sock.paused = true;
+            tracelog.info('pause [%d] (%d)', args.timesleep, writed);
             setTimeout(function () {
                 if (sock.paused === true) {
                     sock.paused = false;
@@ -64,12 +67,15 @@ var write_sock_process = function (sock, rstream, endcallback) {
             endcallback(null);
         }
     });
-    sock.on('writable', function () {
-        if (sock.paused !== true) {
+    sock.on('drain', function () {
+        if (sock.paused !== true && sock.actpaused === true) {
             tracelog.info('resume not paused');
             rstream.resume();
-        } else {
+            sock.actpaused = false;
+        } else if (sock.paused === true) {
             tracelog.info('writable on paused time');
+        } else {
+            tracelog.info('sock no drain');
         }
     });
     sock.on('data', function (chunk) {
