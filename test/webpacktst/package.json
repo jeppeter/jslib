@@ -1,0 +1,22 @@
+{
+  "name": "webpacktst",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies" : {
+    "webpack" : "latest",
+    "css-loader" : "latest",
+    "style-loader" : "latest"
+  },
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/jeppeter/jslib.git"
+  },
+  "keywords": ["webpack"],
+  "author": "jeppeter@gmail.com",
+  "license": "ISC",
+  "description": "webpack test case",
+  "README" : "README"
+}
