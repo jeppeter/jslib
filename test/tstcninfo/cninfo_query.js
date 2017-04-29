@@ -171,7 +171,8 @@ function createCninfoQuery(options) {
         /*ok we should get all the anountments*/
         for (i = 0; i < querylist.pdfs.length; i += 1) {
             curannounce = querylist.pdfs[i];
-            if (baseop.match_expr_i(curannounce.adjunctUrl, '\.pdf$')) {
+            if (baseop.match_expr_i(curannounce.adjunctUrl, '\.pdf$') ||
+                    baseop.match_expr_i(curannounce.adjunctUrl, '\.html$')) {
                 downpdf = hosturl;
                 downpdf += curannounce.adjunctUrl;
                 worker.parent.download_queue(downpdf, curdowndir, {
