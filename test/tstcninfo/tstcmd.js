@@ -36,10 +36,10 @@ var command_line_format = `
         "grabtimeout|t" : 10000,
         "startdate|S" : "19990101",
         "enddate|E" : "%s",
-        "stockcode|s" : "600000",
         "topdir|P" : "%s",
         "watermark|w" : 20,
-        "url|U" : "http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/"
+        "url|U" : "http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/",
+        "$" : "+"
     }
 `;
 var command_line;
@@ -90,6 +90,9 @@ var mainurl;
 mainurl = args.url + args.stockcode;
 tracelog.info('url (%s)', mainurl);
 
-grab.queue(mainurl, {
-    cninfomain: args.stockcode
+args.args.forEach(function (code) {
+    'use strict';
+    grab.queue(mainurl, {
+        cninfomain: code
+    });
 });
