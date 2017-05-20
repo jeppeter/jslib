@@ -32,12 +32,12 @@ var trace_exit = function (ec) {
 
 var command_line_format = `
     {
-        "grabmaxsock|m" : 10,
+        "grabmaxsock|m" : 30,
         "grabtimeout|t" : 10000,
         "startdate|S" : "19990101",
         "enddate|E" : "%s",
         "topdir|P" : "%s",
-        "watermark|w" : 20,
+        "watermark|w" : 50,
         "url|U" : "http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/",
         "$" : "+"
     }
