@@ -1,5 +1,5 @@
 var http = require('http');
-var extargsparse = require('../../extargsparse');
+var extargsparse = require('extargsparse');
 var command_line = `
     {
         "port|p" : 3000

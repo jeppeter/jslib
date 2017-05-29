@@ -1,6 +1,6 @@
 var fs = require('fs');
 var path = require('path');
-var tracelog = require('../tracelog');
+var jstracer = require('jstracer');
 var util = require('util');
 module.exports.remove_array = function (array, elm) {
     'use strict';
@@ -409,7 +409,7 @@ var split_by_oneyear = function (startdate, enddate) {
             eday = parseInt(enddate.substring(6, 8));
 
             if (syear < eyear || (syear === eyear && smonth < emonth) || (syear === eyear && smonth === emonth && sday <= eday)) {
-                tracelog.info('');
+                jstracer.info('');
                 csyear = syear;
                 ceyear = syear;
 

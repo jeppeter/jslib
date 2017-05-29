@@ -9,7 +9,7 @@ var hkexnewspaper_post = require('./hkexnewspaper_post');
 var hkexnewsextend_post = require('./hkexnewsextend_post');
 var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('../../grabwork/random_delay');
-var extargsparse = require('../../extargsparse');
+var extargsparse = require('extargsparse');
 var curdate;
 var d = new Date();
 

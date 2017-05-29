@@ -1,5 +1,5 @@
 var request = require('request');
-var tracelog = require('../tracelog');
+var jstracer = require('jstracer');
 var baseop = require('../baseop');
 var util = require('util');
 
@@ -47,12 +47,12 @@ function createWorker(parent, meth, url, reqopt) {
 
     worker.add_finish = function (finish_func) {
         if (typeof finish_func !== 'function') {
-            tracelog.error('%s not function', finish_func);
+            jstracer.error('%s not function', finish_func);
             return;
         }
 
         if (worker.finish_callbacks.indexOf(finish_func) >= 0) {
-            tracelog.warn('%s already in', finish_func);
+            jstracer.warn('%s already in', finish_func);
             return;
         }
         worker.finish_callbacks.push(finish_func);
@@ -137,13 +137,13 @@ function createGrabwork(options) {
         /*we push it into the request queue, as it will work ok*/
         self.reqworkqueue.push(worker);
         if (self.reqworkqueue.length > self.grabmaxsock && self.grabmaxsock !== 0) {
-            tracelog.error('length %d grabmaxsock %d', self.reqworkqueue.length, self.grabmaxsock);
+            jstracer.error('length %d grabmaxsock %d', self.reqworkqueue.length, self.grabmaxsock);
         }
         reqopt.url = url;
         reqopt.method = meth;
         self.reqworkqueue.push(worker);
         if (false) {
-            tracelog.trace('worker (%s)', util.inspect(worker, {
+            jstracer.trace('worker (%s)', util.inspect(worker, {
                 showHidden: true,
                 depth: 3
             }));
@@ -157,13 +157,13 @@ function createGrabwork(options) {
                 worker.finish(null);
             });
             worker.pipe.on('error', function (err) {
-                tracelog.error('(%s) error(%s)', worker.url, JSON.stringify(err));
+                jstracer.error('(%s) error(%s)', worker.url, JSON.stringify(err));
                 worker.finish(err);
             });
 
             request(reqopt, function (err) {
                 if (err) {
-                    tracelog.error('<%s::%s> error(%s)', worker.meth, worker.url, JSON.stringify(err));
+                    jstracer.error('<%s::%s> error(%s)', worker.meth, worker.url, JSON.stringify(err));
                     worker.finish(err);
                     return;
                 }
@@ -174,7 +174,7 @@ function createGrabwork(options) {
                     worker.response = resp;
                     worker.htmldata = body;
                 } else {
-                    tracelog.error('(%s) error(%s)', worker.url, JSON.stringify(err));
+                    jstracer.error('(%s) error(%s)', worker.url, JSON.stringify(err));
                 }
                 worker.post_next(true, err);
             });
@@ -321,19 +321,19 @@ function createGrabwork(options) {
             }
 
             if (!baseop.is_url_format(url2)) {
-                tracelog.warn('<no url specified>');
+                jstracer.warn('<no url specified>');
                 return;
             }
         }
 
         if (baseop.is_valid_string(reqopt.downloadoption, 'downloaddir')) {
             if (dir2 !== '' && dir2 !== reqopt.downloadoption.downloaddir) {
-                tracelog.warn('downloadoption.downloaddir <%s> != <%s>', reqopt.downloadoption.downloaddir, dir2);
+                jstracer.warn('downloadoption.downloaddir <%s> != <%s>', reqopt.downloadoption.downloaddir, dir2);
                 reqopt.downloadoption.downloaddir = dir2;
             }
         } else {
             if (dir2 === '') {
-                tracelog.warn('not specify downloaddir for (%s)', url2);
+                jstracer.warn('not specify downloaddir for (%s)', url2);
                 dir2 = __dirname;
             }
             reqopt.downloadoption.downloaddir = dir2;
@@ -345,12 +345,12 @@ function createGrabwork(options) {
 
     self.add_pre = function (handler) {
         if (handler.pre_handler === null || handler.pre_handler === undefined || typeof handler.pre_handler !== 'function') {
-            tracelog.error('handler (%s) not functions', handler);
+            jstracer.error('handler (%s) not functions', handler);
             return;
         }
 
         if (self.pre_handlers.indexOf(handler) >= 0) {
-            tracelog.warn('handler (%s) already in', handler);
+            jstracer.warn('handler (%s) already in', handler);
             return;
         }
         self.pre_handlers.push(handler);
@@ -359,12 +359,12 @@ function createGrabwork(options) {
 
     self.add_post = function (handler) {
         if (handler.post_handler === null || handler.post_handler === undefined || typeof handler.post_handler !== 'function') {
-            tracelog.error('handler (%s) not valid', handler);
+            jstracer.error('handler (%s) not valid', handler);
             return;
         }
 
         if (self.post_handlers.indexOf(handler) >= 0) {
-            tracelog.warn('handler (%s) already in', handler);
+            jstracer.warn('handler (%s) already in', handler);
             return;
         }
         self.post_handlers.push(handler);

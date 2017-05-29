@@ -1,4 +1,4 @@
-var tracelog = require('../tracelog');
+var jstracer = require('jstracer');
 var urlparse = require('url');
 var path = require('path');
 var fs = require('fs');
@@ -32,7 +32,7 @@ function createDownloadPre(options) {
         getfilename = path.basename(getdir.pathname);
 
         if (getfilename.length === 0) {
-            tracelog.error('can not get from path (%s)', worker.url);
+            jstracer.error('can not get from path (%s)', worker.url);
             /*we can not download any more*/
             worker.reqopt.url = '';
             next(false, null);
@@ -48,7 +48,7 @@ function createDownloadPre(options) {
             downloadpre.workingfiles.push(fname);
             baseop.mkdir_safe(fdir, function (err) {
                 if (err) {
-                    tracelog.error('can not mkdir(%s) (%s)', fdir, err);
+                    jstracer.error('can not mkdir(%s) (%s)', fdir, err);
                     worker.url = '';
                     next(false, err);
                     return;
@@ -62,7 +62,7 @@ function createDownloadPre(options) {
             });
             return;
         }
-        tracelog.info('worker <%s> file already in downloading (%s)', worker.url, fname);
+        jstracer.info('worker <%s> file already in downloading (%s)', worker.url, fname);
         /*the file is already handled ,so we do not handle this any more*/
         worker.url = '';
         next(true, null);
@@ -97,7 +97,7 @@ function createDownloadPre(options) {
             /*we should remove the */
             downloadpre.workingfiles = baseop.remove_array(downloadpre.workingfiles, worker.reqopt.downloadoption.downloadfile);
         } else {
-            tracelog.warn('<%s> not in workingfiles', worker.reqopt.downloadoption.downloadfile);
+            jstracer.warn('<%s> not in workingfiles', worker.reqopt.downloadoption.downloadfile);
         }
 
         if (err) {
@@ -111,10 +111,10 @@ function createDownloadPre(options) {
                 sendreqopt = worker.reqopt;
                 sendreqopt.downloadoption.downloadtries = trytimes;
                 if (trytimes < 5) {
-                    tracelog.warn('[%d]request (%s) again', trytimes, worker.url);
+                    jstracer.warn('[%d]request (%s) again', trytimes, worker.url);
                     worker.parent.download_queue(worker.url, sendreqopt);
                 } else {
-                    tracelog.error('request (%s) failed totally', worker.url);
+                    jstracer.error('request (%s) failed totally', worker.url);
                 }
             }
             downloadpre.state.failed_download += 1;
@@ -148,7 +148,7 @@ function createDownloadPre(options) {
         }
         if (err) {
             /*if we have nothing to do*/
-            tracelog.error('downloaddir (%s) error(%s)', worker.reqopt.downloadoption.downloaddir, JSON.stringify(err));
+            jstracer.error('downloaddir (%s) error(%s)', worker.reqopt.downloadoption.downloaddir, JSON.stringify(err));
             worker.url = '';
             next(false, err);
             return;

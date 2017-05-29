@@ -1,7 +1,7 @@
 //var util = require('util');
 var jstracer = require('jstracer');
 var http = require('http');
-var extargsparse = require('../../extargsparse');
+var extargsparse = require('extargsparse');
 
 var command_line = `
     {

@@ -6,7 +6,7 @@ var filehdl = require('./expr_filedir');
 module.exports = express();
 var app = module.exports;
 var newapp = express();
-var extargsparse = require('../../extargsparse');
+var extargsparse = require('extargsparse');
 var parser, args;
 var command_line_fmt = `
     {
