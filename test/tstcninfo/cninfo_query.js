@@ -1,4 +1,4 @@
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var baseop = require('../../baseop');
 var util = require('util');
 var URL = require('url');
@@ -13,17 +13,17 @@ var get_annoucement = function (opt) {
     var curpdf;
 
     if (!baseop.is_non_null(opt, 'announcements')) {
-        tracelog.error('can not get classifiedAnnouncements');
+        jstracer.error('can not get classifiedAnnouncements');
         return null;
     }
 
     if (!baseop.is_non_null(opt, 'totalAnnouncement')) {
-        tracelog.error('can not get totalAnnouncement');
+        jstracer.error('can not get totalAnnouncement');
         return null;
     }
 
     if (!baseop.is_non_null(opt, 'totalRecordNum')) {
-        tracelog.error('can not get totalRecordNum');
+        jstracer.error('can not get totalRecordNum');
         return null;
     }
 
@@ -35,7 +35,7 @@ var get_annoucement = function (opt) {
         for (i = 0; i < opt.announcements.length; i += 1) {
             curelm = opt.announcements[i];
             if (!baseop.is_non_null(curelm, 'adjunctUrl')) {
-                tracelog.warn('[%d] no adjunctUrl', i);
+                jstracer.warn('[%d] no adjunctUrl', i);
             } else {
                 curpdf = {};
                 curpdf.adjunctUrl = curelm.adjunctUrl;
@@ -90,7 +90,7 @@ function createCninfoQuery(options) {
         if (err) {
             /*it is error*/
             postdata = worker.reqopt.reqopt.body;
-            tracelog.error('POST (%s) with data (%s) error', worker.url, postdata);
+            jstracer.error('POST (%s) with data (%s) error', worker.url, postdata);
             sendcninfoquery = cninfoquery;
             /*it means we have retry this*/
             sendcninfoquery.retry += 1;
@@ -105,7 +105,7 @@ function createCninfoQuery(options) {
                     cninfoquery: sendcninfoquery
                 });
             } else {
-                tracelog.error('POST (%s) with data (%s) really failed', worker.url, postdata);
+                jstracer.error('POST (%s) with data (%s) really failed', worker.url, postdata);
             }
             next(false, err);
             return;
@@ -116,7 +116,7 @@ function createCninfoQuery(options) {
         try {
             parser = JSON.parse(worker.htmldata);
         } catch (e) {
-            tracelog.error('parse (%s) error', worker.htmldata);
+            jstracer.error('parse (%s) error', worker.htmldata);
             next(false, e);
             return;
         }
@@ -124,7 +124,7 @@ function createCninfoQuery(options) {
         querylist = get_annoucement(parser);
         if (querylist === null) {
             err2 = new Error('can not parse parser');
-            tracelog.error('parse (%s) error', worker.htmldata);
+            jstracer.error('parse (%s) error', worker.htmldata);
             next(false, err2);
             return;
         }
@@ -153,7 +153,7 @@ function createCninfoQuery(options) {
                 postdata += util.format('column=%s', sendcninfoquery.column);
                 postdata += '&tabName=fulltext&sortName=&sortType=&limit=&';
                 postdata += util.format('seDate=%s+~+%s', sendcninfoquery.startdate, sendcninfoquery.enddate);
-                tracelog.info('send<%s> postdata (%s)', worker.url, postdata);
+                jstracer.info('send<%s> postdata (%s)', worker.url, postdata);
                 worker.parent.post_queue(worker.url, {
                     priority: grabwork.DEF_PRIORITY,
                     cninfoquery: sendcninfoquery,
@@ -179,7 +179,7 @@ function createCninfoQuery(options) {
                     priority: grabwork.MAX_PRIORITY
                 });
             } else {
-                tracelog.warn('<%s:%s>[%d] not pdf (%s)', cninfoquery.stockcode, cninfoquery.startdate, i, curannounce.adjunctUrl);
+                jstracer.warn('<%s:%s>[%d] not pdf (%s)', cninfoquery.stockcode, cninfoquery.startdate, i, curannounce.adjunctUrl);
             }
         }
 

@@ -14,16 +14,17 @@
     "url": ""
   },
   "dependencies": {
-    "extargsparse": "latest",
-    "request": "latest",
-    "tracer": "latest",
     "cheerio": "latest",
-    "express": "latest",
-    "formidable": "latest",
     "ejs": "latest",
+    "express": "latest",
+    "extargsparse": "latest",
+    "formidable": "latest",
+    "jstracer": "latest",
     "keep-alive-agent": "latest",
+    "mktemp": "latest",
+    "request": "latest",
     "tape": "latest",
-    "mktemp": "latest"
+    "tracer": "latest"
   },
   "keywords": [],
   "author": "",

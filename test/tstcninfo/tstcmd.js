@@ -1,4 +1,4 @@
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var grabwork = require('../../grabwork');
 var baseop = require('../../baseop');
 var util = require('util');
@@ -21,7 +21,7 @@ curdate += baseop.number_format_length(2, d.getDate());
 
 var trace_exit = function (ec) {
     'use strict';
-    tracelog.finish(function (err) {
+    jstracer.finish(function (err) {
         if (err) {
             return;
         }
@@ -64,11 +64,11 @@ var curdir = __dirname;
 curdir = curdir.replace(/\\/g, '\\\\');
 command_line = util.format(command_line_format, curdate, curdir);
 parser.load_command_line_string(command_line);
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 
 process.on('uncaughtException', function (err) {
     'use struct';
-    tracelog.error('error (%s) stack(%s)', err, err.stack);
+    jstracer.error('error (%s) stack(%s)', err, err.stack);
     trace_exit(3);
 });
 
@@ -78,7 +78,7 @@ process.on('SIGINT', function () {
 });
 
 args = parser.parse_command_line();
-tracelog.set_args(args);
+jstracer.set_args(args);
 
 
 grab.add_pre(random_delay());
@@ -88,7 +88,7 @@ grab.add_post(cninfomain(args));
 grab.add_post(cninfoquery(args));
 var mainurl;
 mainurl = args.url + args.stockcode;
-tracelog.info('url (%s)', mainurl);
+jstracer.info('url (%s)', mainurl);
 
 args.args.forEach(function (code) {
     'use strict';

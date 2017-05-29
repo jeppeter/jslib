@@ -1,4 +1,4 @@
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var baseop = require('../../baseop');
 var util = require('util');
 var grabwork = require('../../grabwork');
@@ -93,7 +93,7 @@ function createCninfoMain(options) {
         columnval = get_attr_value(column, parser, 'value');
         if (columnval === '') {
             err2 = new Error('can not get column_hidden_input.value');
-            tracelog.error('can not get column_hidden_input.value');
+            jstracer.error('can not get column_hidden_input.value');
             next(false, err2);
             return;
         }
@@ -102,7 +102,7 @@ function createCninfoMain(options) {
         yeardate = baseop.split_by_oneyear(cninfo.options.startdate, cninfo.options.enddate);
         if (yeardate.length === 0) {
             err2 = new Error(util.format('can not split date (%s - %s)', cninfo.options.startdate, cninfo.options.enddate));
-            tracelog.error('error(%s)', err2);
+            jstracer.error('error(%s)', err2);
             next(false, err2);
             return;
         }
@@ -125,7 +125,7 @@ function createCninfoMain(options) {
             cninfoquery.startdate = yeardate[i].startdate;
             cninfoquery.enddate = yeardate[i].enddate;
             cninfoquery.retry = 0;
-            tracelog.info('post query (%s) (%s)', queryurl, postdata);
+            jstracer.info('post query (%s) (%s)', queryurl, postdata);
             worker.parent.post_queue(queryurl, {
                 reqopt: {
                     body: postdata,
