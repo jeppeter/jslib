@@ -2,7 +2,7 @@ var filehandle = require('./lib/filehandle');
 var qs = require('querystring');
 var util = require('util');
 var http = require('http');
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var path = require('path');
 var fs = require('fs');
 var ejs = require('ejs');
@@ -18,9 +18,9 @@ var command_line_fmt = `
 var command_line = util.format(command_line_fmt, __dirname.replace(/\\/g, '\\\\'));
 parser = extargsparse.ExtArgsParse();
 parser.load_command_line_string(command_line);
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 args = parser.parse_command_line();
-tracelog.set_args(args);
+jstracer.set_args(args);
 
 
 var directory = args.path;
@@ -32,13 +32,13 @@ var __handle_ejsdata_func = function () {
     var ejsdata;
 
     return function (file, callback) {
-        tracelog.trace('call test ejsdata');
+        jstracer.trace('call test ejsdata');
         if (ejsdata) {
-            tracelog.trace('will put ejsdata (%s)', ejsdata);
+            jstracer.trace('will put ejsdata (%s)', ejsdata);
             callback(null, ejsdata);
             return ejsdata;
         }
-        tracelog.trace('fs read %s', file);
+        jstracer.trace('fs read %s', file);
         fs.readFile(file, 'utf-8', function (err, data1) {
             if (err) {
                 callback(err, null);
@@ -55,8 +55,8 @@ var __handle_ejsdata_func = function () {
 
 process.on('SIGINT', function () {
     'use strict';
-    tracelog.warn('caught sig int');
-    tracelog.finish(function (err) {
+    jstracer.warn('caught sig int');
+    jstracer.finish(function (err) {
         if (err) {
             console.error('on finish error (%s)', err);
             return;
@@ -67,8 +67,8 @@ process.on('SIGINT', function () {
 
 process.on('uncaughtException', function (err) {
     'use struct';
-    tracelog.error('error (%s)', err);
-    tracelog.finish(function (err) {
+    jstracer.error('error (%s)', err);
+    jstracer.finish(function (err) {
         if (err) {
             console.log('error on (%s)', err);
             return;
@@ -85,7 +85,7 @@ http.createServer(function (req, res) {
     var inputjson;
     var host, hostarr;
     inputjson = {};
-    /*tracelog.info(util.inspect(req, {
+    /*jstracer.info(util.inspect(req, {
         showHidden: true,
         depth: null
     }));*/
@@ -94,7 +94,7 @@ http.createServer(function (req, res) {
     hostarr = host.split(':');
     host = hostarr[0];
     host = util.format('http://%s:%d', host, lport + 1);
-    tracelog.info('(%s)method %s', req.headers.host, req.method);
+    jstracer.info('(%s)method %s', req.headers.host, req.method);
     if (req.method === 'GET') {
         inputjson.basedir = directory;
         filehandle.list_dir(inputjson, req, res, function (err, outputjson, req, res) {
@@ -128,14 +128,14 @@ http.createServer(function (req, res) {
                     res.writeHead(500);
                     if (typeof e === 'object') {
                         if (err.message) {
-                            tracelog.error('error (%s)', err.message);
+                            jstracer.error('error (%s)', err.message);
                         }
                         if (err.stack) {
-                            tracelog.error('stack (%s)', err.stack);
+                            jstracer.error('stack (%s)', err.stack);
                         }
-                        tracelog.error('%s', JSON.stringify(err));
+                        jstracer.error('%s', JSON.stringify(err));
                     } else {
-                        tracelog.error('error %s', err);
+                        jstracer.error('error %s', err);
                     }
                     res.end(JSON.stringify(e));
                     return;
@@ -168,7 +168,7 @@ http.createServer(function (req, res) {
             body.push(chunk);
         }).on('end', function () {
             var setmaxage = false;
-            tracelog.info('body (%s)', Buffer.concat(body).toString());
+            jstracer.info('body (%s)', Buffer.concat(body).toString());
             if (req.headers['access-control-request-method']) {
                 res.headers('access-control-request-method', req.headers['access-control-request-method']);
                 setmaxage = true;
@@ -195,7 +195,7 @@ http.createServer(function (req, res) {
     var rstream;
     var host;
     var hostarr;
-    tracelog.info('(%s)method %s', req.headers.host, req.method);
+    jstracer.info('(%s)method %s', req.headers.host, req.method);
     if (req.method === 'GET') {
         requrl = req.url;
         host = req.headers.host;
@@ -211,7 +211,7 @@ http.createServer(function (req, res) {
             newfile = getfile.replace(path.sep, '/');
         }
         getfile = getfile.replace(/[\/]+/g, path.sep);
-        tracelog.info('get file %s', getfile);
+        jstracer.info('get file %s', getfile);
 
         fs.stat(getfile, function (err, stats) {
             var errorinfo;
@@ -231,16 +231,16 @@ http.createServer(function (req, res) {
 
             rstream = fs.createReadStream(getfile);
             rstream.on('open', function () {
-                tracelog.info('opened (%s)', getfile);
+                jstracer.info('opened (%s)', getfile);
                 rstream.pipe(res);
             });
             rstream.on('error', function (err) {
-                tracelog.error('read %s error(%s)', getfile, JSON.stringify(err));
+                jstracer.error('read %s error(%s)', getfile, JSON.stringify(err));
                 res.end();
             });
 
             rstream.on('end', function () {
-                tracelog.info('ended (%s)', getfile);
+                jstracer.info('ended (%s)', getfile);
                 res.end();
             });
 
@@ -251,4 +251,4 @@ http.createServer(function (req, res) {
     }
 }).listen(lport + 1);
 
-tracelog.info('listne(%d) on (%s)', lport, directory);
+jstracer.info('listne(%d) on (%s)', lport, directory);

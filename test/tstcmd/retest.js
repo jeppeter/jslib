@@ -1,5 +1,5 @@
-var tracelog = require('../../tracelog');
-var extargsparse = require('../../extargsparse');
+var jstracer = require('jstracer');
+var extargsparse = require('extargsparse');
 var parser = extargsparse.ExtArgsParse();
 //var util = require('util');
 var command_line = `
@@ -21,7 +21,7 @@ var command_line = `
 
 var trace_exit = function (ec) {
     'use strict';
-    tracelog.finish(function (err) {
+    jstracer.finish(function (err) {
         if (err) {
             return;
         }
@@ -32,7 +32,7 @@ var trace_exit = function (ec) {
 
 
 parser.load_command_line_string(command_line);
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 
 var re_match = function (args) {
     'use strict';
@@ -40,8 +40,8 @@ var re_match = function (args) {
     var restr, instr;
     restr = args.subnargs[0];
     instr = args.subnargs[1];
-    tracelog.set_args(args);
-    tracelog.info('restr (%s) instr (%s)', restr, instr);
+    jstracer.set_args(args);
+    jstracer.info('restr (%s) instr (%s)', restr, instr);
 
     reg = new RegExp(restr);
     if (reg.test(instr)) {
@@ -61,8 +61,8 @@ var re_imatch = function (args) {
     var restr, instr;
     restr = args.subnargs[0];
     instr = args.subnargs[1];
-    tracelog.set_args(args);
-    tracelog.info('restr (%s) instr (%s)', restr, instr);
+    jstracer.set_args(args);
+    jstracer.info('restr (%s) instr (%s)', restr, instr);
 
     reg = new RegExp(restr, 'i');
     if (reg.test(instr)) {
@@ -82,8 +82,8 @@ var re_find = function (args) {
     var restr, instr;
     restr = args.subnargs[0];
     instr = args.subnargs[1];
-    tracelog.set_args(args);
-    tracelog.info('args %s %s', restr, instr);
+    jstracer.set_args(args);
+    jstracer.info('args %s %s', restr, instr);
 
     reg = new RegExp(restr, 'i');
     m = reg.exec(instr);
@@ -106,8 +106,8 @@ var re_ifind = function (args) {
     var restr, instr;
     restr = args.subnargs[0];
     instr = args.subnargs[1];
-    tracelog.set_args(args);
-    tracelog.info('args %s %s', restr, instr);
+    jstracer.set_args(args);
+    jstracer.info('args %s %s', restr, instr);
 
     reg = new RegExp(restr, 'i');
     m = reg.exec(instr);

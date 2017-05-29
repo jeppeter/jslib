@@ -1,4 +1,4 @@
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var cheerio = require('cheerio');
 var util = require('util');
 var qs = require('querystring');
@@ -179,17 +179,17 @@ function createHkexNewsMainPost(options) {
                     }
                 });
             } else {
-                tracelog.error('can not make hkexnewsmainoption (%s)', worker.url);
+                jstracer.error('can not make hkexnewsmainoption (%s)', worker.url);
             }
             next(true, err);
             return;
         }
 
         /*now it is time ,we handle ,so we should no more to handle out*/
-        //tracelog.info('htmldata (%s)', worker.htmldata);
+        //jstracer.info('htmldata (%s)', worker.htmldata);
         parser = cheerio.load(worker.htmldata);
         inputs = parser('input');
-        tracelog.info('inputs (%d)', inputs.length);
+        jstracer.info('inputs (%d)', inputs.length);
         findinput = null;
         for (i = 0; i < inputs.length; i += 1) {
             input = inputs[i];
@@ -215,7 +215,7 @@ function createHkexNewsMainPost(options) {
 
         /*now we find the input ,so we should all things we should put post data*/
         postdata = hknews.make_post_data(findinput, worker.reqopt.hkexnewsmainoption);
-        //tracelog.info('postdata (%s)', postdata);
+        //jstracer.info('postdata (%s)', postdata);
         worker.parent.post_queue(worker.url, {
             hkexnewspaperoption: {
                 downdir: hknews.topdir,

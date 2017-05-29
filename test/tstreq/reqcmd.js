@@ -1,6 +1,6 @@
 var request = require('request');
-var tracelog = require('../../tracelog');
-var extargsparse = require('../../extargsparse');
+var jstracer = require('jstracer');
+var extargsparse = require('extargsparse');
 var util = require('util');
 var URL = require('url');
 var path = require('path');
@@ -29,7 +29,7 @@ var command_line = `
 
 var trace_exit = function (ec) {
     'use strict';
-    tracelog.finish(function (err) {
+    jstracer.finish(function (err) {
         if (err) {
             return;
         }
@@ -43,11 +43,11 @@ var get_command = function (args) {
     'use strict';
     var errcode = 0;
     var urls = args.subnargs;
-    tracelog.set_args(args);
-    tracelog.info('urls(%d) %s', urls.length, urls);
+    jstracer.set_args(args);
+    jstracer.info('urls(%d) %s', urls.length, urls);
     baseop.read_json_parse(args.jsonfile, function (err, opt) {
         if (err) {
-            tracelog.error('can not read (%s)', args.jsonfile);
+            jstracer.error('can not read (%s)', args.jsonfile);
             trace_exit(3);
             return;
         }
@@ -57,7 +57,7 @@ var get_command = function (args) {
                     errcode = 3;
                 } else {
                     console.log('<%d:%s> htmls(%s)', idx, elm, body2);
-                    tracelog.info('<%d:%s> htmls(%s)', idx, elm, body2);
+                    jstracer.info('<%d:%s> htmls(%s)', idx, elm, body2);
                 }
                 resp2 = resp2;
                 if (idx === (urls.length - 1)) {
@@ -85,7 +85,7 @@ var pipe_command = function (args) {
         outfile = path.basename(outfile);
         outfile = __dirname + path.sep + outfile;
     }
-    tracelog.set_args(args);
+    jstracer.set_args(args);
 
     baseop.read_json_parse(args.jsonfile, function (err, opt) {
         if (err) {
@@ -96,18 +96,18 @@ var pipe_command = function (args) {
 
         ws = fs.createWriteStream(outfile);
         ws.on('error', function (err) {
-            tracelog.error('parse <%s> error(%s)', outfile, JSON.stringify(err));
+            jstracer.error('parse <%s> error(%s)', outfile, JSON.stringify(err));
             trace_exit(3);
             return;
         });
         ws.on('close', function () {
-            tracelog.info('<%s> closed', url);
+            jstracer.info('<%s> closed', url);
             trace_exit(0);
             return;
         });
         request.get(url, opt, function (err2) {
             if (err2) {
-                tracelog.error('<%s> error(%s)', url, JSON.stringify(err2));
+                jstracer.error('<%s> error(%s)', url, JSON.stringify(err2));
                 trace_exit(3);
                 return;
             }
@@ -122,8 +122,8 @@ var post_command = function (args) {
     var errcode = 0;
     var postdata = '';
     var urls = args.subnargs;
-    tracelog.set_args(args);
-    tracelog.info('urls(%d) %s', urls.length, urls);
+    jstracer.set_args(args);
+    jstracer.info('urls(%d) %s', urls.length, urls);
     postdata = '';
     if (baseop.is_valid_string(args, 'post_data')) {
         postdata = args.post_data;
@@ -131,14 +131,14 @@ var post_command = function (args) {
     if (baseop.is_valid_string(args, 'post_file')) {
         fs.readFile(args.post_file, function (err2, data) {
             if (err2) {
-                tracelog.error('can not read (%s) (%s)', args.post_file, JSON.stringify(err2));
+                jstracer.error('can not read (%s) (%s)', args.post_file, JSON.stringify(err2));
                 trace_exit(3);
                 return;
             }
             postdata = data;
             baseop.read_json_parse(args.jsonfile, function (err, opt) {
                 if (err) {
-                    tracelog.error('can not read (%s) (%s)', args.jsonfile, JSON.stringify(err));
+                    jstracer.error('can not read (%s) (%s)', args.jsonfile, JSON.stringify(err));
                     trace_exit(3);
                     return;
                 }
@@ -153,8 +153,8 @@ var post_command = function (args) {
                         if (err3) {
                             errcode = 3;
                         } else {
-                            tracelog.info('<%d:%s> htmls(%s)', idx, elm, body3);
-                            tracelog.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp3.headers, {
+                            jstracer.info('<%d:%s> htmls(%s)', idx, elm, body3);
+                            jstracer.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp3.headers, {
                                 showHidden: true,
                                 depth: null
                             }));
@@ -170,7 +170,7 @@ var post_command = function (args) {
     } else {
         baseop.read_json_parse(args.jsonfile, function (err, opt) {
             if (err) {
-                tracelog.error('can not read (%s) (%s)', args.jsonfile, JSON.stringify(err));
+                jstracer.error('can not read (%s) (%s)', args.jsonfile, JSON.stringify(err));
                 trace_exit(3);
                 return;
             }
@@ -185,8 +185,8 @@ var post_command = function (args) {
                     if (err4) {
                         errcode = 3;
                     } else {
-                        tracelog.info('<%d:%s> htmls(%s)', idx, elm, body4);
-                        tracelog.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp4.headers, {
+                        jstracer.info('<%d:%s> htmls(%s)', idx, elm, body4);
+                        jstracer.info('<%d:%s> headers(%s)', idx, elm, util.inspect(resp4.headers, {
                             showHidden: true,
                             depth: null
                         }));
@@ -219,5 +219,5 @@ parser = extargsparse.ExtArgsParse({
 });
 
 parser.load_command_line_string(command_line);
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 parser.parse_command_line();

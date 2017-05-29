@@ -1,6 +1,6 @@
 var express = require('express');
-var extargsparse = require('../../extargsparse');
-var tracelog = require('../../tracelog');
+var extargsparse = require('extargsparse');
+var jstracer = require('jstracer');
 var util = require('util');
 var app;
 var command_line = `
@@ -13,7 +13,7 @@ var parser, args;
 
 var trace_exit = function (ec) {
     'use strict';
-    tracelog.finish(function (err) {
+    jstracer.finish(function (err) {
         if (err) {
             return;
         }
@@ -36,13 +36,13 @@ parser = extargsparse.ExtArgsParse({
         trace_exit(ec);
     }
 });
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 parser.load_command_line_string(command_line);
 
 var handler_request = function (req, res, next) {
     'use strict';
-    tracelog.info('call handler');
-    tracelog.info('req.headers (%s)', util.inspect(req.headers, {
+    jstracer.info('call handler');
+    jstracer.info('req.headers (%s)', util.inspect(req.headers, {
         showHidden: true,
         depth: null
     }));
@@ -51,21 +51,21 @@ var handler_request = function (req, res, next) {
         return;
     }
     req.on('end', function () {
-        tracelog.info('handler ended');
+        jstracer.info('handler ended');
     });
     req.on('close', function () {
-        tracelog.info('handler closed');
+        jstracer.info('handler closed');
     });
     req.session_set = 'session set';
-    tracelog.info('write hello');
+    jstracer.info('write hello');
     res.send('<html><body><p>hello world</p></body></html>');
     return;
 };
 
 var session_request = function (req, res, next) {
     'use strict';
-    tracelog.info('call session');
-    tracelog.info('req.headers (%s)', util.inspect(req.headers, {
+    jstracer.info('call session');
+    jstracer.info('req.headers (%s)', util.inspect(req.headers, {
         showHidden: true,
         depth: null
     }));
@@ -74,22 +74,22 @@ var session_request = function (req, res, next) {
         return;
     }
     req.on('end', function () {
-        tracelog.info('session ended');
+        jstracer.info('session ended');
     });
     req.on('close', function () {
-        tracelog.info('session closed');
+        jstracer.info('session closed');
     });
-    tracelog.info('write session');
+    jstracer.info('write session');
     res.end('<html><body><p>session read</p></body></html>');
     return;
 };
 
 args = parser.parse_command_line();
-tracelog.set_args(args);
+jstracer.set_args(args);
 
 app = express();
 app.use(handler_request);
 app.use(session_request);
 
-tracelog.info('listen on %d', args.port);
+jstracer.info('listen on %d', args.port);
 app.listen(args.port);

@@ -1,4 +1,4 @@
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var baseop = require('../../baseop');
 var gitcheerio = require('./gitcheerio');
 var URL = require('url');
@@ -35,7 +35,7 @@ var creategithubfilePost = function (opt) {
         if (err) {
             worker.reqopt.githubfile.errors += 1;
             githubfilepost.state.failed += 1;
-            tracelog.warn('[%d] %s', worker.reqopt.githubfile.errors, worker.reqopt.githubfile.url);
+            jstracer.warn('[%d] %s', worker.reqopt.githubfile.errors, worker.reqopt.githubfile.url);
             githubfilepost.try_again(worker);
             next(false, err);
             return;
@@ -57,10 +57,10 @@ var creategithubfilePost = function (opt) {
             }
             url += urlparse.host;
             url += rawurl;
-            //tracelog.info('url (%s) => dir(%s)', url, worker.reqopt.githubfile.localdir);
+            //jstracer.info('url (%s) => dir(%s)', url, worker.reqopt.githubfile.localdir);
             worker.parent.download_queue(url, worker.reqopt.githubfile.localdir);
         } else {
-            tracelog.warn('(%s) no elementfile raw', worker.url);
+            jstracer.warn('(%s) no elementfile raw', worker.url);
         }
         next(false, null);
         return;

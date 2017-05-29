@@ -1,7 +1,7 @@
 var grabcheerio = require('./grabcheerio');
 var fs = require('fs');
-var extargsparse = require('../../extargsparse');
-var tracelog = require('../../tracelog');
+var extargsparse = require('extargsparse');
+var jstracer = require('jstracer');
 var util = require('util');
 var parser;
 
@@ -9,7 +9,7 @@ var parser;
 
 var trace_exit = function (ec) {
     'use strict';
-    tracelog.finish(function (err) {
+    jstracer.finish(function (err) {
         if (err) {
             return;
         }
@@ -21,16 +21,16 @@ var trace_exit = function (ec) {
 var query_command = function (args) {
     'use strict';
     var html = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     fs.readFile(html, function (err, data) {
         var list_result;
         if (err) {
-            tracelog.error('read %s (%s)', html, JSON.stringify(err));
+            jstracer.error('read %s (%s)', html, JSON.stringify(err));
             trace_exit(3);
             return;
         }
         list_result = grabcheerio.find_query_result(data);
-        tracelog.info('list_result (%s)', util.inspect(list_result));
+        jstracer.info('list_result (%s)', util.inspect(list_result));
         trace_exit(0);
         return;
     });
@@ -41,16 +41,16 @@ exports.query_command = query_command;
 var morequery_command = function (args) {
     'use strict';
     var html = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     fs.readFile(html, function (err, data) {
         var list_result;
         if (err) {
-            tracelog.error('read %s (%s)', html, JSON.stringify(err));
+            jstracer.error('read %s (%s)', html, JSON.stringify(err));
             trace_exit(3);
             return;
         }
         list_result = grabcheerio.more_query_html(data);
-        tracelog.info('list_result (%s)', util.inspect(list_result));
+        jstracer.info('list_result (%s)', util.inspect(list_result));
         trace_exit(0);
         return;
     });
@@ -63,7 +63,7 @@ var combind_command = function (args) {
     var retval;
     var url = args.subnargs[0];
     var pdf = args.subnargs[1];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     retval = grabcheerio.combine_dir(url, pdf);
     console.log('<%s> <%s> = <%s>', url, pdf, retval);
 };
@@ -99,5 +99,5 @@ parser = extargsparse.ExtArgsParse({
 });
 
 parser.load_command_line_string(command_line);
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 parser.parse_command_line();

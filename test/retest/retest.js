@@ -1,7 +1,7 @@
 var extargsparse = require('extargsparse');
 var parser;
 var args;
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var commandline = `
     {
         "restr|r"  : null,
@@ -20,9 +20,9 @@ var match_handler = function (args) {
     var restr = args.restr;
     var curstr;
     parser = parser;
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     if (args.restr === undefined || args.restr === null) {
-        tracelog.error('no restr specified');
+        jstracer.error('no restr specified');
         process.exit(3);
         return;
     }
@@ -47,9 +47,9 @@ var findall_handler = function (args) {
     var j;
     var matches;
     parser = parser;
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     if (restr === undefined || restr === null) {
-        tracelog.error('not specified restr');
+        jstracer.error('not specified restr');
         process.exit(3);
         return;
     }
@@ -76,7 +76,7 @@ exports.match_handler = match_handler;
 exports.findall_handler = findall_handler;
 
 parser = extargsparse.ExtArgsParse();
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 parser.load_command_line_string(commandline);
 args = parser.parse_command_line(null, parser);
 args = args;

@@ -1,6 +1,6 @@
 var express = require('express');
-var extargsparse = require('../../extargsparse');
-var tracelog = require('../../tracelog');
+var extargsparse = require('extargsparse');
+var jstracer = require('jstracer');
 var util = require('util');
 var app;
 
@@ -15,7 +15,7 @@ var parser, args;
 
 var trace_exit = function (ec) {
     'use strict';
-    tracelog.finish(function (err) {
+    jstracer.finish(function (err) {
         if (err) {
             return;
         }
@@ -38,16 +38,16 @@ parser = extargsparse.ExtArgsParse({
         trace_exit(ec);
     }
 });
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 parser.load_command_line_string(command_line);
 
 args = parser.parse_command_line();
-tracelog.set_args(args);
+jstracer.set_args(args);
 
 var handler_request = function (req, res, next) {
     'use strict';
-    tracelog.info('call handler');
-    tracelog.info('req.headers (%s)', util.inspect(req.headers, {
+    jstracer.info('call handler');
+    jstracer.info('req.headers (%s)', util.inspect(req.headers, {
         showHidden: true,
         depth: null
     }));
@@ -56,24 +56,24 @@ var handler_request = function (req, res, next) {
         return;
     }
     req.on('end', function () {
-        tracelog.info('handler ended');
+        jstracer.info('handler ended');
     });
     req.on('close', function () {
-        tracelog.info('handler closed');
+        jstracer.info('handler closed');
     });
     res.on('end', function () {
-        tracelog.info('res end');
+        jstracer.info('res end');
     });
     res.on('close', function () {
-        tracelog.info('res close');
+        jstracer.info('res close');
     });
     res.on('error', function (err) {
-        tracelog.info('error (%s)', JSON.stringify(err));
+        jstracer.info('error (%s)', JSON.stringify(err));
         return;
     });
     req.gettimeout = null;
     req.gettimeout = setTimeout(function () {
-        tracelog.info('write hello');
+        jstracer.info('write hello');
         res.send('<html><body><p>hello world</p></body></html>');
         if (req.gettimeout !== null && req.gettimeout !== undefined) {
             clearTimeout(req.gettimeout);
@@ -87,5 +87,5 @@ var handler_request = function (req, res, next) {
 app = express();
 app.use(handler_request);
 
-tracelog.info('listen on %d', args.port);
+jstracer.info('listen on %d', args.port);
 app.listen(args.port);

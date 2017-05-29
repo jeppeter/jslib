@@ -2,7 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var qs = require('querystring');
 var util = require('util');
-var tracelog = require('./tracelog');
+var jstracer = require('jstracer');
 var formidable = require('formidable');
 
 
@@ -19,7 +19,7 @@ function FileInfo(link, name, isdir, size) {
         this.type = 'file';
         this.size = size;
     }
-    //tracelog.info('link(%s) name (%s)', this.href, this.displayname);
+    //jstracer.info('link(%s) name (%s)', this.href, this.displayname);
     return this;
 }
 
@@ -60,10 +60,10 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                     outerr = new Error('read (%s) error(%s)', outfile, JSON.stringify(err));
                     return callback(outerr, outputjson, req, res);
                 }
-                //tracelog.info('req %s', requrl);
+                //jstracer.info('req %s', requrl);
                 pdir = util.format('%s%s/..', posix_dir, requrl);
                 pdir = pdir.replace(/[\/]+/g, path.sep);
-                //tracelog.info('pdir %s', pdir);
+                //jstracer.info('pdir %s', pdir);
 
                 pdir = path.resolve(pdir, '.');
                 if (pdir.length < basedir.length) {
@@ -72,7 +72,7 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                     pdir = path.relative(basedir, pdir);
                     pdir = pdir.split(path.sep).join('/');
                     pdir = qs.escape(pdir);
-                    tracelog.info('pdir %s', pdir);
+                    jstracer.info('pdir %s', pdir);
                     pdir = '/' + pdir;
                 }
                 curelm = new FileInfo(pdir, '..', true, 0);
@@ -97,7 +97,7 @@ module.exports.list_dir = function (inputjson, req, res, callback) {
                             }
                             elem = elem.split(path.sep).join('/');
                             elmlink = '/' + qs.escape(elem);
-                            tracelog.info('%s stats ', lfile);
+                            jstracer.info('%s stats ', lfile);
                             if (stats.isDirectory()) {
                                 curelm = new FileInfo(elmlink, elemstr, true, 0);
                             } else {
@@ -172,7 +172,7 @@ module.exports.put_file = function (inputjson, req, res, callback) {
     outdir = basedir + requrl;
     outdir = outdir.replace(/\\/g, '/');
     outdir = outdir.replace(/[\/]+/g, path.sep);
-    tracelog.info('requrl (%s) outfile (%s)', requrl, outdir);
+    jstracer.info('requrl (%s) outfile (%s)', requrl, outdir);
     form = new formidable.IncomingForm();
     form.multiples = true;
     form.uploadDir = outdir;
@@ -180,19 +180,19 @@ module.exports.put_file = function (inputjson, req, res, callback) {
     //form.uploadDir = ;
     form.on('file', function (field, file) {
         field = field;
-        tracelog.info('create file (%s)', file.name);
+        jstracer.info('create file (%s)', file.name);
         outputjson.file = file.name;
         fs.rename(file.path, path.join(form.uploadDir, file.name));
     });
 
     form.on('error', function (err) {
-        tracelog.error('An error has occured: \n' + err);
+        jstracer.error('An error has occured: \n' + err);
         callback(err, outputjson, req, res);
     });
 
     // once all the files have been uploaded, send a response to the client
     form.on('end', function () {
-        tracelog.info('end');
+        jstracer.info('end');
         callback(null, outputjson, req, res);
     });
 

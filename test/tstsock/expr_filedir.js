@@ -1,5 +1,5 @@
 var fileop = require('./lib/filehandle');
-var tracelog = require('./lib/tracelog');
+var jstracer = require('jstracer');
 var ejs = require('ejs');
 var fs = require('fs');
 var util = require('util');
@@ -11,12 +11,12 @@ var __handle_ejsdata_func = function () {
     ejsdata = {};
 
     return function (file, callback) {
-        tracelog.trace('call test ejsdata');
+        jstracer.trace('call test ejsdata');
         if (ejsdata[file]) {
             callback(null, ejsdata[file]);
             return ejsdata;
         }
-        tracelog.trace('fs read %s', file);
+        jstracer.trace('fs read %s', file);
         fs.readFile(file, 'utf-8', function (err, data1) {
             if (err) {
                 callback(err, null);
@@ -62,32 +62,32 @@ module.exports.get_request = function (req, res, next) {
     var host;
     var indexejs;
     if (req.get_file === undefined || req.get_file === null) {
-        tracelog.trace('');
+        jstracer.trace('');
         next();
         return;
     }
 
     if (req.get_file.basedir === undefined || req.get_file.basedir === '') {
-        tracelog.trace('');
+        jstracer.trace('');
         next();
         return;
     }
 
     if (req.get_file.url === undefined || req.get_file.url === '') {
-        tracelog.trace('');
+        jstracer.trace('');
         next();
         return;
     }
 
 
     if (req.get_file.host === undefined || req.get_file.host === '') {
-        tracelog.trace('');
+        jstracer.trace('');
         next();
         return;
     }
 
     if (req.get_file.indexejs === undefined || req.get_file.indexejs === '') {
-        tracelog.trace('');
+        jstracer.trace('');
         next();
         return;
     }
@@ -102,13 +102,13 @@ module.exports.get_request = function (req, res, next) {
         if (err) {
             res.writeHead(500);
             res.end(JSON.stringify(err));
-            tracelog.error(JSON.stringify(err));
+            jstracer.error(JSON.stringify(err));
             return;
         }
 
         if (outputjson.hashandled) {
             /*to no handle this*/
-            tracelog.trace('');
+            jstracer.trace('');
             return;
         }
 
@@ -118,7 +118,7 @@ module.exports.get_request = function (req, res, next) {
             if (err) {
                 res.writeHead(500);
                 res.end(JSON.stringify(err));
-                tracelog.error(JSON.stringify(err));
+                jstracer.error(JSON.stringify(err));
                 return;
             }
             req = req;
@@ -131,14 +131,14 @@ module.exports.get_request = function (req, res, next) {
                 res.writeHead(500);
                 if (typeof e === 'object') {
                     if (err.message) {
-                        tracelog.error('error (%s)', err.message);
+                        jstracer.error('error (%s)', err.message);
                     }
                     if (err.stack) {
-                        tracelog.error('stack (%s)', err.stack);
+                        jstracer.error('stack (%s)', err.stack);
                     }
-                    tracelog.error('%s', JSON.stringify(err));
+                    jstracer.error('%s', JSON.stringify(err));
                 } else {
-                    tracelog.error('error %s', err);
+                    jstracer.error('error %s', err);
                 }
                 res.end(JSON.stringify(e));
                 return;
@@ -153,19 +153,19 @@ module.exports.put_file = function (req, res, next) {
     'use strict';
     var inputjson = {};
     if (req.put_file === undefined || req.put_file === null) {
-        tracelog.trace('');
+        jstracer.trace('');
         next();
         return;
     }
 
     if (req.put_file.basedir === undefined || req.put_file.basedir === '') {
-        tracelog.trace('');
+        jstracer.trace('');
         next();
         return;
     }
 
     if (req.put_file.url === undefined || req.put_file.url === '') {
-        tracelog.trace('');
+        jstracer.trace('');
         next();
         return;
     }

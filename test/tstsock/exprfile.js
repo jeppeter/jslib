@@ -1,6 +1,6 @@
 var express = require('express');
 var util = require('util');
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var path = require('path');
 var filehdl = require('./expr_filedir');
 module.exports = express();
@@ -18,7 +18,7 @@ var command_line_fmt = `
 var command_line = util.format(command_line_fmt, __dirname.replace(/\\/g, '\\\\'));
 parser = extargsparse.ExtArgsParse();
 parser.load_command_line_string(command_line);
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 args = parser.parse_command_line();
 
 
@@ -27,13 +27,13 @@ var lport = args.port;
 var jsdir = __dirname;
 var indexejs = jsdir + path.sep + 'index.ejs';
 
-tracelog.set_args(args);
+jstracer.set_args(args);
 
 
 process.on('SIGINT', function () {
     'use strict';
-    tracelog.warn('caught sig int');
-    tracelog.finish(function (err) {
+    jstracer.warn('caught sig int');
+    jstracer.finish(function (err) {
         if (err) {
             console.error('on finish error (%s)', err);
             return;
@@ -44,8 +44,8 @@ process.on('SIGINT', function () {
 
 process.on('uncaughtException', function (err) {
     'use struct';
-    tracelog.error('error (%s)', err);
-    tracelog.finish(function (err) {
+    jstracer.error('error (%s)', err);
+    jstracer.finish(function (err) {
         if (err) {
             console.log('error on (%s)', err);
             return;
@@ -72,4 +72,4 @@ newapp.use(express.static(jsdir));
 
 app.listen(lport);
 newapp.listen(lport + 1);
-tracelog.trace('listen (%s) on (%d) with indexejs (%s)', directory, lport, indexejs);
+jstracer.trace('listen (%s) on (%d) with indexejs (%s)', directory, lport, indexejs);

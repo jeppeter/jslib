@@ -1,5 +1,5 @@
 var grabcheerio = require('./grabcheerio');
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var URL = require('url');
 var path = require('path');
 var baseop = require('../../baseop');
@@ -25,7 +25,7 @@ function createHkexNewsPaperPost(options) {
         var extension;
         var downdir;
         var sendreqopt;
-        //tracelog.trace('newspaper');
+        //jstracer.trace('newspaper');
 
         if (!baseop.is_non_null(worker.reqopt, 'hkexnewsextendoption')) {
             /*if we do not handle news make*/
@@ -43,10 +43,10 @@ function createHkexNewsPaperPost(options) {
             trytimes += 1;
             if (trytimes < hknews.options.maxtries || hknews.options.maxtries === 0) {
                 sendreqopt.hkexnewsextendoption.trytimes = trytimes;
-                tracelog.warn('[%d]<%s>', trytimes, worker.url);
+                jstracer.warn('[%d]<%s>', trytimes, worker.url);
                 worker.parent.queue(worker.url, sendreqopt);
             } else {
-                tracelog.error('really error on extend(%s)', worker.url);
+                jstracer.error('really error on extend(%s)', worker.url);
             }
 
             next(true, err);
@@ -55,13 +55,13 @@ function createHkexNewsPaperPost(options) {
 
 
         /*now it is time ,we handle ,so we should no more to handle out*/
-        //tracelog.trace('request paper');
-        //tracelog.info('htmldata %s', worker.htmldata);
+        //jstracer.trace('request paper');
+        //jstracer.info('htmldata %s', worker.htmldata);
         pdfs = grabcheerio.more_query_html(worker.htmldata);
         if (pdfs.length === 0) {
 
             /*we find nothing to handle*/
-            tracelog.info('<%s> pdfs 0', worker.url);
+            jstracer.info('<%s> pdfs 0', worker.url);
             next(false, null);
             return;
         }

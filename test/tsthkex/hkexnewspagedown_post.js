@@ -1,4 +1,4 @@
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var cheerio = require('cheerio');
 
 function createHkexNewsPageDownPost() {
@@ -7,7 +7,7 @@ function createHkexNewsPageDownPost() {
 
     hknews.post_handler = function (err, worker, next) {
         var parser, ahrefs, i, aref;
-        tracelog.trace('pagedownload');
+        jstracer.trace('pagedownload');
         if (err) {
             /*if we have nothing to do*/
             next(true, err);
@@ -21,7 +21,7 @@ function createHkexNewsPageDownPost() {
         }
 
         /*now it is time ,we handle ,so we should no more to handle out*/
-        tracelog.trace('hkexnewspagedown %s', worker.reqopt.hkexnewspagedown);
+        jstracer.trace('hkexnewspagedown %s', worker.reqopt.hkexnewspagedown);
         /*we should give */
         parser = cheerio.load(worker.htmldata);
         ahrefs = parser('a');
@@ -32,7 +32,7 @@ function createHkexNewsPageDownPost() {
                 if (aref.attribs.href !== null && aref.attribs.href !== undefined && aref.attribs.href.length > 0) {
                     /*it is the href to test if ended with pdf file*/
                     if (/\.pdf$/.test(aref.attribs.href)) {
-                        tracelog.info('will download %s', aref.attribs.href);
+                        jstracer.info('will download %s', aref.attribs.href);
                     }
                 }
             }

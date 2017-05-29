@@ -1,5 +1,5 @@
 //var util = require('util');
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var http = require('http');
 var extargsparse = require('../../extargsparse');
 
@@ -13,24 +13,24 @@ var parser, argv;
 
 parser = extargsparse.ExtArgsParse();
 parser.load_command_line_string(command_line);
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 argv = parser.parse_command_line();
 
 
 
-tracelog.set_args(argv);
+jstracer.set_args(argv);
 
-tracelog.trace('print trace (%d)', argv.verbose);
-tracelog.debug('print debug (%d)', argv.verbose);
-tracelog.info('print info (%d)', argv.verbose);
-tracelog.warn('print warn (%d)', argv.verbose);
-tracelog.error('print error (%d)', argv.verbose);
-tracelog.info('interactive %s', argv.interactive);
+jstracer.trace('print trace (%d)', argv.verbose);
+jstracer.debug('print debug (%d)', argv.verbose);
+jstracer.info('print info (%d)', argv.verbose);
+jstracer.warn('print warn (%d)', argv.verbose);
+jstracer.error('print error (%d)', argv.verbose);
+jstracer.info('interactive %s', argv.interactive);
 
 process.on('SIGINT', function () {
     'use strict';
-    tracelog.warn('caught sig int');
-    tracelog.finish(function (err) {
+    jstracer.warn('caught sig int');
+    jstracer.finish(function (err) {
         if (err) {
             console.log('error on (%s)', err);
             return;
@@ -43,8 +43,8 @@ process.on('SIGINT', function () {
 
 process.on('uncaughtException', function (err) {
     'use struct';
-    tracelog.error('error (%s)', err);
-    tracelog.finish(function (err) {
+    jstracer.error('error (%s)', err);
+    jstracer.finish(function (err) {
         if (err) {
             console.log('error on (%s)', err);
             return;
@@ -62,7 +62,7 @@ if (argv.interactive) {
         res.end();
     }).listen(3000);
 } else {
-    tracelog.finish(function (err) {
+    jstracer.finish(function (err) {
         'use strict';
         if (err) {
             console.log('error on (%s)', err);

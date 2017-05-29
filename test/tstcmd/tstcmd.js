@@ -1,6 +1,6 @@
-var extargsparse = require('../../extargsparse');
+var extargsparse = require('extargsparse');
 var util = require('util');
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var baseop = require('../../baseop');
 var parser;
 var URL = require('url');
@@ -49,7 +49,7 @@ var command_line = `
 
 var trace_exit = function (ec) {
     'use strict';
-    tracelog.finish(function (err) {
+    jstracer.finish(function (err) {
         if (err) {
             return;
         }
@@ -76,14 +76,14 @@ parser.load_command_line_string(command_line);
 
 process.on('SIGINT', function () {
     'use strict';
-    tracelog.warn('caught sig int');
+    jstracer.warn('caught sig int');
     trace_exit(0);
     return;
 });
 
 process.on('uncaughtException', function (err) {
     'use struct';
-    tracelog.error('error (%s) (%s)', err, err.stack);
+    jstracer.error('error (%s) (%s)', err, err.stack);
     trace_exit(3);
     return;
 });
@@ -91,19 +91,19 @@ process.on('uncaughtException', function (err) {
 var mkdir_command = function (args) {
     'use strict';
     var errcode = 0;
-    tracelog.set_args(args);
+    jstracer.set_args(args);
 
     args.subnargs.forEach(function (elm, idx) {
         baseop.mkdir_safe(elm, function (err) {
             if (err) {
-                tracelog.error('[%d](%s) error(%s)', idx, elm, err);
+                jstracer.error('[%d](%s) error(%s)', idx, elm, err);
                 errcode = 3;
                 if (idx === (args.subnargs.length - 1)) {
                     trace_exit(errcode);
                 }
                 return;
             }
-            tracelog.info('[%d](%s) succ', idx, elm);
+            jstracer.info('[%d](%s) succ', idx, elm);
             if (idx === (args.subnargs.length - 1)) {
                 trace_exit(errcode);
             }
@@ -117,7 +117,7 @@ exports.mkdir_command = mkdir_command;
 
 var testroot_command = function (args) {
     'use strict';
-    tracelog.set_args(args);
+    jstracer.set_args(args);
 
     args.subnargs.forEach(function (elm, idx) {
         var isroot;
@@ -141,7 +141,7 @@ var validdate_command = function (args) {
     'use strict';
     var errcode = 0;
     var datestr = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     if (baseop.is_valid_date(datestr)) {
         console.log('<%s> is valid date', datestr);
     } else {
@@ -158,7 +158,7 @@ var validnum_command = function (args) {
     'use strict';
     var errcode = 0;
     var numstr = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     if (baseop.is_valid_number(numstr, args.validnum_is16)) {
         console.log('<%s> is valid number', numstr);
     } else {
@@ -176,7 +176,7 @@ var parsenum_command = function (args) {
     var errcode = 0;
     var num;
     var numstr = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     num = baseop.parse_number(numstr);
     if (!isNaN(num)) {
         if (baseop.is_valid_float(numstr)) {
@@ -196,7 +196,7 @@ exports.parsenum_command = parsenum_command;
 var readjson_command = function (args) {
     'use strict';
     var jsonfile = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     baseop.read_json_parse(jsonfile, function (err, opt) {
         if (err) {
             console.error('read (%s) error(%s)', jsonfile, JSON.stringify(err));
@@ -221,9 +221,9 @@ var datesplit_command = function (args) {
     var yeardate;
     var startdate = args.subnargs[0];
     var enddate = args.subnargs[1];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     yeardate = baseop.split_by_oneyear(startdate, enddate);
-    tracelog.info('get date (%s) (%s) (%d)', startdate, enddate, yeardate.length);
+    jstracer.info('get date (%s) (%s) (%d)', startdate, enddate, yeardate.length);
     yeardate.forEach(function (elm, idx) {
         console.log('[%d] %s %s', idx, elm.startdate, elm.enddate);
     });
@@ -241,7 +241,7 @@ var jsonparse_command = function (args) {
     if (args.subnargs.length > 1) {
         values = args.subnargs.slice(1, args.subnargs.length - 1);
     }
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     baseop.read_json_parse(jsonfile, function (err, opt) {
         if (err) {
             console.error('can not read(%s) error(%s)', jsonfile, JSON.stringify(err));
@@ -279,7 +279,7 @@ var jsonarray_command = function (args) {
         value = parseInt(args.subnargs[1]);
     }
     idx = args.jsonarray_num;
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     baseop.read_json_parse(jsonfile, function (err, opt) {
         if (err) {
             console.error('can not read(%s) error(%s)', jsonfile, JSON.stringify(err));
@@ -318,17 +318,17 @@ var get_annoucement = function (opt) {
     var curpdf;
 
     if (!baseop.is_non_null(opt, 'announcements')) {
-        tracelog.error('can not get classifiedAnnouncements');
+        jstracer.error('can not get classifiedAnnouncements');
         return null;
     }
 
     if (!baseop.is_non_null(opt, 'totalAnnouncement')) {
-        tracelog.error('can not get totalAnnouncement');
+        jstracer.error('can not get totalAnnouncement');
         return null;
     }
 
     if (!baseop.is_non_null(opt, 'totalRecordNum')) {
-        tracelog.error('can not get totalRecordNum');
+        jstracer.error('can not get totalRecordNum');
         return null;
     }
 
@@ -340,7 +340,7 @@ var get_annoucement = function (opt) {
         for (i = 0; i < opt.announcements.length; i += 1) {
             curelm = opt.announcements[i];
             if (!baseop.is_non_null(curelm, 'adjunctUrl')) {
-                tracelog.warn('[%d] no adjunctUrl', i);
+                jstracer.warn('[%d] no adjunctUrl', i);
             } else {
                 curpdf = {};
                 curpdf.adjunctUrl = curelm.adjunctUrl;
@@ -356,7 +356,7 @@ var get_annoucement = function (opt) {
 var getannounce_command = function (args) {
     'use strict';
     var jsonfile = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     baseop.read_json_parse(jsonfile, function (err, opt) {
         var retlists;
         if (err) {
@@ -430,7 +430,7 @@ var testdownloadfile_command = function (args) {
     var opt = {};
     opt.reqopt = {};
     opt.reqopt.url = url;
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     download_file(url, dirname);
     download_file(url, opt);
     download_file(dirname, opt);
@@ -446,21 +446,21 @@ exports.testdownloadfile_command = testdownloadfile_command;
 
 var parseurl_command = function (args, parser) {
     'use strict';
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     parser = parser;
     args.subnargs.forEach(function (elm) {
         var urlparse;
         urlparse = URL.parse(elm);
-        tracelog.info('protocol (%s)', urlparse.protocol);
-        tracelog.info('auth (%s)', urlparse.auth);
-        tracelog.info('host (%s)', urlparse.host);
-        tracelog.info('path (%s)', urlparse.path);
-        tracelog.info('hash (%s)', urlparse.hash);
+        jstracer.info('protocol (%s)', urlparse.protocol);
+        jstracer.info('auth (%s)', urlparse.auth);
+        jstracer.info('host (%s)', urlparse.host);
+        jstracer.info('path (%s)', urlparse.path);
+        jstracer.info('hash (%s)', urlparse.hash);
     });
     return;
 };
 
 exports.parseurl_command = parseurl_command;
 
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 parser.parse_command_line();

@@ -1,5 +1,5 @@
 var extargsparse = require('extargsparse');
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var gitcheerio = require('./gitcheerio');
 var fs = require('fs');
 
@@ -11,7 +11,7 @@ var command_line = `
 
 var trace_exit = function (ec) {
     'use strict';
-    tracelog.finish(function (err) {
+    jstracer.finish(function (err) {
         if (err) {
             return;
         }
@@ -36,22 +36,22 @@ var parser = extargsparse.ExtArgsParse({
 
 
 var args;
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 parser.load_command_line_string(command_line);
 args = parser.parse_command_line(null, parser);
-tracelog.set_args(args);
+jstracer.set_args(args);
 args.args.forEach(function (elm) {
     'use strict';
     fs.readFile(elm, function (err, cont) {
         var listdirs;
         if (err !== null) {
-            tracelog.error("can not read (%s) error(%s)", elm, err);
+            jstracer.error("can not read (%s) error(%s)", elm, err);
             trace_exit(3);
             return;
         }
         listdirs = gitcheerio.get_list_dirs(cont);
         listdirs.forEach(function (elm, idx) {
-            tracelog.info('[%d] <%s> %s', idx, elm.type, elm.href);
+            jstracer.info('[%d] <%s> %s', idx, elm.type, elm.href);
         });
     });
 });

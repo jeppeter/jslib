@@ -1,4 +1,4 @@
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var cheerio = require('cheerio');
 var qs = require('querystring');
 var util = require('util');
@@ -45,8 +45,8 @@ function createHkexNewsPaperPost(opt) {
         var cururl;
         var downdir;
         var getenddate, curlastdate;
-        //tracelog.trace('newspaper');
-        /*tracelog.info('worker (%s)', util.inspect(worker, {
+        //jstracer.trace('newspaper');
+        /*jstracer.info('worker (%s)', util.inspect(worker, {
             showHidden: true,
             depth: null
         }));*/
@@ -81,7 +81,7 @@ function createHkexNewsPaperPost(opt) {
                     });
                 }
             } else {
-                tracelog.error('query %s really failed', worker.url);
+                jstracer.error('query %s really failed', worker.url);
             }
 
             next(false, err);
@@ -89,8 +89,8 @@ function createHkexNewsPaperPost(opt) {
         }
 
         /*now it is time ,we handle ,so we should no more to handle out*/
-        //tracelog.trace('request paper');
-        //tracelog.info('htmldata %s', worker.htmldata);
+        //jstracer.trace('request paper');
+        //jstracer.info('htmldata %s', worker.htmldata);
         parser = cheerio.load(worker.htmldata);
         findres = grabcheerio.find_query_result(worker.htmldata);
         if (findres === null || findres.lists_html.length === 0) {
@@ -104,20 +104,20 @@ function createHkexNewsPaperPost(opt) {
             /*it means that we should get the next value*/
             selected = parser('#__VIEWSTATE');
             if (selected.length === 0) {
-                tracelog.error('can not get __VIEWSTATE');
+                jstracer.error('can not get __VIEWSTATE');
                 next(false, null);
                 return;
             }
 
             curval = grabcheerio.get_attr_value(selected, parser, 'value');
             if (curval === '') {
-                tracelog.error('can not get __VIEWSTATE');
+                jstracer.error('can not get __VIEWSTATE');
                 next(false, null);
                 return;
             }
 
             postdata = get_post_data(curval);
-            //tracelog.info('postdata (%s)', postdata);
+            //jstracer.info('postdata (%s)', postdata);
             worker.parent.post_queue(worker.url, {
                 hkexnewspaperoption: worker.reqopt.hkexnewspaperoption,
                 reuse: true,
@@ -158,7 +158,7 @@ function createHkexNewsPaperPost(opt) {
                     priority: grabwork.MAX_PRIORITY
                 });
             } else if (baseop.match_expr_i(cururl, '\.htm[l]?$')) {
-                tracelog.info('will more query (%s)', cururl);
+                jstracer.info('will more query (%s)', cururl);
                 worker.parent.queue(cururl, {
                     hkexnewsextendoption: {
                         downloaddir: downdir
@@ -166,7 +166,7 @@ function createHkexNewsPaperPost(opt) {
                     reuse: true
                 });
             } else {
-                tracelog.info('unknown url (%s)', cururl);
+                jstracer.info('unknown url (%s)', cururl);
             }
         }
         next(false, null);

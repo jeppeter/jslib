@@ -1,7 +1,7 @@
 var extargsparse = require('extargsparse');
 var parser;
 var args;
-var tracelog = require('../../../tracelog');
+var jstracer = require('jstracer');
 var net = require('net');
 var fs = require('fs');
 var mktemp = require('mktemp');
@@ -23,10 +23,10 @@ var is_error_valid = function (err) {
 };
 
 parser = extargsparse.ExtArgsParse();
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 parser.load_command_line_string(commandline);
 args = parser.parse_command_line();
-tracelog.set_args(args);
+jstracer.set_args(args);
 
 
 
@@ -40,23 +40,23 @@ var write_sock_process = function (sock, rstream, endcallback) {
         bret = sock.write(chunk, 'binary');
         writed += chunk.length;
         if (!bret) {
-            tracelog.info('pause read [%s] (%d)', args.files[0], writed);
+            jstracer.info('pause read [%s] (%d)', args.files[0], writed);
             rstream.pause();
             sock.actpaused = true;
         } else if (args.timesleep !== 0) {
             sock.paused = true;
-            tracelog.info('pause [%d] (%d)', args.timesleep, writed);
+            jstracer.info('pause [%d] (%d)', args.timesleep, writed);
             setTimeout(function () {
                 if (sock.paused === true) {
                     sock.paused = false;
                     sock.resume();
-                    tracelog.info('paused resume');
+                    jstracer.info('paused resume');
                 }
             }, args.timesleep);
         }
     });
     rstream.on('error', function (err) {
-        tracelog.error('can not read %s error(%s)', args.files[0], err);
+        jstracer.error('can not read %s error(%s)', args.files[0], err);
         if (endcallback !== null) {
             endcallback(err);
         }
@@ -69,20 +69,20 @@ var write_sock_process = function (sock, rstream, endcallback) {
     });
     sock.on('drain', function () {
         if (sock.paused !== true && sock.actpaused === true) {
-            tracelog.info('resume not paused');
+            jstracer.info('resume not paused');
             rstream.resume();
             sock.actpaused = false;
         } else if (sock.paused === true) {
-            tracelog.info('writable on paused time');
+            jstracer.info('writable on paused time');
         } else {
-            tracelog.info('sock no drain');
+            jstracer.info('sock no drain');
         }
     });
     sock.on('data', function (chunk) {
-        tracelog.info('read data [%s] discard', chunk);
+        jstracer.info('read data [%s] discard', chunk);
     });
     sock.on('error', function (err3) {
-        tracelog.error('sock error (%s)', err3);
+        jstracer.error('sock error (%s)', err3);
         if (endcallback !== null) {
             endcallback(err3);
         }
@@ -99,32 +99,32 @@ var read_sock_process = function (sock, wstream, endcallback) {
         writed += chunk.length;
         bret = wstream.write(chunk, 'binary');
         if (!bret) {
-            tracelog.info('pause sock (%d)', writed);
+            jstracer.info('pause sock (%d)', writed);
             sock.pause();
             sock.actpaused = true;
         } else if (args.timesleep > 0) {
-            tracelog.info('timesleep [%d]', args.timesleep);
+            jstracer.info('timesleep [%d]', args.timesleep);
             sock.pause();
             sock.paused = true;
             setTimeout(function () {
                 if (sock.paused === true) {
                     sock.paused = false;
                     sock.resume();
-                    tracelog.info('resume paused state');
+                    jstracer.info('resume paused state');
                 }
             }, args.timesleep);
         }
         return;
     });
     sock.on('error', function (err) {
-        tracelog.error('read error(%s)', err);
+        jstracer.error('read error(%s)', err);
         if (endcallback !== null) {
             endcallback(err);
         }
         return;
     });
     sock.on('end', function () {
-        tracelog.info('sock ended');
+        jstracer.info('sock ended');
         if (endcallback !== null) {
             endcallback(null);
         }
@@ -134,16 +134,16 @@ var read_sock_process = function (sock, wstream, endcallback) {
         if (sock.paused !== true && sock.actpaused === true) {
             sock.resume();
             sock.actpaused = false;
-            tracelog.info('resume without paused');
+            jstracer.info('resume without paused');
         } else if (sock.paused === true) {
-            tracelog.info('sock is paused');
+            jstracer.info('sock is paused');
         } else {
-            tracelog.info('no reason drain');
+            jstracer.info('no reason drain');
         }
     });
 
     wstream.on('error', function (err5) {
-        tracelog.error('write error(%s)', err5);
+        jstracer.error('write error(%s)', err5);
         if (endcallback !== null) {
             endcallback(err5);
         }
@@ -153,7 +153,7 @@ var read_sock_process = function (sock, wstream, endcallback) {
 
 net.createServer(function (sock) {
     'use strict';
-    tracelog.info('remote %s %d', sock.remoteAddress, sock.remotePort);
+    jstracer.info('remote %s %d', sock.remoteAddress, sock.remotePort);
     if (args.files.length > 0) {
         var rstream = null;
         sock.paused = false;
@@ -173,13 +173,13 @@ net.createServer(function (sock) {
         var wstream = null;
         mktemp.createFile('XXXXXX.serverwrite', function (err, path) {
             if (is_error_valid(err)) {
-                tracelog.error('can not create tempfile %s', err);
+                jstracer.error('can not create tempfile %s', err);
                 sock.end();
                 sock = null;
                 return;
             }
             wstream = fs.createWriteStream(path, 'binary');
-            tracelog.info('write [%s]', path);
+            jstracer.info('write [%s]', path);
             read_sock_process(sock, wstream, function (err2) {
                 if (sock !== null) {
                     sock.end();
@@ -192,13 +192,13 @@ net.createServer(function (sock) {
                 if (!is_error_valid(err2)) {
                     fs.lstat(path, function (err3, fstat) {
                         if (!is_error_valid(err3)) {
-                            tracelog.info('[%s] size %d', path, fstat.size);
+                            jstracer.info('[%s] size %d', path, fstat.size);
                             if (args.reserved !== true) {
                                 fs.unlink(path, function (err4) {
                                     if (is_error_valid(err4)) {
-                                        tracelog.error('can not remove [%s] error(%s)', path, err4);
+                                        jstracer.error('can not remove [%s] error(%s)', path, err4);
                                     } else {
-                                        tracelog.info('remove %s', path);
+                                        jstracer.info('remove %s', path);
                                     }
                                 });
                             }
@@ -207,9 +207,9 @@ net.createServer(function (sock) {
                         if (args.reserved !== true) {
                             fs.unlink(path, function (err4) {
                                 if (is_error_valid(err4)) {
-                                    tracelog.error('can not remove [%s] error(%s)', path, err4);
+                                    jstracer.error('can not remove [%s] error(%s)', path, err4);
                                 } else {
-                                    tracelog.info('remove %s', path);
+                                    jstracer.info('remove %s', path);
                                 }
                             });
                         }
@@ -219,9 +219,9 @@ net.createServer(function (sock) {
                 if (args.reserved !== true) {
                     fs.unlink(path, function (err3) {
                         if (is_error_valid(err3)) {
-                            tracelog.error('can not remove [%s] error(%s)', path, err3);
+                            jstracer.error('can not remove [%s] error(%s)', path, err3);
                         } else {
-                            tracelog.info('remove %s', path);
+                            jstracer.info('remove %s', path);
                         }
                     });
                 }
@@ -229,4 +229,4 @@ net.createServer(function (sock) {
         });
     }
 }).listen(args.port);
-tracelog.info('listen on %d', args.port);
+jstracer.info('listen on %d', args.port);

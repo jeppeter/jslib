@@ -1,4 +1,4 @@
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var baseop = require('../../baseop');
 var gitcheerio = require('./gitcheerio');
 var URL = require('url');
@@ -39,7 +39,7 @@ var creategithubdirPost = function (opt) {
         if (err) {
             worker.reqopt.githubdir.errors += 1;
             githubdirpost.state.failed += 1;
-            tracelog.warn('[%d] %s', worker.reqopt.githubdir.errors, worker.reqopt.githubdir.url);
+            jstracer.warn('[%d] %s', worker.reqopt.githubdir.errors, worker.reqopt.githubdir.url);
             githubdirpost.try_again(worker);
             next(false, err);
             return;
@@ -76,7 +76,7 @@ var creategithubdirPost = function (opt) {
                             setdir += elmarr[j];
                         }
                     } else {
-                        tracelog.warn('(%s) not startsWith (%s)', elm.href, pathname);
+                        jstracer.warn('(%s) not startsWith (%s)', elm.href, pathname);
                         setdir += path.sep;
                         setdir += path.basename(elm.href);
                         diropt.githubdir.depth += 1;
@@ -95,18 +95,18 @@ var creategithubdirPost = function (opt) {
                     diropt.githubdir.url = url;
                     /*we start 0 errors*/
                     diropt.githubdir.errors = 0;
-                    //tracelog.info('url(%s) dir(%s)', diropt.githubdir.url, diropt.githubdir.localdir);
+                    //jstracer.info('url(%s) dir(%s)', diropt.githubdir.url, diropt.githubdir.localdir);
                     if (githubdirpost.maxdepth === 0 || diropt.githubdir.depth < githubdirpost.maxdepth) {
                         baseop.mkdir_safe(curdir, function (err2) {
                             if (err2) {
-                                tracelog.error('can not create(%s) error(%s)', curdir, err2);
+                                jstracer.error('can not create(%s) error(%s)', curdir, err2);
                                 return;
                             }
                             parent.queue(diropt.githubdir.url, diropt);
                             return;
                         });
                     } else {
-                        tracelog.warn('%s exceed maxdepth (%d)', diropt.githubdir.url, githubdirpost.maxdepth);
+                        jstracer.warn('%s exceed maxdepth (%d)', diropt.githubdir.url, githubdirpost.maxdepth);
                     }
                 } else {
                     fileopt = {};
@@ -130,7 +130,7 @@ var creategithubdirPost = function (opt) {
                         url += '/';
                         if (j === 2) {
                             if (elmarr[j] !== 'tree' && elmarr[j] !== 'blob') {
-                                tracelog.info('(%s[%d]) (%s) ', elm.href, j, elmarr[j]);
+                                jstracer.info('(%s[%d]) (%s) ', elm.href, j, elmarr[j]);
                                 url += elmarr[j];
                             } else {
                                 url += 'raw';
@@ -143,12 +143,12 @@ var creategithubdirPost = function (opt) {
                     fileopt.githubfile.url = url;
                     fileopt.githubfile.errors = 0;
                     fileopt.githubfile.localdir = worker.reqopt.githubdir.localdir;
-                    //tracelog.info('url (%s) filedir(%s)', fileopt.githubfile.url, fileopt.githubfile.localdir);
+                    //jstracer.info('url (%s) filedir(%s)', fileopt.githubfile.url, fileopt.githubfile.localdir);
                     parent.download_queue(fileopt.githubfile.url, fileopt.githubfile.localdir);
                 }
             });
         } else {
-            tracelog.warn('(%s) no element', worker.url);
+            jstracer.warn('(%s) no element', worker.url);
         }
         next(false, null);
         return;

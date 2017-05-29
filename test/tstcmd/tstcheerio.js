@@ -1,13 +1,13 @@
 var cheerio = require('cheerio');
-var extargsparse = require('../../extargsparse');
-var tracelog = require('../../tracelog');
+var extargsparse = require('extargsparse');
+var jstracer = require('jstracer');
 var util = require('util');
 var fs = require('fs');
 
 
 var trace_exit = function (ec) {
     'use strict';
-    tracelog.finish(function (err) {
+    jstracer.finish(function (err) {
         if (err) {
             return;
         }
@@ -80,7 +80,7 @@ var get_child_name = function (elm, parser) {
 
 process.on('uncaughtException', function (err) {
     'use struct';
-    tracelog.error('error (%s) stack(%s)', err, err.stack);
+    jstracer.error('error (%s) stack(%s)', err, err.stack);
     trace_exit(3);
 });
 
@@ -95,7 +95,7 @@ var call_cheerparser = function (fname, selector, callback) {
         var parser;
         var content;
         if (err) {
-            tracelog.error('get (%s) error (%s)', fname, JSON.stringify(err));
+            jstracer.error('get (%s) error (%s)', fname, JSON.stringify(err));
             trace_exit(4);
             return;
         }
@@ -125,7 +125,7 @@ var traverse_next = function (parser, tabs, cont, travers_state) {
             curchild = allchildrens.children.eq(idx);
             allchildrens.idx += 1;
             pathname = allchildrens.pathname;
-            tracelog.info('{%s}[%d]', pathname, idx);
+            jstracer.info('{%s}[%d]', pathname, idx);
             travers_state.callback_fn(parser, tabs, pathname, idx, curchild, travers_state);
             allchildrens = null;
             return;
@@ -136,7 +136,7 @@ var traverse_next = function (parser, tabs, cont, travers_state) {
         travers_state.last_children = null;
         travers_state.allchildrens = null;
         allchildrens = null;
-        tracelog.info('');
+        jstracer.info('');
         return;
     }
     /*now it will for call*/
@@ -144,7 +144,7 @@ var traverse_next = function (parser, tabs, cont, travers_state) {
         /*we get all trasversed ,so we do this ok*/
         travers_state.allchildrens = null;
         allchildrens = null;
-        tracelog.info('');
+        jstracer.info('');
         return;
     }
 
@@ -166,11 +166,11 @@ var traverse_get = function (parser, tabs, travers_state) {
 
     curallchildrens = travers_state.allchildrens;
     if (curallchildrens === null || curallchildrens === undefined) {
-        tracelog.info('');
+        jstracer.info('');
         return;
     }
 
-    tracelog.info('{%s} (%d) (%d)', curallchildrens.pathname, curallchildrens.mainidx, curallchildrens.children.length);
+    jstracer.info('{%s} (%d) (%d)', curallchildrens.pathname, curallchildrens.mainidx, curallchildrens.children.length);
     while (curallchildrens.mainidx < curallchildrens.children.length) {
         idx = curallchildrens.mainidx;
         curallchildrens.mainidx += 1;
@@ -192,7 +192,7 @@ var traverse_get = function (parser, tabs, travers_state) {
             travers_state.next_fn(parser, tabs + 1, true, travers_state);
             return;
         }
-        tracelog.info('[%d]{%s} child 0', idx, curallchildrens.pathname);
+        jstracer.info('[%d]{%s} child 0', idx, curallchildrens.pathname);
         if (idx > 0) {
             /*the first we have search before*/
             travers_state.callback_fn(parser, tabs, curallchildrens.pathname, idx, curchild, travers_state);
@@ -203,7 +203,7 @@ var traverse_get = function (parser, tabs, travers_state) {
     /*ok we should make the upper calling*/
     if (curallchildrens.prev_children === null) {
         travers_state.allchildrens = null;
-        tracelog.info('');
+        jstracer.info('');
         return;
     }
 
@@ -211,7 +211,7 @@ var traverse_get = function (parser, tabs, travers_state) {
     /*we pop the last*/
     travers_state.allchildrens = curallchildrens.prev_children;
     curallchildrens = travers_state.allchildrens;
-    /*tracelog.info('[%d] (%s)', tabs - 1, util.inspect(travers_state, {
+    /*jstracer.info('[%d] (%s)', tabs - 1, util.inspect(travers_state, {
         showHidden: true,
         depth: 3
     }));*/
@@ -224,7 +224,7 @@ var output_traverse = function (parser, tabs, pathname, idx, curchild, travers_s
     var s;
     var i;
 
-    /*tracelog.info('curchild (%s)', util.inspect(curchild, {
+    /*jstracer.info('curchild (%s)', util.inspect(curchild, {
         showHidden: true,
         depth: 3
     }));*/
@@ -277,29 +277,29 @@ var parser;
 
 parser = extargsparse.ExtArgsParse();
 parser.load_command_line_string(command_line);
-tracelog.init_args(parser);
+jstracer.init_args(parser);
 
 var text_command = function (args) {
     'use strict';
     var htmlfile;
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     htmlfile = args.subnargs[0];
     if (htmlfile.length < 1) {
-        tracelog.error('need htmlfile\n');
+        jstracer.error('need htmlfile\n');
         trace_exit(3);
         return;
     }
 
     if (args.selector.length === 0) {
-        tracelog.error('need selector set\n');
+        jstracer.error('need selector set\n');
         trace_exit(3);
         return;
     }
 
-    tracelog.info('htmlfile %s', htmlfile);
+    jstracer.info('htmlfile %s', htmlfile);
 
     call_cheerparser(htmlfile, args.selector, function (parser, content, exit_fn) {
-        /*tracelog.trace('parser (%s)', util.inspect(parser, {
+        /*jstracer.trace('parser (%s)', util.inspect(parser, {
             showHidden: true,
             depth: 3
         }));*/
@@ -313,14 +313,14 @@ var text_command = function (args) {
         if (Array.isArray(content)) {
             content.forEach(function (elm, idx) {
                 console.log('<%s>[%d] (%s)', args.selector, idx, elm.text());
-                tracelog.trace('<%s>[%d] (%s)', args.selector, idx, util.inspect(elm, {
+                jstracer.trace('<%s>[%d] (%s)', args.selector, idx, util.inspect(elm, {
                     showHidden: true,
                     depth: 3
                 }));
             });
         } else {
             console.log('<%s> (%s)', args.selector, content.text());
-            tracelog.trace('<%s> (%s)', args.selector, util.inspect(content, {
+            jstracer.trace('<%s> (%s)', args.selector, util.inspect(content, {
                 showHidden: true,
                 depth: 3
             }));
@@ -334,23 +334,23 @@ exports.text_command = text_command;
 var parent_command = function (args) {
     'use strict';
     var htmlfile;
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     htmlfile = args.subnargs[0];
     if (htmlfile.length < 1) {
-        tracelog.error('need htmlfile\n');
+        jstracer.error('need htmlfile\n');
         trace_exit(3);
         return;
     }
 
     if (args.selector.length === 0) {
-        tracelog.error('need selector set\n');
+        jstracer.error('need selector set\n');
         trace_exit(3);
         return;
     }
 
-    tracelog.info('htmlfile %s', htmlfile);
+    jstracer.info('htmlfile %s', htmlfile);
     call_cheerparser(htmlfile, args.selector, function (parser, content, exit_fn) {
-        tracelog.trace('parser (%s)', util.inspect(parser, {
+        jstracer.trace('parser (%s)', util.inspect(parser, {
             showHidden: true,
             depth: 3
         }));
@@ -370,27 +370,27 @@ var each_command = function (args) {
     'use strict';
     var htmlfile;
     htmlfile = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     if (htmlfile.length < 1) {
-        tracelog.error('need htmlfile\n');
+        jstracer.error('need htmlfile\n');
         trace_exit(3);
         return;
     }
 
     if (args.selector.length === 0) {
-        tracelog.error('need selector set\n');
+        jstracer.error('need selector set\n');
         trace_exit(3);
         return;
     }
 
-    tracelog.info('htmlfile %s', htmlfile);
+    jstracer.info('htmlfile %s', htmlfile);
     call_cheerparser(htmlfile, args.selector, function (parser, content, exit_fn) {
-        tracelog.trace('parser (%s)', util.inspect(parser, {
+        jstracer.trace('parser (%s)', util.inspect(parser, {
             showHidden: true,
             depth: 3
         }));
         if (content === null || content === undefined) {
-            tracelog.error('can not find(%s) in (%s)', args.selector, htmlfile);
+            jstracer.error('can not find(%s) in (%s)', args.selector, htmlfile);
             exit_fn(4);
             return;
         }
@@ -410,32 +410,32 @@ var find_command = function (args) {
     'use strict';
     var htmlfile;
     htmlfile = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     if (htmlfile.length < 1) {
-        tracelog.error('need htmlfile\n');
+        jstracer.error('need htmlfile\n');
         trace_exit(3);
         return;
     }
 
     if (args.selector.length === 0) {
-        tracelog.error('need selector set\n');
+        jstracer.error('need selector set\n');
         trace_exit(3);
         return;
     }
 
     if (args.find_children.length === 0) {
-        tracelog.error('need a --children set\n');
+        jstracer.error('need a --children set\n');
         trace_exit(3);
         return;
     }
 
-    tracelog.info('htmlfile %s', htmlfile);
+    jstracer.info('htmlfile %s', htmlfile);
     call_cheerparser(htmlfile, args.selector, function (parser, content, exit_fn) {
         var children;
         var idx, jdx;
         var curchild, curcon;
         var s;
-        tracelog.trace('parser (%s)', util.inspect(parser, {
+        jstracer.trace('parser (%s)', util.inspect(parser, {
             showHidden: true,
             depth: 3
         }));
@@ -460,32 +460,32 @@ exports.find_command = find_command;
 var attr_command = function (args) {
     'use strict';
     var htmlfile = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     if (htmlfile.length < 1) {
-        tracelog.error('need htmlfile\n');
+        jstracer.error('need htmlfile\n');
         trace_exit(3);
         return;
     }
 
     if (args.selector.length === 0) {
-        tracelog.error('need selector set\n');
+        jstracer.error('need selector set\n');
         trace_exit(3);
         return;
     }
-    /*tracelog.trace('parent (%s)', util.inspect(options.parent, {
+    /*jstracer.trace('parent (%s)', util.inspect(options.parent, {
         showHidden: true,
         depth: 3
     }));*/
 
 
-    tracelog.info('htmlfile %s', htmlfile);
+    jstracer.info('htmlfile %s', htmlfile);
     call_cheerparser(htmlfile, args.selector, function (parser, content, exit_fn) {
-        /*tracelog.trace('parser (%s)', util.inspect(parser, {
+        /*jstracer.trace('parser (%s)', util.inspect(parser, {
             showHidden: true,
             depth: 3
         }));*/
         if (content === null || content === undefined) {
-            tracelog.error('can not find(%s) in (%s)', args.selector, htmlfile);
+            jstracer.error('can not find(%s) in (%s)', args.selector, htmlfile);
             exit_fn(4);
             return;
         }
@@ -518,24 +518,24 @@ exports.attr_command = attr_command;
 var traverse_command = function (args) {
     'use strict';
     var htmlfile = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     if (htmlfile.length < 1) {
-        tracelog.error('need htmlfile\n');
+        jstracer.error('need htmlfile\n');
         trace_exit(3);
         return;
     }
 
     if (args.selector.length === 0) {
-        tracelog.error('need selector set\n');
+        jstracer.error('need selector set\n');
         trace_exit(3);
         return;
     }
 
-    tracelog.info('htmlfile %s', htmlfile);
+    jstracer.info('htmlfile %s', htmlfile);
     call_cheerparser(htmlfile, args.selector, function (parser, content, exit_fn) {
         var travers_state;
         if (content === null || content === undefined) {
-            tracelog.error('can not find(%s) in (%s)', args.selector, htmlfile);
+            jstracer.error('can not find(%s) in (%s)', args.selector, htmlfile);
             exit_fn(4);
             return;
         }
@@ -560,20 +560,20 @@ exports.traverse_command = traverse_command;
 var childrens_command = function (args) {
     'use strict';
     var htmlfile = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     if (htmlfile.length < 1) {
-        tracelog.error('need htmlfile\n');
+        jstracer.error('need htmlfile\n');
         trace_exit(3);
         return;
     }
 
     if (args.selector.length === 0) {
-        tracelog.error('need selector set\n');
+        jstracer.error('need selector set\n');
         trace_exit(3);
         return;
     }
 
-    tracelog.info('htmlfile %s', htmlfile);
+    jstracer.info('htmlfile %s', htmlfile);
     call_cheerparser(htmlfile, args.selector, function (parser, content, exit_fn) {
         var children;
         var curelm;
@@ -582,12 +582,12 @@ var childrens_command = function (args) {
         var curchild; //, siblings;
         parser = parser;
         if (content === null || content === undefined) {
-            tracelog.info('nocontent %s', args.selector);
+            jstracer.info('nocontent %s', args.selector);
             exit_fn(0);
             return;
         }
 
-        tracelog.info('length %d', content.length);
+        jstracer.info('length %d', content.length);
         jdx = 0;
         for (jdx = 0; jdx < content.length; jdx += 1) {
             curelm = content.eq(jdx);
@@ -595,18 +595,18 @@ var childrens_command = function (args) {
             s = get_data_name(curelm, htmlfile.selector, jdx, null);
             console.log(s);
             idx = 0;
-            //tracelog.info('children %d', children.length);
+            //jstracer.info('children %d', children.length);
             for (idx = 0; idx < children.length; idx += 1) {
                 curchild = children.eq(idx);
                 s = get_data_name(curchild, args.selector, jdx, idx);
                 console.log(s);
                 if (true) {
-                    tracelog.info('[%d] (%s)', idx, util.inspect(curchild, {
+                    jstracer.info('[%d] (%s)', idx, util.inspect(curchild, {
                         showHidden: true,
                         depth: 2
                     }));
                 } else {
-                    tracelog.info('[%d] type (%s) name(%s)', idx, curchild.type(), curchild.name());
+                    jstracer.info('[%d] type (%s) name(%s)', idx, curchild.type(), curchild.name());
                 }
             }
         }
@@ -620,20 +620,20 @@ exports.childrens_command = childrens_command;
 var childselect_command = function (args) {
     'use strict';
     var htmlfile = args.subnargs[0];
-    tracelog.set_args(args);
+    jstracer.set_args(args);
     if (htmlfile.length < 2) {
-        tracelog.error('need htmlfile\n');
+        jstracer.error('need htmlfile\n');
         trace_exit(3);
         return;
     }
 
     if (args.selector.length === 0) {
-        tracelog.error('need selector set\n');
+        jstracer.error('need selector set\n');
         trace_exit(3);
         return;
     }
 
-    tracelog.info('htmlfile %s', htmlfile);
+    jstracer.info('htmlfile %s', htmlfile);
     call_cheerparser(htmlfile[0], args.selector, function (parser, content, exit_fn) {
         var children;
         var curelm;
@@ -642,12 +642,12 @@ var childselect_command = function (args) {
         var curchild; //, siblings;
         parser = parser;
         if (content.length === 0) {
-            tracelog.info('length %d', content.length);
+            jstracer.info('length %d', content.length);
             exit_fn(0);
             return;
         }
 
-        tracelog.info('length %d', content.length);
+        jstracer.info('length %d', content.length);
         jdx = 0;
         for (jdx = 0; jdx < content.length; jdx += 1) {
             curelm = content.eq(jdx);
@@ -655,18 +655,18 @@ var childselect_command = function (args) {
             s = get_data_name(curelm, args.selector, jdx, null);
             console.log(s);
             idx = 0;
-            tracelog.info('children %d', children.length);
+            jstracer.info('children %d', children.length);
             for (idx = 0; idx < children.length; idx += 1) {
                 curchild = children.eq(idx);
                 s = get_data_name(curchild, args.selector, jdx, idx);
                 console.log(s);
                 if (true) {
-                    tracelog.info('[%d] (%s)', idx, util.inspect(curchild, {
+                    jstracer.info('[%d] (%s)', idx, util.inspect(curchild, {
                         showHidden: true,
                         depth: 2
                     }));
                 } else {
-                    tracelog.info('[%d] type (%s) name(%s)', idx, curchild.type(), curchild.name());
+                    jstracer.info('[%d] type (%s) name(%s)', idx, curchild.type(), curchild.name());
                 }
             }
         }

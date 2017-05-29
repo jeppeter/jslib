@@ -1,4 +1,4 @@
-var tracelog = require('../../tracelog');
+var jstracer = require('jstracer');
 var cheerio = require('cheerio');
 var URL = require('url');
 var path = require('path');
@@ -64,12 +64,12 @@ var inner_get_number_list = function (value) {
     reg = new RegExp('[^\\d]+([\\d]+)[^\\d]+([\\d]+)[^\\d]+([\\d]+)[^\\d]+', 'i');
     m = reg.exec(value);
     if (m === undefined || m === null) {
-        tracelog.info('value (%s) (%s)', value, m);
+        jstracer.info('value (%s) (%s)', value, m);
         return num;
     }
 
     if (m.length < 4) {
-        tracelog.info('m (%d)', m.length);
+        jstracer.info('m (%d)', m.length);
         return num;
     }
 
@@ -173,17 +173,17 @@ module.exports.find_query_result = function (htmldata) {
     selected = parser('#ctl00_lblDisplay');
     value = inner_get_text_html(selected, parser);
     if (value === '') {
-        tracelog.error('nothing to handle');
+        jstracer.error('nothing to handle');
         return null;
     }
     num = inner_get_number_list(value);
     if (num[2] === 0) {
-        tracelog.error('get 0 records');
+        jstracer.error('get 0 records');
         return null;
     }
 
     if (num[1] === num[2]) {
-        tracelog.info('get all %d', num[1]);
+        jstracer.info('get all %d', num[1]);
         findres.next = false;
         return findres;
     }
@@ -211,7 +211,7 @@ module.exports.more_query_html = function (htmldata) {
             if (baseop.match_expr_i(curval, '\.pdf$')) {
                 htmllists.push(curval);
             } else {
-                tracelog.info('curval unknown (%s)', curval);
+                jstracer.info('curval unknown (%s)', curval);
             }
         }
     }
