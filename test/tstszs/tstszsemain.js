@@ -40,3 +40,8 @@ process.on('SIGINT', function () {
 });
 
 var extparser = extargsparse.ExtArgsParser();
+var args;
+extparser.load_command_line_string(commandline);
+jstracer.init_args(extparser);
+
+args = extparser.parse_command_line();
