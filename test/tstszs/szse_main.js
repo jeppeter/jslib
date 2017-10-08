@@ -23,12 +23,20 @@ function createSzseMain(options, stockcode) {
         }
 
         if (err !== undefined && err !== null) {
-            if (worker.reqopt.szsetries < worker.reqopt.szse_max_tries) {
-                jstracer.warn
+            if (worker.reqopt.szsemain.szsetries < worker.reqopt.szsemain.szse_max_tries) {
+                jstracer.warn('[%d] can not get [%s]', worker.reqopt.szsemain.szsetries, worker.reqopt.szsemain.queryurl);
+                worker.reqopt.szsemain.szsetries += 1;
+                grabwork.post_queue(worker.reqopt.szsemain.queryurl, worker.reqopt);
+                return;
             }
+
+            /*now it is totally failed*/
+            jstracer.error('[%d] totally failed [%s]', worker.reqopt.szsemain.szsetries, worker.reqopt.szsemain.queryurl);
+            return;
         }
 
         /*now it is we search ,so we should */
+        
     };
 
     return szse;
