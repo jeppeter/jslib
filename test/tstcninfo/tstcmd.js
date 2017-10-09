@@ -37,6 +37,7 @@ var command_line_format = `
         "startdate|S" : "19990101",
         "enddate|E" : "%s",
         "topdir|P" : "%s",
+        "downloadmax|M" : 30,
         "watermark|w" : 50,
         "url|U" : "http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/",
         "$" : "+"
