@@ -1,39 +1,64 @@
 var crypto = require('crypto');
-//var util = require('util');
+var util = require('util');
 var baseop = require('../baseop');
 
 
 function createRandomDelay(options) {
     'use strict';
-    var hknews = {};
+    var randompre = {};
 
-    hknews.options = {};
-    hknews.options.watermark = 20;
+    randompre.options = {};
+    randompre.options.watermark = 20;
+    randompre.options.randommin = 0;
+    randompre.options.randommax = 1000;
     if (baseop.is_non_null(options, 'watermark') && options.watermark < 256) {
-        hknews.options.watermark = options.watermark;
+        randompre.options.watermark = options.watermark;
     }
 
-    hknews.pre_handler = function (err, worker, next) {
+    if (baseop.is_non_null(options, 'randommin')) {
+        randompre.options.randommin = options.randommin;
+    }
+
+    if (baseop.is_non_null(options, 'randommax')) {
+        randompre.options.randommax = options.randommax;
+    }
+
+    if (randompre.options.randommin >= randompre.options.randommax) {
+        throw new Error(util.format('please use random min(%s) >= max(%s)', randompre.options.randommin, randompre.options.randommax));
+    }
+
+    randompre.pre_handler = function (err, worker, next) {
         if (err) {
             next(true, err);
             return;
         }
         worker = worker;
-        crypto.randomBytes(1, function (err, buffer) {
+        crypto.randomBytes(4, function (err2, buffer2) {
             var hex;
             var num;
-            if (err) {
+            var randtime;
+            if (err2) {
                 next(true, null);
                 return;
             }
-            hex = buffer.toString('hex');
+            hex = buffer2.toString('hex');
             num = parseInt(hex, 16);
             num %= 256;
-            if (num > hknews.options.watermark) {
-                setTimeout(function () {
-                    next(true, null);
-                    return;
-                }, num * 20);
+            if (num > randompre.options.watermark) {
+                crypto.randomBytes(4, function(err3, buffer3) {
+                    if (err3) {
+                        next(true, null);
+                        return;
+                    }
+                    hex = buffer3.toString('hex');
+                    randtime = parseInt(hex,16);
+                    randtime %= (randompre.options.randommax - randompre.options.randommin);
+                    randtime += randompre.options.randommin;
+                    setTimeout(function(){
+                        next(true, null);
+                        return;
+                    }, randtime);
+                });
                 return;
             }
             next(true, null);
@@ -41,23 +66,23 @@ function createRandomDelay(options) {
         });
     };
 
-    hknews.post_handler = function (err, worker, next) {
+    /*randompre.post_handler = function (err, worker, next) {
         if (err) {
             next(true, err);
             return;
         }
         worker = worker;
-        crypto.randomBytes(1, function (err, buffer) {
+        crypto.randomBytes(4, function (err2, buffer2) {
             var hex;
             var num;
             if (err) {
                 next(true, null);
                 return;
             }
-            hex = buffer.toString('hex');
+            hex = buffer2.toString('hex');
             num = parseInt(hex, 16);
             num %= 256;
-            if (num > hknews.options.watermark) {
+            if (num > randompre.options.watermark) {
                 setTimeout(function () {
                     next(true, null);
                     return;
@@ -68,9 +93,9 @@ function createRandomDelay(options) {
             return;
         });
         return;
-    };
+    };*/
 
-    return hknews;
+    return randompre;
 }
 
 

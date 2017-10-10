@@ -35,6 +35,8 @@ var command_line_format = `
         "grabmaxsock|m" : 30,
         "grabtimeout|t" : 10000,
         "startdate|S" : "19990101",
+        "randommin" : 0,
+        "randommax" : 1000,
         "enddate|E" : "%s",
         "topdir|P" : "%s",
         "downloadmax|M" : 30,
@@ -84,7 +86,7 @@ jstracer.set_args(args);
 
 grab.add_pre(random_delay());
 grab.add_pre(download_pre(args));
-grab.add_post(random_delay(args));
+//grab.add_post(random_delay(args));
 grab.add_post(cninfomain(args));
 grab.add_post(cninfoquery(args));
 var mainurl;
