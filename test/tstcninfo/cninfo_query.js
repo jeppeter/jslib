@@ -90,7 +90,7 @@ function createCninfoQuery(options) {
         if (err) {
             /*it is error*/
             postdata = worker.reqopt.reqopt.body;
-            jstracer.error('POST (%s) with data (%s) error', worker.url, postdata);
+            jstracer.error('<POST::%s> [%s] error [%s]', worker.url, postdata, err);
             sendcninfoquery = cninfoquery;
             /*it means we have retry this*/
             sendcninfoquery.retry += 1;
@@ -105,7 +105,7 @@ function createCninfoQuery(options) {
                     cninfoquery: sendcninfoquery
                 });
             } else {
-                jstracer.error('POST (%s) with data (%s) really failed', worker.url, postdata);
+                jstracer.error('POST (%s) with data (%s) totally failed', worker.url, postdata);
             }
             next(false, err);
             return;

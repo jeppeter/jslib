@@ -78,6 +78,7 @@ function createCninfoMain(options) {
 
         if (err) {
             /*we should query again*/
+            jstracer.error('<GET::%s> error %s', worker.url, err);
             worker.parent.queue(worker.url, {
                 priority: grabwork.MIN_PRIORITY,
                 cninfomain: worker.reqopt.cninfomain
