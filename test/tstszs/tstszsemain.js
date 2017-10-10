@@ -3,17 +3,42 @@ var cheerio = require('cheerio');
 var extargsparse = require('extargsparse');
 var fs = require('fs');
 
-var szse_main_get_number_span = function(htmldata, args, callback) {
+
+var szse_main_get_number_span = function (htmldata) {
     'use strict';
-    var parser ;
+    var parser;
+    var content;
+    var idx;
+    var needidx=-1;
+    var num = -1;
     parser = cheerio.load(htmldata);
-    return 0;
+    content = parser('tr').find('span');
+    for(idx = 0 ;idx < content.length ; idx += 1) {
+        if (content.eq(idx).attr('class') === undefined) {
+            if (needidx < 0) {
+                needidx = idx;
+            } else {
+                num = parseInt(content.eq(idx).text(),10);
+                break;
+            }
+        }
+    }
+    return num;
+};
+
+var call_numspan = function(err , numspan, args) {
+    if (err !== undefined && err !== null) {
+        console.error('parse error %s', err);
+        return;
+    }
+    console.log('numspan %d', numspan);
+    return;
 };
 
 
 var commandline = `
     {
-        '$' : 1
+        "$": "+"
     }
 `;
 
@@ -28,6 +53,8 @@ var trace_exit = function (ec) {
     return;
 };
 
+
+
 process.on('uncaughtException', function (err) {
     'use struct';
     jstracer.error('error (%s) stack(%s)', err, err.stack);
@@ -39,9 +66,23 @@ process.on('SIGINT', function () {
     trace_exit(0);
 });
 
-var extparser = extargsparse.ExtArgsParser();
+var extparser = extargsparse.ExtArgsParse();
 var args;
 extparser.load_command_line_string(commandline);
 jstracer.init_args(extparser);
 
 args = extparser.parse_command_line();
+jstracer.set_args(args);
+
+args.args.forEach(function (fname, idx) {
+    'use strict';
+    fs.readFile(fname, function (err, data) {
+        var numspan;
+        if (err !== undefined && err !== null) {
+            jstracer.error('[%s][%s] read error[%s]', idx, fname, err);
+            return;
+        }
+        numspan=szse_main_get_number_span(data);
+        console.log('numspan [%d]', numspan);
+    });
+});
