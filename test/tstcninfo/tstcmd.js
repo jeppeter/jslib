@@ -32,14 +32,14 @@ var trace_exit = function (ec) {
 
 var command_line_format = `
     {
-        "grabmaxsock|m" : 30,
-        "grabtimeout|t" : 10000,
+        "grabmaxsock|m" : 1,
+        "grabtimeout|t" : 5000,
         "startdate|S" : "19990101",
-        "randommin" : 0,
-        "randommax" : 1000,
+        "randommin" : 5000,
+        "randommax" : 7000,
         "enddate|E" : "%s",
         "topdir|P" : "%s",
-        "downloadmax|M" : 30,
+        "downloadmax|M" : 1,
         "watermark|w" : 50,
         "url|U" : "http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/",
         "$" : "+"
