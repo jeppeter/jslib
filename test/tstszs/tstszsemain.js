@@ -9,16 +9,16 @@ var szse_main_get_number_span = function (htmldata) {
     var parser;
     var content;
     var idx;
-    var needidx=-1;
+    var needidx = -1;
     var num = -1;
     parser = cheerio.load(htmldata);
     content = parser('tr').find('span');
-    for(idx = 0 ;idx < content.length ; idx += 1) {
+    for (idx = 0; idx < content.length; idx += 1) {
         if (content.eq(idx).attr('class') === undefined) {
             if (needidx < 0) {
                 needidx = idx;
             } else {
-                num = parseInt(content.eq(idx).text(),10);
+                num = parseInt(content.eq(idx).text(), 10);
                 break;
             }
         }
@@ -26,7 +26,25 @@ var szse_main_get_number_span = function (htmldata) {
     return num;
 };
 
-var call_numspan = function(err , numspan, args) {
+var szse_get_ahrefs = function (htmldata) {
+    'use strict';
+    var parser;
+    var content;
+    var ahrefs = {};
+    var currefs = {};
+    var idx;
+
+    parser = cheerio.load(htmldata);
+    content = parser('tr').find('td');
+    for (idx = 0; idx < content.length; idx += 1) {
+        if (content.eq(idx).attr('class') === 'td2') {
+            console.log('content[%d]', idx);
+        }
+    }
+    return ahrefs;
+};
+
+var call_numspan = function (err, numspan, args) {
     if (err !== undefined && err !== null) {
         console.error('parse error %s', err);
         return;
@@ -78,11 +96,14 @@ args.args.forEach(function (fname, idx) {
     'use strict';
     fs.readFile(fname, function (err, data) {
         var numspan;
+        var ahrefs;
         if (err !== undefined && err !== null) {
             jstracer.error('[%s][%s] read error[%s]', idx, fname, err);
             return;
         }
-        numspan=szse_main_get_number_span(data);
+        numspan = szse_main_get_number_span(data);
         console.log('numspan [%d]', numspan);
+        ahrefs = szse_get_ahrefs(data);
+        console.log('ahrefs [%s]', ahrefs);
     });
 });
