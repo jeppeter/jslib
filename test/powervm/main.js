@@ -74,7 +74,9 @@ app.post('/vm/vmctrl/power', function (req, res) {
             return;
         }
         jstracer.info('send [%s]', data);
-        res.end(data);
+        res.set("Connection", "close");
+        res.write(data);
+        res.end();
         return;
     });
     postidx += 1;
@@ -97,7 +99,9 @@ app.post('/vm/ceph/vmstat', function (req, res) {
             return;
         }
         jstracer.info('send [%s]', data);
-        res.end(data);
+        res.set("Connection", "close");
+        res.write(data);
+        res.end();
         return;
     });
     postidx += 1;
