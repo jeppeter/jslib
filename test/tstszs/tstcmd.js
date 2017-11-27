@@ -89,5 +89,12 @@ grab.add_post(szsemain(args));
 grab.add_post(szsegrab(args));
 
 args.args.forEach(function (stockcode) {
-    
+    'use strict';
+    if (stockcode.length >= 6) {
+        if (stockcode[0] !== '6') {
+            szsemain.AddSzseMain(args, stockcode);
+        }
+    } else {
+        jstracer.error('[%s] not valid stockcode', stockcode);
+    }
 });
