@@ -4,6 +4,7 @@ var util = require('util');
 var grabwork = require('../../grabwork');
 var cheerio = require('cheerio');
 //var URL = require('url');
+var grab = grabwork();
 
 
 var szse_main_get_number_span = function (htmldata) {
@@ -41,6 +42,10 @@ function createSzseMain(options) {
         var numspan = -1;
         var idx;
 
+        jstracer.info('reqopt [%s]', util.inspect(worker.reqopt, {
+            showHidden: true,
+            depth: null
+        }));
         if (!baseop.is_non_null(worker.reqopt, 'szsemain')) {
             next(true, err);
             return;
@@ -50,7 +55,7 @@ function createSzseMain(options) {
             if (worker.reqopt.szsemain.szsetries < worker.reqopt.szsemain.szse_max_tries) {
                 jstracer.warn('[%d] can not get [%s]', worker.reqopt.szsemain.szsetries, worker.reqopt.szsemain.queryurl);
                 worker.reqopt.szsemain.szsetries += 1;
-                grabwork.post_queue(worker.reqopt.szsemain.queryurl, worker.reqopt);
+                grab.post_queue(worker.reqopt.szsemain.queryurl, worker.reqopt);
                 return;
             }
 
@@ -64,7 +69,7 @@ function createSzseMain(options) {
             if (worker.reqopt.szsemain.szsetries < worker.reqopt.szsemain.szse_max_tries) {
                 jstracer.warn('[%d] not get right span number', worker.reqopt.szsemain.szsetries);
                 worker.reqopt.szsemain.szsetries += 1;
-                grabwork.post_queue(worker.reqopt.szsemain.queryurl, worker.reqopt);
+                grab.post_queue(worker.reqopt.szsemain.queryurl, worker.reqopt);
                 return;
             }
             jstracer.error('[%d] totally failed [%s]', worker.reqopt.szsemain.szsetries, worker.reqopt.szsemain.queryurl);
@@ -96,7 +101,7 @@ function createSzseMain(options) {
             reqopt.body = szsegrab.postdata;
             reqopt.headers = szsegrab.headers;
             reqopt.szsegrab = szsegrab;
-            grabwork.post_queue(szsegrab.queryurl, reqopt);
+            grab.post_queue(szsegrab.queryurl, reqopt);
         }
         return;
     };
@@ -160,8 +165,8 @@ function AddSzseMain(options, stockcode) {
         'Content-Type': 'application/x-www-form-urlencoded'
     };
 
-    szsemain.postdata = util.format('leftid=1&lmid=drgg&pageNo=1&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7&tzy=', reqopt.stockcode, reqopt.startdate, reqopt.enddate);
-    reqopt.body = reqopt.postdata;
+    szsemain.postdata = util.format('leftid=1&lmid=drgg&pageNo=1&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7&tzy=', stockcode, szsemain.startdate, szsemain.enddate);
+    reqopt.body = szsemain.postdata;
     reqopt.headers = szsemain.headers;
     szsemain.szsetries = 0;
     szsemain.szse_max_tries = 5;
@@ -169,8 +174,12 @@ function AddSzseMain(options, stockcode) {
         szsemain.szse_max_tries = options.maxtries;
     }
     reqopt.szsemain = szsemain;
+    jstracer.warn('reqopt22 [%s]', util.inspect(reqopt, {
+        showHidden: true,
+        depth: null
+    }));
 
-    grabwork.post_queue(reqopt.queryurl, reqopt);
+    grab.post_queue(szsemain.queryurl, reqopt);
     return;
 }
 
