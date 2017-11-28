@@ -97,12 +97,18 @@ function createWorker(parent, meth, url, reqopt) {
     return worker;
 }
 
+var _innergrabwork = null;
+
 
 function createGrabwork(options) {
     'use strict';
     var self = {};
     var setopt = options || {};
     var idx;
+    if (_innergrabwork !== null) {
+        return _innergrabwork;
+    }
+
     self.workers = [];
     self.pre_handlers = [];
     self.post_handlers = [];
@@ -370,6 +376,8 @@ function createGrabwork(options) {
         self.post_handlers.push(handler);
         return;
     };
+
+    _innergrabwork = self;
 
     return self;
 }

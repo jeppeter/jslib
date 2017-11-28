@@ -36,6 +36,7 @@ function createSzseMain(options) {
 
     szse = {};
 
+    jstracer.trace('init create ');
     szse.post_handler = function (err, worker, next) {
         var reqopt;
         var szsegrab = {};
@@ -165,7 +166,7 @@ function AddSzseMain(options, stockcode) {
         'Content-Type': 'application/x-www-form-urlencoded'
     };
 
-    szsemain.postdata = util.format('leftid=1&lmid=drgg&pageNo=1&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7&tzy=', stockcode, szsemain.startdate, szsemain.enddate);
+    szsemain.postdata = util.format('leftid=1&lmid=drgg&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7', stockcode, szsemain.startdate, szsemain.enddate);
     reqopt.body = szsemain.postdata;
     reqopt.headers = szsemain.headers;
     szsemain.szsetries = 0;
