@@ -36,17 +36,12 @@ function createSzseMain(options) {
 
     szse = {};
 
-    jstracer.trace('init create ');
     szse.post_handler = function (err, worker, next) {
         var reqopt;
         var szsegrab = {};
         var numspan = -1;
         var idx;
 
-        jstracer.info('reqopt [%s]', util.inspect(worker.reqopt, {
-            showHidden: true,
-            depth: null
-        }));
         if (!baseop.is_non_null(worker.reqopt, 'szsemain')) {
             next(true, err);
             return;
@@ -77,6 +72,8 @@ function createSzseMain(options) {
             return;
         }
 
+        jstracer.trace('numspan [%s]', numspan);
+
         /*now it is we search ,so we should */
         for (idx = 0; idx < numspan; idx += 1) {
             reqopt = {};
@@ -98,7 +95,9 @@ function createSzseMain(options) {
             }
             szsegrab.szsetries = 0;
             szsegrab.queryurl = 'http://disclosure.szse.cn/m/search0425.jsp';
-            szsegrab.postdata = util.format('leftid=1&lmid=drgg&pageNo=%d&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7&tzy=', (idx + 1), reqopt.szsemain.stockcode, reqopt.szsemain.startdate, reqopt.szsemain.enddate);
+            szsegrab.stockcode = worker.reqopt.szsemain.stockcode;
+            szsegrab.postdata = util.format('leftid=1&lmid=drgg&pageNo=%d&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7&tzy=', (idx + 1), worker.reqopt.szsemain.stockcode, worker.reqopt.szsemain.startdate, worker.reqopt.szsemain.enddate);
+            jstracer.trace('postdata [%s]', szsegrab.postdata);
             reqopt.body = szsegrab.postdata;
             reqopt.headers = szsegrab.headers;
             reqopt.szsegrab = szsegrab;
@@ -167,6 +166,7 @@ function AddSzseMain(options, stockcode) {
     };
 
     szsemain.postdata = util.format('leftid=1&lmid=drgg&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7', stockcode, szsemain.startdate, szsemain.enddate);
+    szsemain.stockcode = stockcode;
     reqopt.body = szsemain.postdata;
     reqopt.headers = szsemain.headers;
     szsemain.szsetries = 0;
@@ -175,11 +175,6 @@ function AddSzseMain(options, stockcode) {
         szsemain.szse_max_tries = options.maxtries;
     }
     reqopt.szsemain = szsemain;
-    jstracer.warn('reqopt22 [%s]', util.inspect(reqopt, {
-        showHidden: true,
-        depth: null
-    }));
-
     grab.post_queue(szsemain.queryurl, reqopt);
     return;
 }

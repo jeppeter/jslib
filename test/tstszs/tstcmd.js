@@ -70,7 +70,7 @@ jstracer.init_args(parser);
 
 process.on('uncaughtException', function (err) {
     'use struct';
-    jstracer.error('error (%s) stack(%s)', err, err.stack);
+    jstracer.error('error (%s) stack(%s)', err, util.inspect(err,{showHidden:true,depth:null}));
     trace_exit(3);
 });
 

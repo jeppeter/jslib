@@ -56,7 +56,7 @@ function createSzseGrab(options) {
 
         ahrefs = szse_get_ahrefs(worker.htmldata);
         for (idx = 0; idx < ahrefs.length; idx += 1) {
-            jstracer.info('[%s][%s]', idx, ahrefs[idx]);
+            jstracer.trace('[%s][%s]', idx, ahrefs[idx]);
         }
 
     };
