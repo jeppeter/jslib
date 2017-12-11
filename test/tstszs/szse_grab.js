@@ -38,6 +38,8 @@ function createSzseGrab(options) {
     szsegrab.post_handler = function (err, worker, next) {
         var ahrefs = [];
         var idx;
+        var curfile = '';
+        var cururl = '';
         if (!baseop.is_non_null(worker.reqopt, 'szsegrab')) {
             next(true, err);
             return;

@@ -51,10 +51,15 @@ function createSzseMainRequest(opt, worker, idx) {
     if (opt !== undefined && opt !== null && baseop.is_non_null(opt, 'maxtries')) {
         szsegrab.szse_max_tries = opt.maxtries;
     }
+    szsegrab.topdir = process.cwd();
+    if (opt !== undefined && opt !== null && baseop.is_non_null(opt, 'topdir')) {
+        szsegrab.topdir = opt.topdir;
+    }
     szsegrab.szsetries = 0;
     szsegrab.queryurl = 'http://disclosure.szse.cn/m/search0425.jsp';
     szsegrab.stockcode = worker.reqopt.szsemain.stockcode;
     szsegrab.postdata = util.format('leftid=1&lmid=drgg&pageNo=%d&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7&tzy=', (idx), worker.reqopt.szsemain.stockcode, worker.reqopt.szsemain.startdate, worker.reqopt.szsemain.enddate);
+
     jstracer.trace('postdata [%s]', szsegrab.postdata);
     jstracer.trace('queryurl [%s]', szsegrab.queryurl);
     reqopt.reqopt = {};
@@ -177,8 +182,9 @@ function AddSzseMain(options, stockcode) {
 
     szsemain.postdata = util.format('leftid=1&lmid=drgg&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7', stockcode, szsemain.startdate, szsemain.enddate);
     szsemain.stockcode = stockcode;
-    reqopt.body = szsemain.postdata;
-    reqopt.headers = szsemain.headers;
+    reqopt.reqopt = {};
+    reqopt.reqopt.body = szsemain.postdata;
+    reqopt.reqopt.headers = szsemain.headers;
     szsemain.szsetries = 0;
     szsemain.szse_max_tries = 5;
     if (baseop.is_valid_number(options, 'maxtries')) {
