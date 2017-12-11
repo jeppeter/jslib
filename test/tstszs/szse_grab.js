@@ -3,6 +3,9 @@ var baseop = require('../../baseop');
 //var util = require('util');
 var grabwork = require('../../grabwork');
 var cheerio = require('cheerio');
+var path = require('path');
+var util = require('util');
+var grab = grabwork();
 
 
 var szse_get_ahrefs = function (htmldata) {
@@ -38,8 +41,11 @@ function createSzseGrab(options) {
     szsegrab.post_handler = function (err, worker, next) {
         var ahrefs = [];
         var idx;
-        var curfile = '';
         var cururl = '';
+        var curdir;
+        var curyear;
+        var carr;
+        var sarr;
         if (!baseop.is_non_null(worker.reqopt, 'szsegrab')) {
             next(true, err);
             return;
@@ -58,9 +64,20 @@ function createSzseGrab(options) {
 
         ahrefs = szse_get_ahrefs(worker.htmldata);
         for (idx = 0; idx < ahrefs.length; idx += 1) {
-            jstracer.trace('[%s][%s]', idx, ahrefs[idx]);
+            //jstracer.trace('[%s][%s]', idx, ahrefs[idx]);
+            cururl = util.format('http://disclosure.szse.cn/%s', ahrefs[idx]);
+            carr = ahrefs[idx].split('/');
+            if (carr.length >= 2) {
+                sarr = carr[1].split('-');
+                curyear = sarr[0];
+                curdir = path.join(worker.reqopt.szsegrab.topdir, worker.reqopt.szsegrab.stockcode, curyear);
+                grab.download_queue(cururl, curdir);
+            } else {
+                jstracer.warn('[%s][%s] not valid', idx, ahrefs[idx]);
+            }
         }
 
+        return;
     };
 
     return szsegrab;
