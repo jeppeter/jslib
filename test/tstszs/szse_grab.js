@@ -47,7 +47,7 @@ function createSzseGrab(options) {
             if (worker.reqopt.szsegrab.szsetries < worker.reqopt.szsegrab.szse_max_tries) {
                 jstracer.warn('[%d] can not get [%s][%s] [%s]', worker.reqopt.szsegrab.szsetries, worker.reqopt.szsegrab.queryurl, worker.reqopt.body, err);
                 worker.reqopt.szsegrab.szsetries += 1;
-                grabwork.post_queue(worker.reqopt.szsegrab.queryurl, worker.reqopt.szsegrab);
+                grabwork.post_queue(worker.reqopt.szsegrab.queryurl, worker.reqopt);
                 return;
             }
             jstracer.error('[%s] grab [%s][%s] totally failed [%s]', worker.reqopt.szsegrab.szsetries, worker.reqopt.szsegrab.queryurl, worker.reqopt.body, err);

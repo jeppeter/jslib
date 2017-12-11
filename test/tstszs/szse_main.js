@@ -30,6 +30,40 @@ var szse_main_get_number_span = function (htmldata) {
 };
 
 
+function createSzseMainRequest(opt, worker, idx) {
+    'use strict';
+    var reqopt;
+    var szsegrab;
+    reqopt = {};
+    szsegrab = {};
+    szsegrab.headers = {
+        Host: 'disclosure.szse.cn',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+        'Accept-Encoding': 'gzip, deflate',
+        Referer: 'http://disclosure.szse.cn/m/search0425.jsp',
+        Connection: 'keep-alive',
+        'Upgrade-Insecure-Requests': 1,
+        'Content-Type': 'application/x-www-form-urlencoded'
+    };
+    szsegrab.szse_max_tries = 5;
+    if (opt !== undefined && opt !== null && baseop.is_non_null(opt, 'maxtries')) {
+        szsegrab.szse_max_tries = opt.maxtries;
+    }
+    szsegrab.szsetries = 0;
+    szsegrab.queryurl = 'http://disclosure.szse.cn/m/search0425.jsp';
+    szsegrab.stockcode = worker.reqopt.szsemain.stockcode;
+    szsegrab.postdata = util.format('leftid=1&lmid=drgg&pageNo=%d&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7&tzy=', (idx), worker.reqopt.szsemain.stockcode, worker.reqopt.szsemain.startdate, worker.reqopt.szsemain.enddate);
+    jstracer.trace('postdata [%s]', szsegrab.postdata);
+    jstracer.trace('queryurl [%s]', szsegrab.queryurl);
+    reqopt.reqopt = {};
+    reqopt.reqopt.body = szsegrab.postdata;
+    reqopt.reqopt.headers = szsegrab.headers;
+    reqopt.szsegrab = szsegrab;
+    return reqopt;
+}
+
 function createSzseMain(options) {
     'use strict';
     var szse = null;
@@ -38,7 +72,6 @@ function createSzseMain(options) {
 
     szse.post_handler = function (err, worker, next) {
         var reqopt;
-        var szsegrab = {};
         var numspan = -1;
         var idx;
 
@@ -76,32 +109,9 @@ function createSzseMain(options) {
 
         /*now it is we search ,so we should */
         for (idx = 0; idx < numspan; idx += 1) {
-            reqopt = {};
-            szsegrab = {};
-            szsegrab.headers = {
-                Host: 'disclosure.szse.cn',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0',
-                Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-                'Accept-Encoding': 'gzip, deflate',
-                Referer: 'http://disclosure.szse.cn/m/search0425.jsp',
-                Connection: 'keep-alive',
-                'Upgrade-Insecure-Requests': 1,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            };
-            szsegrab.szse_max_tries = 5;
-            if (options !== undefined && options !== null && baseop.is_non_null(options, 'maxtries')) {
-                szsegrab.szse_max_tries = options.maxtries;
-            }
-            szsegrab.szsetries = 0;
-            szsegrab.queryurl = 'http://disclosure.szse.cn/m/search0425.jsp';
-            szsegrab.stockcode = worker.reqopt.szsemain.stockcode;
-            szsegrab.postdata = util.format('leftid=1&lmid=drgg&pageNo=%d&stockCode=%s&keyword=&noticeType=&startTime=%s&endTime=%s&imageField.x=45&imageField.y=7&tzy=', (idx + 1), worker.reqopt.szsemain.stockcode, worker.reqopt.szsemain.startdate, worker.reqopt.szsemain.enddate);
-            jstracer.trace('postdata [%s]', szsegrab.postdata);
-            reqopt.body = szsegrab.postdata;
-            reqopt.headers = szsegrab.headers;
-            reqopt.szsegrab = szsegrab;
-            grab.post_queue(szsegrab.queryurl, reqopt);
+            reqopt = createSzseMainRequest(options, worker, (idx + 1));
+            grab.post_queue(reqopt.szsegrab.queryurl, reqopt);
+            reqopt = null;
         }
         return;
     };
