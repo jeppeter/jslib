@@ -80,12 +80,14 @@ process.on('uncaughtException', function (err) {
 
 process.on('SIGINT', function () {
     'use strict';
-    trace_exit(0);
+    trace_exit(3);
 });
 
 process.on('exit', function (coderr) {
     'use strict';
-    grab.assert_exit_dump();
+    if (coderr === 0) {
+        grab.assert_exit_dump();
+    }
     trace_exit(coderr);
 });
 
