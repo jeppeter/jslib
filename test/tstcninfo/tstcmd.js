@@ -77,7 +77,15 @@ process.on('uncaughtException', function (err) {
 
 process.on('SIGINT', function () {
     'use strict';
-    trace_exit(0);
+    trace_exit(3);
+});
+
+process.on('exit', function (coderr) {
+    'use strict';
+    if (coderr === 0) {
+        grab.assert_exit_dump();
+    }
+    trace_exit(coderr);
 });
 
 args = parser.parse_command_line();
