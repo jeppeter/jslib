@@ -39,9 +39,11 @@ function createDownloadPre(options) {
             return;
         }
         worker.add_finish(downloadpre.finish_callback);
-        fname = worker.reqopt.downloadoption.downloaddir;
-        fname += path.sep;
-        fname += getfilename;
+        if (baseop.is_non_null(worker.reqopt.downloadoption, 'downloadfile')) {
+            fname = worker.reqopt.downloadoption.downloadfile;
+        } else {
+            fname = path.join(worker.reqopt.downloadoption.downloaddir, getfilename);
+        }
         if (!baseop.is_in_array(downloadpre.workingfiles, fname)) {
             fdir = path.dirname(fname);
             worker.reqopt.downloadoption.downloadfile = fname;
@@ -63,6 +65,7 @@ function createDownloadPre(options) {
             return;
         }
         jstracer.info('worker <%s> file already in downloading (%s)', worker.url, fname);
+        worker.reqopt.downloadoption.downloadfile = fname;
         /*the file is already handled ,so we do not handle this any more*/
         worker.url = '';
         next(true, null);

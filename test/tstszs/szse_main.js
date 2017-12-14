@@ -124,7 +124,7 @@ function createSzseMain(options) {
     return szse;
 }
 
-function AddSzseMain(options, stockcode) {
+function AddSseMain(options, stockcode) {
     'use strict';
     var reqopt = {};
     var d;
@@ -196,4 +196,4 @@ function AddSzseMain(options, stockcode) {
 }
 
 module.exports = createSzseMain;
-module.exports.AddSzseMain = AddSzseMain;
+module.exports.AddSseMain = AddSseMain;

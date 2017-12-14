@@ -6,6 +6,7 @@ var util = require('util');
 var grab = grabwork();
 var szsemain = require('./szse_main');
 var szsegrab = require('./szse_grab');
+var ssemain = require('./sse_main');
 var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('../../grabwork/random_delay');
 var extargsparse = require('extargsparse');
@@ -70,7 +71,10 @@ jstracer.init_args(parser);
 
 process.on('uncaughtException', function (err) {
     'use struct';
-    jstracer.error('error (%s) stack(%s)', err, util.inspect(err,{showHidden:true,depth:null}));
+    jstracer.error('error (%s) stack(%s)', err, util.inspect(err, {
+        showHidden: true,
+        depth: null
+    }));
     trace_exit(3);
 });
 
@@ -87,12 +91,15 @@ grab.add_pre(download_pre(args));
 
 grab.add_post(szsemain(args));
 grab.add_post(szsegrab(args));
+grab.add_post(ssemain(args));
 
 args.args.forEach(function (stockcode) {
     'use strict';
     if (stockcode.length >= 6) {
         if (stockcode[0] !== '6') {
             szsemain.AddSzseMain(args, stockcode);
+        } else {
+            ssemain.addSSEMainCode(args, stockcode);
         }
     } else {
         jstracer.error('[%s] not valid stockcode', stockcode);
