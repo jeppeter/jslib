@@ -90,11 +90,13 @@ function createSzseMain(options) {
                 jstracer.warn('[%d] can not get [%s]', worker.reqopt.szsemain.szsetries, worker.reqopt.szsemain.queryurl);
                 worker.reqopt.szsemain.szsetries += 1;
                 grab.post_queue(worker.reqopt.szsemain.queryurl, worker.reqopt);
+                next(false, err);
                 return;
             }
 
             /*now it is totally failed*/
             jstracer.error('[%d] totally failed [%s]', worker.reqopt.szsemain.szsetries, worker.reqopt.szsemain.queryurl);
+            next(false, err);
             return;
         }
 
@@ -104,9 +106,11 @@ function createSzseMain(options) {
                 jstracer.warn('[%d] not get right span number', worker.reqopt.szsemain.szsetries);
                 worker.reqopt.szsemain.szsetries += 1;
                 grab.post_queue(worker.reqopt.szsemain.queryurl, worker.reqopt);
+                next(false, new Error(util.format('[%d] not get right span number', worker.reqopt.szsemain.szsetries)));
                 return;
             }
             jstracer.error('[%d] totally failed [%s]', worker.reqopt.szsemain.szsetries, worker.reqopt.szsemain.queryurl);
+            next(false, new Error(util.format('[%d] totally failed [%s]', worker.reqopt.szsemain.szsetries, worker.reqopt.szsemain.queryurl)));
             return;
         }
 
@@ -118,13 +122,14 @@ function createSzseMain(options) {
             grab.post_queue(reqopt.szsegrab.queryurl, reqopt);
             reqopt = null;
         }
+        next(false, null);
         return;
     };
 
     return szse;
 }
 
-function AddSseMain(options, stockcode) {
+function AddSzseMain(options, stockcode) {
     'use strict';
     var reqopt = {};
     var d;
@@ -196,4 +201,4 @@ function AddSseMain(options, stockcode) {
 }
 
 module.exports = createSzseMain;
-module.exports.AddSseMain = AddSseMain;
+module.exports.AddSzseMain = AddSzseMain;

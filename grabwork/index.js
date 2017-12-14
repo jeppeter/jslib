@@ -377,6 +377,21 @@ function createGrabwork(options) {
         return;
     };
 
+    self.assert_exit_dump = function () {
+        var jdx;
+        if (self.reqworkqueue.length !== 0) {
+            jstracer.error('total reqworkqueue [%s]', self.reqworkqueue.length);
+            if (self.reqworkqueue.length > 0) {
+                for (jdx = 0; jdx < self.reqworkqueue.length; jdx += 1) {
+                    jstracer.error('[%s] -----------------\n%s\n+++++++++++++++++++', jdx, util.inspect(self.reqworkqueue[jdx], {
+                        showHidden: true,
+                        depth: 3
+                    }));
+                }
+            }
+        }
+    };
+
     _innergrabwork = self;
 
     return self;

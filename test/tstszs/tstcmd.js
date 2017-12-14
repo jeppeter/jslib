@@ -83,6 +83,12 @@ process.on('SIGINT', function () {
     trace_exit(0);
 });
 
+process.on('exit', function (coderr) {
+    'use strict';
+    grab.assert_exit_dump();
+    trace_exit(coderr);
+});
+
 args = parser.parse_command_line();
 jstracer.set_args(args);
 

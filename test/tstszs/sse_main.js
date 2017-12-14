@@ -19,7 +19,7 @@ function createSSEMainRequest(opt, stockcode, idx) {
     rnd1 = Math.floor(Math.random() * 100000);
     callbackstr = util.format('jsonpCallback%s', rnd1);
     d = new Date();
-    time1 = Math.floor(d.getTime() / 1000);
+    time1 = Math.floor(d.getTime());
     if (idx <= 1) {
         endpage = 5;
     } else {
@@ -27,7 +27,6 @@ function createSSEMainRequest(opt, stockcode, idx) {
     }
 
     ssemain.queryurl = util.format('http://query.sse.com.cn/security/stock/queryCompanyStatementNew.do?jsonCallBack=%s&isPagination=true&productId=%s&keyWord=&isNew=1&reportType2=&reportType=ALL&beginDate=%s&endDate=%s&pageHelp.pageSize=25&pageHelp.pageCount=50&pageHelp.pageNo=%s&pageHelp.beginPage=%s&pageHelp.cacheSize=1&pageHelp.endPage=%s&_=%s', callbackstr, stockcode, opt.startdate, opt.enddate, idx, idx, endpage, time1);
-    //jstracer.trace('query url [%s]', ssemain.queryurl);
     ssemain.headers = {
         Referer: "http://www.sse.com.cn/disclosure/listedinfo/announcement/"
     };
@@ -42,6 +41,7 @@ function createSSEMainRequest(opt, stockcode, idx) {
     reqopt.ssemain = ssemain;
     reqopt.reqopt = {};
     reqopt.reqopt.headers = ssemain.headers;
+    jstracer.trace('add[%s=>%s][%s]', ssemain.startdate, ssemain.enddate, idx);
     return reqopt;
 }
 
@@ -110,7 +110,6 @@ function getResulturls(res) {
     }
     return hrefs;
 }
-
 
 
 function addSSEMainCode(options, stockcode) {
@@ -198,12 +197,14 @@ function createSSEMain(options) {
         if (err !== undefined && err !== null) {
             jstracer.warn('[%s] query [%s] failed', worker.reqopt.ssemain.ssetries, worker.reqopt.ssemain.queryurl);
             errorCreateSSEMainRequest(worker);
+            next(false, err);
             return;
         }
         jsons = worker.htmldata;
         if (!jsons.startsWith(worker.reqopt.ssemain.callbackstr)) {
             jstracer.warn('[%s] query [%s] return [%s]', worker.reqopt.ssemain.ssetries, worker.reqopt.ssemain.queryurl, worker.htmldata);
             errorCreateSSEMainRequest(worker);
+            next(false, new Error(util.format('not start with %s')));
             return;
         }
         /*to omit the (*/
@@ -216,6 +217,7 @@ function createSSEMain(options) {
         } catch (e) {
             jstracer.error('not valid res for [%s]\n[%s]\n[%s]\nerror[%s]', worker.reqopt.ssemain.queryurl, worker.htmldata, jsons, e);
             errorCreateSSEMainRequest(worker);
+            next(false, new Error(util.format('not valid jsons[%s]', jsons)));
             return;
         }
 
@@ -234,10 +236,12 @@ function createSSEMain(options) {
                 /*we have find the workers ,so we should make request more*/
                 succCreateSSEMainRequest(worker);
             }
+            next(false, null);
             return;
         }
         jstracer.error('[%s] in res [%s]', worker.reqopt.ssemain.queryurl, worker.htmldata);
         errorCreateSSEMainRequest(worker);
+        next(false, new Error(util.format('not valid data [%s]', worker.htmldata)));
         return;
     };
     return sse;

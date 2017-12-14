@@ -32,7 +32,19 @@ function createRandomDelay(options) {
             next(true, err);
             return;
         }
-        worker = worker;
+        if (baseop.is_non_null(worker.reqopt, 'delayoption')) {
+            if (baseop.is_non_null(worker.reqopt.delayoption, 'nodelay')) {
+                next(true, null);
+                return;
+            }
+            if (baseop.is_non_null(worker.reqopt.delayoption, 'delaymills')) {
+                setTimeout(function () {
+                    next(true, null);
+                    return;
+                }, worker.reqopt.delayoption.delaymills);
+                return;
+            }
+        }
         crypto.randomBytes(4, function (err2, buffer2) {
             var hex;
             var num;
@@ -45,16 +57,16 @@ function createRandomDelay(options) {
             num = parseInt(hex, 16);
             num %= 256;
             if (num > randompre.options.watermark) {
-                crypto.randomBytes(4, function(err3, buffer3) {
+                crypto.randomBytes(4, function (err3, buffer3) {
                     if (err3) {
                         next(true, null);
                         return;
                     }
                     hex = buffer3.toString('hex');
-                    randtime = parseInt(hex,16);
+                    randtime = parseInt(hex, 16);
                     randtime %= (randompre.options.randommax - randompre.options.randommin);
                     randtime += randompre.options.randommin;
-                    setTimeout(function(){
+                    setTimeout(function () {
                         next(true, null);
                         return;
                     }, randtime);
