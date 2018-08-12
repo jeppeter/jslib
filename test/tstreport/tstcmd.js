@@ -47,7 +47,7 @@ var command_line_format = `
         "downloadmax|M" : 30,
         "watermark|w" : 50,
         "url|U" : "http://data.eastmoney.com/report/",
-        "$" : "+"
+        "$" : "*"
     }
 `;
 var command_line;
@@ -105,9 +105,16 @@ var mainurl;
 mainurl = args.url;
 jstracer.info('url (%s)', mainurl);
 
-args.args.forEach(function (code) {
-    'use strict';
-    grab.queue(mainurl, {
-        cninfomain: code
+
+if (args.args.length > 0) {
+    args.args.forEach(function (code) {
+        'use strict';
+        grab.queue(mainurl, {
+            reportmain: code
+        });
     });
-});
+} else {
+    grab.queue(mainurl, {
+        reportmain: " "
+    });
+}
