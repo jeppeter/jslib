@@ -13,6 +13,14 @@ function createCninfoNewQuery(options) {
 	if (baseop.is_non_null(options['stockcode'])) {
 		queryinfo.options.stockcode = options.stockcode;
 	}
+	queryinfo.options.pagenum = 30;
+	if (baseop.is_non_null(options['pagenum'])) {
+		queryinfo.options.pagenum = options.pagenum;
+	}
+
+	queryinfo.post_handleer = function() {
+
+	};
 
 	return queryinfo;
 }
