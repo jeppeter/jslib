@@ -5,7 +5,7 @@ var grabwork = require('grabwork');
 
 
 
-function createCninfoNewQuery(options) {
+function createCninfoNewMain(options) {
     'use strict';
     var cninfo;
     var d;
@@ -120,4 +120,4 @@ function createCninfoNewQuery(options) {
     return cninfo;
 }
 
-module.exports = createCninfoMain;
+module.exports = createCninfoNewMain;
