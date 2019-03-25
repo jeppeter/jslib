@@ -83,8 +83,36 @@ function createCninfoNewQuery(options) {
 
         /*now it is ok ,so we should calculate the query */
         try{
+            var arr;
             jdata = JSON.Parse(worker.htmldata);
-            if ()
+            if (!baseop.is_non_null(jdata['classifiedAnnouncements'])) {
+                cninfo.post_next_error(new Error('no classifiedAnnouncements'),worker,next);
+                return;
+            }
+
+            arr = jdata['classifiedAnnouncements'];
+            if (! array.IsArray(arr)) {
+                cninfo.post_next_error(new Error('classifiedAnnouncements not array type'), worker, next);
+                return;
+            }
+
+            arr = arr[0];
+            if (! array.IsArray(arr)) {
+                cninfo.post_next_error(new Error('classifiedAnnouncements[0] not array type'), worker, next);
+                return;
+            }
+
+            arr = arr[0];
+            if (! baseop.is_non_null(arr)) {
+                cninfo.post_next_error(new Error('classifiedAnnouncements[0][0] null'), worker, next);
+                return;
+            }
+            if (!baseop.is_non_null(arr['orgId'])) {
+                cninfo.post_next_error(new Error('classifiedAnnouncements[0][0][orgId] null'), worker, next);
+                return;                
+            }
+
+            
         }
         catch(e) {
             cninfo.post_next_error(e, worker, next);
