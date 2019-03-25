@@ -84,20 +84,20 @@ function createCninfoNewQuery(options) {
         /*now it is ok ,so we should calculate the query */
         try{
             var arr;
-            jdata = JSON.Parse(worker.htmldata);
+            jdata = JSON.parse(data);
             if (!baseop.is_non_null(jdata['classifiedAnnouncements'])) {
                 cninfo.post_next_error(new Error('no classifiedAnnouncements'),worker,next);
                 return;
             }
 
             arr = jdata['classifiedAnnouncements'];
-            if (! array.IsArray(arr)) {
+            if (! Array.isArray(arr)) {
                 cninfo.post_next_error(new Error('classifiedAnnouncements not array type'), worker, next);
                 return;
             }
 
             arr = arr[0];
-            if (! array.IsArray(arr)) {
+            if (! Array.isArray(arr)) {
                 cninfo.post_next_error(new Error('classifiedAnnouncements[0] not array type'), worker, next);
                 return;
             }
@@ -112,7 +112,7 @@ function createCninfoNewQuery(options) {
                 return;                
             }
 
-            
+
         }
         catch(e) {
             cninfo.post_next_error(e, worker, next);
