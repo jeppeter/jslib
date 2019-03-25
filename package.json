@@ -25,7 +25,7 @@
     "request": "latest",
     "tape": "latest",
     "tracer": "latest",
-    "stack-trace" : "latest"
+    "stack-trace": "latest"
   },
   "keywords": [],
   "author": "",

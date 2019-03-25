@@ -36,7 +36,6 @@ function createCninfoNewQuery(options) {
 
     cninfo.options = {};
     cninfo.options.stockcode = '600000';
-    cninfo.options.cninfoquerypath = '/new/hisAnnouncement/query';
     cninfo.options.startdate = '19990101';
     d = new Date();
     cninfo.options.enddate = '';
@@ -48,9 +47,6 @@ function createCninfoNewQuery(options) {
         cninfo.options.stockcode = options.stockcode;
     }
 
-    if (baseop.is_valid_string(options, 'cninfoquerypath')) {
-        cninfo.options.cninfoquerypath = options.cninfoquerypath;
-    }
 
     if (baseop.is_valid_date(options.startdate)) {
         cninfo.options.startdate = options.startdate;
@@ -60,16 +56,19 @@ function createCninfoNewQuery(options) {
         cninfo.options.enddate = options.enddate;
     }
 
+    cninfo.post_next_error = function(err, worker, next) {
+        jstracer.error('<GET::%s> error %s', worker.url, err);
+        worker.parent.post_queue(worker.url, {
+            priority: grabwork.MIN_PRIORITY,
+            cninfomain: worker.reqopt.cninfomain,
+        });
+        next(false, err);
+        return;
+    };
+
     cninfo.post_handler = function (err, worker, next) {
-        var queryurl;
-        var parser;
-        var column, columnval;
-        var err2;
-        var yeardate;
-        var i;
-        var postdata;
-        var urlparser;
-        var cninfoquery;
+        var jdata;
+
 
         if (!baseop.is_valid_string(worker.reqopt, 'cninfomain')) {
             next(true, err);
@@ -78,25 +77,40 @@ function createCninfoNewQuery(options) {
 
         if (err) {
             /*we should query again*/
-            jstracer.error('<GET::%s> error %s', worker.url, err);
-            worker.parent.post_queue(worker.url, {
-                priority: grabwork.MIN_PRIORITY,
-                cninfomain: worker.reqopt.cninfomain,
-                reqopt : {
-                    body : worker.reqopt.cninfomain.body
-                }
-            });
-            next(false, err);
+            cninfo.post_next_error(err,worker,next);
             return;
         }
 
-        
-
+        /*now it is ok ,so we should calculate the query */
+        try{
+            jdata = JSON.Parse(worker.htmldata);
+            if ()
+        }
+        catch(e) {
+            cninfo.post_next_error(e, worker, next);
+            return;
+        }
 
         /*ok ,we should have this*/
         next(false, null);
         return;
     };
+
+    cninfo.format_url = function() {
+        'use strict';
+        var urlret ;
+
+        urlret = 'http://www.cninfo.com.cn/new/singleDisclosure/fulltext?stock=';
+        urlret += util.format('%s&pageSize=20&pageNum=1&tabname=latest&plate=', cninfo.options.stockcode);
+        if (cninfo.options.stockcode.startsWith('6')) {
+            urlret += util.format('sse&limit=');
+        } else {
+            urlret += util.format('szse&limit=');
+        }
+        return urlret;
+    };
+
+
 
     return cninfo;
 }
