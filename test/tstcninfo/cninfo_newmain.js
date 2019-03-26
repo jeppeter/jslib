@@ -47,7 +47,7 @@ function createCninfoNewMain(options) {
         var jdata;
 
 
-        if (!baseop.is_valid_string(worker.reqopt, 'cninfomain')) {
+        if (!baseop.is_non_null(worker.reqopt['cninfomain'])) {
             next(true, err);
             return;
         }
