@@ -5,10 +5,13 @@ var util = require('util');
 //var util = require('util');
 var grab = grabwork();
 var cninfonewmain = require('./cninfo_newmain');
+var cninfonewquery = require('./cninfo_newquery');
 var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('../../grabwork/random_delay');
 var extargsparse = require('extargsparse');
 var curdate;
+var cninfomain;
+var cninfoquery;
 var d = new Date();
 
 curdate = '';
@@ -95,10 +98,12 @@ jstracer.set_args(args);
 
 grab.add_pre(random_delay());
 grab.add_pre(download_pre(args));
-cninfonewmain = cninfonewmain(args);
-grab.add_post(cninfonewmain);
+cninfomain = cninfonewmain(args);
+grab.add_post(cninfomain);
+cninfoquery= cninfonewquery(args);
+grab.add_post(cninfoquery)
 
 args.args.forEach(function(elm,idx) {
     jstracer.trace('add [%s] [%s]', idx,elm);
-    cninfonewmain.post_queue_url(elm);
+    cninfomain.post_queue_url(elm);
 });

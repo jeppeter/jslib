@@ -332,7 +332,9 @@ function createGrabwork(options) {
             }
         }
 
-        if (baseop.is_valid_string(reqopt.downloadoption, 'downloaddir')) {
+        if (baseop.is_valid_string(reqopt.downloadoption,'downloadfile')) {
+            reqopt = reqopt;
+        } else if (baseop.is_valid_string(reqopt.downloadoption, 'downloaddir')) {
             if (dir2 !== '' && dir2 !== reqopt.downloadoption.downloaddir) {
                 jstracer.warn('downloadoption.downloaddir <%s> != <%s>', reqopt.downloadoption.downloaddir, dir2);
                 reqopt.downloadoption.downloaddir = dir2;

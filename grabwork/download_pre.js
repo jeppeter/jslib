@@ -91,7 +91,7 @@ function createDownloadPre(options) {
     downloadpre.finish_callback = function (worker, err, next) {
         var sendreqopt;
         var i;
-        if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || !baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir')) {
+        if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || (!baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir') && !baseop.is_non_null(worker.reqopt.downloadoption,'downloadfile'))) {
             next(err);
             return;
         }

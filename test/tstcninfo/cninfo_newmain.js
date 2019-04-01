@@ -3,6 +3,7 @@ var baseop = require('../../baseop');
 var util = require('util');
 var grabwork = require('../../grabwork');
 var grab = grabwork();
+var cninfonewquery = require('./cninfo_newquery');
 
 
 
@@ -90,6 +91,7 @@ function createCninfoNewMain(options) {
             }
 
             jstracer.trace('orgId %s', arr['orgId']);
+            cninfonewquery({}).add_stock(worker.reqopt.cninfomain.stockcode,arr['orgId']);
         }
         catch(e) {
             cninfo.post_next_error(e, worker, next);
