@@ -1,7 +1,8 @@
 var jstracer = require('jstracer');
 var baseop = require('../../baseop');
 var util = require('util');
-var grabwork = require('grabwork');
+var grabwork = require('../../grabwork');
+var grab = grabwork();
 
 
 
@@ -12,18 +13,13 @@ function createCninfoNewMain(options) {
     cninfo = {};
 
     cninfo.options = {};
-    cninfo.options.stockcode = '600000';
-    cninfo.options.startdate = '19990101';
+    cninfo.options.startdate = '20000101';
     d = new Date();
     cninfo.options.enddate = '';
     cninfo.options.enddate += baseop.number_format_length(4, d.getFullYear());
     cninfo.options.enddate += baseop.number_format_length(2, d.getMonth() + 1);
     cninfo.options.enddate += baseop.number_format_length(2, d.getDate());
-
-    if (baseop.is_valid_string(options, 'stockcode') && baseop.is_valid_number(options.stockcode, false)) {
-        cninfo.options.stockcode = options.stockcode;
-    }
-
+    cninfo.options.maxcnt = 5;
 
     if (baseop.is_valid_date(options.startdate)) {
         cninfo.options.startdate = options.startdate;
@@ -34,11 +30,14 @@ function createCninfoNewMain(options) {
     }
 
     cninfo.post_next_error = function(err, worker, next) {
-        jstracer.error('<GET::%s> error %s', worker.url, err);
-        worker.parent.post_queue(worker.url, {
-            priority: grabwork.MIN_PRIORITY,
-            cninfomain: worker.reqopt.cninfomain,
-        });
+        jstracer.error('<GET::%s> error %s', worker.url, err);        
+        worker.reqopt.cninfomain.trycnt += 1;
+        if (worker.reqopt.cninfomain.trycnt < worker.reqopt.cninfomain.maxcnt) {
+            worker.parent.post_queue(worker.url, {
+                priority: grabwork.MIN_PRIORITY,
+                cninfomain: worker.reqopt.cninfomain,
+            });            
+        }
         next(false, err);
         return;
     };
@@ -61,7 +60,8 @@ function createCninfoNewMain(options) {
         /*now it is ok ,so we should calculate the query */
         try{
             var arr;
-            jdata = JSON.parse(data);
+            jstracer.trace('htmldata %s', worker.htmldata);
+            jdata = JSON.parse(worker.htmldata);
             if (!baseop.is_non_null(jdata['classifiedAnnouncements'])) {
                 cninfo.post_next_error(new Error('no classifiedAnnouncements'),worker,next);
                 return;
@@ -89,7 +89,7 @@ function createCninfoNewMain(options) {
                 return;                
             }
 
-
+            jstracer.trace('orgId %s', arr['orgId']);
         }
         catch(e) {
             cninfo.post_next_error(e, worker, next);
@@ -101,18 +101,32 @@ function createCninfoNewMain(options) {
         return;
     };
 
-    cninfo.format_url = function() {
+    cninfo.format_url = function(stockcode) {
         'use strict';
         var urlret ;
 
         urlret = 'http://www.cninfo.com.cn/new/singleDisclosure/fulltext?stock=';
-        urlret += util.format('%s&pageSize=20&pageNum=1&tabname=latest&plate=', cninfo.options.stockcode);
-        if (cninfo.options.stockcode.startsWith('6')) {
+        urlret += util.format('%s&pageSize=20&pageNum=1&tabname=latest&plate=', stockcode);
+        if (stockcode.startsWith('6')) {
             urlret += util.format('sse&limit=');
         } else {
             urlret += util.format('szse&limit=');
         }
         return urlret;
+    };
+
+    cninfo.post_queue_url = function(stockcode) {
+        var urlret;
+        urlret = cninfo.format_url(stockcode);
+        grab.post_queue(urlret, {
+            cninfomain: {
+                stockcode: stockcode,
+                enddate: cninfo.options.enddate,
+                startdate: cninfo.options.startdate,
+                trycnt: 0,
+                maxcnt: cninfo.options.maxcnt
+            }
+        });
     };
 
 
