@@ -148,11 +148,11 @@ function createGrabwork(options) {
         reqopt.url = url;
         reqopt.method = meth;
         self.reqworkqueue.push(worker);
-        if (false) {
+        if (false){
             jstracer.trace('worker (%s)', util.inspect(worker, {
                 showHidden: true,
                 depth: 3
-            }));
+            }));            
         }
         if (reqopt.timeout === null || reqopt.timeout === undefined) {
             reqopt.timeout = self.grabtimeout;
@@ -176,6 +176,9 @@ function createGrabwork(options) {
             }).pipe(worker.pipe);
         } else {
             request(reqopt, function (err, resp, body) {
+                if (false){
+                    jstracer.trace('[%s][%s]resp %s', worker.meth, worker.url, body);    
+                }                
                 if (err === null) {
                     worker.response = resp;
                     worker.htmldata = body;

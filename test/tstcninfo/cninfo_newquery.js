@@ -81,7 +81,7 @@ function createCninfoNewQuery(options) {
 		postdata += util.format('&pageSize=%s', qinfo.pagesize);
 		postdata += util.format('&tabName=fulltext');
 		postdata += util.format('&column=%s', qinfo.typeex);
-		postdata += util.format('&sotck=%s', qinfo.stockcode);
+		postdata += util.format('&stock=%s', qinfo.stockcode);
 		postdata += util.format('%%2C%s', qinfo.orgid);
 		postdata += util.format('&searchkey=');
 		postdata += util.format('&secid=');
@@ -101,14 +101,14 @@ function createCninfoNewQuery(options) {
 		postdata = selfquery.format_post_data(worker.reqopt.queryinfo,true);
 		urlret = selfquery.format_url();
 		reqopt = {};
-		reqopt.postData = postdata ;
-		reqopt.headers = [{
-			name: 'Content-Type' ,
-			value: 'application/x-www-form-urlencoded; charset=UTF-8'
-		}];
+		reqopt.reqopt = {};
+		reqopt.reqopt.body = postdata ;
+		reqopt.headers = {
+			'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'
+		};
 		reqopt.queryinfo = worker.reqopt.queryinfo;
 		reqopt.queryinfo.trycnt = 0;
-		worker.post_queue(urlret, reqopt);
+		worker.parent.post_queue(urlret, reqopt);
 		next(false,null);
 		return;
 	};
@@ -122,11 +122,11 @@ function createCninfoNewQuery(options) {
 			postdata = selfquery.format_post_data(worker.reqopt.queryinfo,false);
 			urlret = selfquery.format_url();
 			reqopt = {};
-			reqopt.postData = postdata ;
-			reqopt.headers = [{
-				name: 'Content-Type' ,
-				value: 'application/x-www-form-urlencoded; charset=UTF-8'
-			}];
+			reqopt.reqopt = {};
+			reqopt.reqopt.body = postdata ;
+			reqopt.reqopt.headers = {
+				'Content-Type' :'application/x-www-form-urlencoded; charset=UTF-8'
+			};
 			reqopt.queryinfo = worker.reqopt.queryinfo;
 			worker.post_queue(urlret, reqopt);
 		}
@@ -135,12 +135,15 @@ function createCninfoNewQuery(options) {
 	}
 
 
-	queryinfo.post_handleer = function(err, worker, next) {
+	queryinfo.post_handler = function(err, worker, next) {
 		var postdate;
 		var urlret;
 		var reqopt;
 		var totalnum;
 		var gettotalnum;
+
+		jstracer.trace('htmldata %s', worker.htmldata);
+
 		if (!baseop.is_non_null(worker.reqopt['queryinfo'])) {
 			next(true,err);
 			return;
@@ -206,7 +209,10 @@ function createCninfoNewQuery(options) {
 
 				annid = elm['announcementId'];
 				anntitle = elm['announcementTitle'];
-				downfile = util.format('%s_%s.%s', annid,anntitle, sfix);
+				anntitle = anntitle.replace(/\\/g,'-');
+				anntitle = anntitle.replace(/\//g, '-');
+				downfile = util.format('%s_%s%s', annid,anntitle, sfix);
+
 
 				durl = util.format('http://static.cninfo.com.cn/%s', elm['adjunctUrl']);
 				reqopt = {};
@@ -214,7 +220,7 @@ function createCninfoNewQuery(options) {
 				yearnum = get_num_with_url(elm['adjunctUrl']);
 				reqopt.downloadoption.downloadfile = path.join(queryinfo.options.topdir,worker.reqopt.queryinfo.stockcode,yearnum,downfile);
 				jstracer.trace('download %s', durl);
-				grab.download_queue(durl, reqopt);
+				//grab.download_queue(durl, reqopt);
 			}) ;
 
 		}
@@ -236,42 +242,45 @@ function createCninfoNewQuery(options) {
 	};
 
 	queryinfo.add_stock = function(stockcode,orgid) {
-		var reqopt;
 		var postdata ;
 		var urlret;
-		reqopt = {};
-		reqopt.queryinfo = {};
-		reqopt.queryinfo.stockcode = stockcode;
-		reqopt.queryinfo.topdir = queryinfo.options.topdir;
-		reqopt.queryinfo.startdate = queryinfo.options.startdate;
-		reqopt.queryinfo.enddate = queryinfo.options.enddate;
-		reqopt.queryinfo.pagesize = queryinfo.options.pagesize;
-		reqopt.queryinfo.pagenum = queryinfo.options.pagenum;
-		reqopt.queryinfo.orgid = orgid;
-		reqopt.queryinfo.maxcnt = queryinfo.options.maxcnt;
-		reqopt.queryinfo.trycnt = 0;
+		var newqueryinfo;
+		newqueryinfo = {};
+		newqueryinfo.stockcode = stockcode;
+		newqueryinfo.topdir = queryinfo.options.topdir;
+		newqueryinfo.startdate = queryinfo.options.startdate;
+		newqueryinfo.enddate = queryinfo.options.enddate;
+		newqueryinfo.pagesize = queryinfo.options.pagesize;
+		newqueryinfo.pagenum = queryinfo.options.pagenum;
+		newqueryinfo.orgid = orgid;
+		newqueryinfo.maxcnt = queryinfo.options.maxcnt;
+		newqueryinfo.trycnt = 0;
 		if (stockcode.startsWith('6')) {
-			reqopt.queryinfo.typeex = 'sse';
+			newqueryinfo.typeex = 'sse';
 		} else {
-			reqopt.queryinfo.typeex = 'szse';
+			newqueryinfo.typeex = 'szse';
 		}
 
 		if (stockcode.startsWith('6')) {
-			reqopt.queryinfo.plate = 'sh';
+			newqueryinfo.plate = 'sh';
 		} else {
-			reqopt.queryinfo.plate = 'sz';
+			newqueryinfo.plate = 'sz';
 		}
 
 		
-		postdata = selfquery.format_post_data(reqopt.queryinfo,false);
+		postdata = selfquery.format_post_data(newqueryinfo,false);
 		urlret = selfquery.format_url();
-		reqopt.postData = postdata ;
-		reqopt.headers = [{
-			name: 'Content-Type' ,
-			value: 'application/x-www-form-urlencoded'
-		}];
-		jstracer.trace('post [%s] postdata [%s]', urlret, reqopt.postData);
-		grab.post_queue(urlret, reqopt);
+		jstracer.trace('post [%s] postdata [%s]', urlret, postdata);
+		grab.post_queue(urlret,{
+			queryinfo : newqueryinfo,
+			reuse: true,
+			reqopt : {
+				body: postdata,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+			}
+		});
 		return;
 	};
 

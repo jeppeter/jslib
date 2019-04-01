@@ -1,17 +1,13 @@
 var jstracer = require('jstracer');
-var grabwork = require('../../grabwork');
 var baseop = require('../../baseop');
 var util = require('util');
-//var util = require('util');
+var grabwork = require('../../grabwork');
 var grab = grabwork();
-var cninfonewmain = require('./cninfo_newmain');
-var cninfonewquery = require('./cninfo_newquery');
 var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('../../grabwork/random_delay');
 var extargsparse = require('extargsparse');
-var curdate;
-var cninfomain;
-var cninfoquery;
+
+
 var d = new Date();
 
 curdate = '';
@@ -47,8 +43,7 @@ var command_line_format = `
         "topdir|P" : "%s",
         "downloadmax|M" : 30,
         "watermark|w" : 50,
-        "url|U" : "http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/",
-        "$" : "+"
+        "$" : 2
     }
 `;
 var command_line;
@@ -100,12 +95,10 @@ jstracer.set_args(args);
 
 grab.add_pre(random_delay());
 grab.add_pre(download_pre(args));
-cninfomain = cninfonewmain(args);
-grab.add_post(cninfomain);
-cninfoquery= cninfonewquery(args);
-grab.add_post(cninfoquery)
 
-args.args.forEach(function(elm,idx) {
-    jstracer.trace('add [%s] [%s]', idx,elm);
-    cninfomain.post_queue_url(elm);
-});
+var url = args.args[0];
+var reqopt = {};
+reqopt.downloadoption = {};
+reqopt.downloadoption.downloadfile = args.args[1];
+
+grab.download_queue(url, reqopt);

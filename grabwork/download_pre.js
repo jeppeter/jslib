@@ -39,6 +39,10 @@ function createDownloadPre(options) {
             return;
         }
         worker.add_finish(downloadpre.finish_callback);
+        jstracer.trace('downloadoption %s', util.inspect(worker.reqopt.downloadoption, {
+            showHidden: true,
+            depth : 3
+        }));
         if (baseop.is_non_null(worker.reqopt.downloadoption, 'downloadfile')) {
             fname = worker.reqopt.downloadoption.downloadfile;
         } else {
@@ -144,7 +148,7 @@ function createDownloadPre(options) {
 
     downloadpre.pre_handler = function (err, worker, next) {
         var curpending;
-        if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || !baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir')) {
+        if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || (!baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir') && !baseop.is_non_null(worker.reqopt.downloadoption,'downloadfile'))) {
             /*if we do not handle news make*/
             next(true, err);
             return;
