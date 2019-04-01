@@ -219,7 +219,7 @@ function createCninfoNewQuery(options) {
 				reqopt.downloadoption = {};
 				yearnum = get_num_with_url(elm['adjunctUrl']);
 				reqopt.downloadoption.downloadfile = path.join(queryinfo.options.topdir,worker.reqopt.queryinfo.stockcode,yearnum,downfile);
-				jstracer.trace('download %s', durl);
+				//jstracer.trace('download %s', durl);
 				grab.download_queue(durl, reqopt);
 			}) ;
 
