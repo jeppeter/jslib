@@ -103,8 +103,8 @@ function createCninfoNewQuery(options) {
 		reqopt = {};
 		reqopt.reqopt = {};
 		reqopt.reqopt.body = postdata ;
-		reqopt.headers = {
-			'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'
+		reqopt.reqopt.headers = {
+			'Content-Type':'application/x-www-form-urlencoded'
 		};
 		reqopt.queryinfo = worker.reqopt.queryinfo;
 		reqopt.queryinfo.trycnt = 0;
@@ -190,7 +190,7 @@ function createCninfoNewQuery(options) {
 				var sfix;
 				var durl;
 				var yearnum;
-				jstracer.trace('[%s] %s', idx, elm);
+				//jstracer.trace('[%s] %s', idx, elm);
 				if (!baseop.is_non_null(elm['adjunctUrl'])) {
 					jstracer.error('[%s] element not adjunctUrl', idx);
 					return;					
@@ -220,7 +220,7 @@ function createCninfoNewQuery(options) {
 				yearnum = get_num_with_url(elm['adjunctUrl']);
 				reqopt.downloadoption.downloadfile = path.join(queryinfo.options.topdir,worker.reqopt.queryinfo.stockcode,yearnum,downfile);
 				jstracer.trace('download %s', durl);
-				//grab.download_queue(durl, reqopt);
+				grab.download_queue(durl, reqopt);
 			}) ;
 
 		}
