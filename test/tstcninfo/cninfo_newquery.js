@@ -212,6 +212,10 @@ function createCninfoNewQuery(options) {
 				anntitle = anntitle.replace(/\\/g,'-');
 				anntitle = anntitle.replace(/\//g, '-');
 				downfile = util.format('%s_%s%s', annid,anntitle, sfix);
+				/*not with invalid character for name*/
+				downfile = downfile.replace(/\</g, '_');
+				downfile = downfile.replace(/\>/g,'_');
+				downfile = downfile.replace(/\?/g,'_');
 
 
 				durl = util.format('http://static.cninfo.com.cn/%s', elm['adjunctUrl']);

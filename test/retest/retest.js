@@ -5,10 +5,14 @@ var jstracer = require('jstracer');
 var commandline = `
     {
         "restr|r"  : null,
+        "global|g" : false,
         "match<match_handler>" : {
             "$" : "+"
         },
         "findall<findall_handler>" :  {
+            "$" : "+"
+        },
+        "replace<replace_handler>" : {
             "$" : "+"
         }
     }
@@ -72,8 +76,32 @@ var findall_handler = function (args) {
     return;
 };
 
+var replace_handler = function (args){
+    var instr="";
+    var restr="";
+    var repstr="";
+    var nstr ;
+    var expr;
+    if (args.subnargs.length < 2) {
+        jstracer.error('no restr specified');
+        process.exit(3);
+        return;        
+    }
+
+    instr =args.subnargs[0];
+    restr = args.subnargs[1];
+    if (args.subnargs.length >= 3) {
+        repstr = args.subnargs[2];
+    }
+
+    nstr = instr.replace(restr,repstr);
+    console.log("nstr [%s] is [%s] ([%s] => [%s])", nstr, instr, restr, repstr);
+    return ;
+};
+
 exports.match_handler = match_handler;
 exports.findall_handler = findall_handler;
+exports.replace_handler = replace_handler;
 
 parser = extargsparse.ExtArgsParse();
 jstracer.init_args(parser);
