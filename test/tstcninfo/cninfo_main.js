@@ -37,11 +37,13 @@ function createCninfoMain(options) {
     cninfo.options = {};
     cninfo.options.stockcode = '600000';
     cninfo.options.cninfoquerypath = '/cninfo-new/announcement/query';
-    cninfo.options.startdate = '19990101';
+    cninfo.options.startdate = '1999-01-01';
     d = new Date();
     cninfo.options.enddate = '';
     cninfo.options.enddate += baseop.number_format_length(4, d.getFullYear());
+    cninfo.options.enddate += '-';
     cninfo.options.enddate += baseop.number_format_length(2, d.getMonth() + 1);
+    cninfo.options.enddate += '-';
     cninfo.options.enddate += baseop.number_format_length(2, d.getDate());
 
     if (baseop.is_valid_string(options, 'stockcode') && baseop.is_valid_number(options.stockcode, false)) {

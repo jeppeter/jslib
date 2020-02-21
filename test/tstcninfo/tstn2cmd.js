@@ -4,12 +4,14 @@ var baseop = require('../../baseop');
 var util = require('util');
 //var util = require('util');
 var grab = grabwork();
-var cninfomain = require('./cninfo_main');
-var cninfoquery = require('./cninfo_query');
+var cninfonewmain = require('./cninfo_n2main');
+var cninfonewquery = require('./cninfo_n2query');
 var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('../../grabwork/random_delay');
 var extargsparse = require('extargsparse');
 var curdate;
+var cninfomain;
+var cninfoquery;
 var d = new Date();
 
 curdate = '';
@@ -36,7 +38,9 @@ var command_line_format = `
     {
         "grabmaxsock|m" : 50,
         "grabtimeout|t" : 5000,
-        "startdate|S" : "1999-01-01",
+        "startdate|S" : "2000-01-01",
+        "pagenum|N" : 1,
+        "pagesize|Z" : 30,
         "randommin" : 0,
         "randommax" : 1000,
         "enddate|E" : "%s",
@@ -93,19 +97,15 @@ process.on('exit', function (coderr) {
 args = parser.parse_command_line();
 jstracer.set_args(args);
 
-
 grab.add_pre(random_delay());
 grab.add_pre(download_pre(args));
-//grab.add_post(random_delay(args));
-grab.add_post(cninfomain(args));
-grab.add_post(cninfoquery(args));
-var mainurl;
-mainurl = args.url + args.stockcode;
-jstracer.info('url (%s)', mainurl);
+cninfomain = cninfonewmain(args);
+grab.add_post(cninfomain);
+cninfoquery = cninfonewquery(args);
+grab.add_post(cninfoquery);
 
-args.args.forEach(function (code) {
+args.args.forEach(function (elm, idx) {
     'use strict';
-    grab.queue(mainurl, {
-        cninfomain: code
-    });
+    jstracer.trace('add [%s] [%s]', idx, elm);
+    cninfomain.post_queue_url(elm);
 });
