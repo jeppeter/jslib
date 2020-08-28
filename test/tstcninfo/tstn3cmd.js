@@ -41,6 +41,7 @@ var command_line_format = `
         "startdate|S" : "2000-01-01",
         "pagenum|N" : 1,
         "pagesize|Z" : 30,
+        "maxcnt|C" : 5,
         "randommin" : 0,
         "randommax" : 1000,
         "enddate|E" : "%s",
@@ -126,17 +127,19 @@ callback_func = function(code) {
                 }));
             } else {
                 jstracer.trace('[%s] [%s]=[%s] [%s]',idx,elm['code'],elm['orgId'],elm['zwjc'])
-                codefmt[elm['code']] = elm['orgId'];
+                codefmt[elm['code']] = {};
+                codefmt[elm['code']].orgId = elm['orgId'];
+                codefmt[elm['code']].name = elm['zwjc'];
             }
         });
 
-        /*args.args.forEach(function(elm,idx) {
+        args.args.forEach(function(elm,idx) {
             if (!baseop.is_non_null(codefmt[elm])) {
                 jstracer.warn('stock code %s not find', elm);
             } else {
-                cninfomain.post_queue_url(elm,codefmt[elm]);
+                cninfomain.post_queue_url(elm,codefmt[elm].orgId,codefmt[elm].name);
             }
-        });*/
+        });
     }
     catch(e) {
         jstracer.error('parse error %s\n%s', e, code);
@@ -145,7 +148,7 @@ callback_func = function(code) {
     }
 };
 
-stockcode = cninfostockcode(5,callback_func);
+stockcode = cninfostockcode(args.maxcnt,callback_func);
 
 grab.add_post(stockcode);
 

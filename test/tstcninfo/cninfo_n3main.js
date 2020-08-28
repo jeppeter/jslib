@@ -23,6 +23,7 @@ function createCninfoNewMain(options) {
     cninfo.options.enddate += '-'
     cninfo.options.enddate += baseop.number_format_length(2, d.getDate());
     cninfo.options.maxcnt = 5;
+    cninfo.options.pagesize = 30;
 
     if (baseop.is_valid_date(options.startdate)) {
         cninfo.options.startdate = options.startdate;
@@ -32,10 +33,14 @@ function createCninfoNewMain(options) {
         cninfo.options.enddate = options.enddate;
     }
 
+
+
     cninfo.post_next_error = function(err, worker, next) {
         jstracer.error('<GET::%s> error %s', worker.url, err);
         worker.reqopt.cninfomain.trycnt += 1;
         if (worker.reqopt.cninfomain.trycnt < worker.reqopt.cninfomain.maxcnt) {
+            var bodydata;
+            bodydata = cninfo.format_url(worker.reqopt.cninfo.stockcode,worker.reqopt.cninfomain.orgid);
             worker.parent.post_queue(worker.url, {
                 priority: grabwork.MIN_PRIORITY,
                 cninfomain: worker.reqopt.cninfomain,
@@ -105,26 +110,39 @@ function createCninfoNewMain(options) {
         return;
     };
 
-    cninfo.format_url = function(stockcode) {
+    cninfo.format_url = function(stockcode,orgId) {
         'use strict';
-        var urlret ;
+        var bodydata;
 
-        urlret = 'http://www.cninfo.com.cn/new/singleDisclosure/fulltext?stock=';
-        urlret += util.format('%s&pageSize=20&pageNum=1&tabname=latest&plate=', stockcode);
+        bodydata = '';
+        bodydata += util.format('stock=%s', stockcode);
+        bodydata += '%2C';
+        bodydata += util.format('%s',orgId);
+        bodydata += util.format('&tabName=fulltext&pageSize=%s', cninfo.options.pagesize);
+        bodydata += '&pageNum=1';
         if (stockcode.startsWith('6')) {
-            urlret += util.format('sse&limit=');
+            bodydata += '&column=sse&category=&plate=sh';
         } else {
-            urlret += util.format('szse&limit=');
+            bodydata += '&column=szse&category=&plate=sz';
         }
-        return urlret;
+
+        bodydata += util.format('&seDate=%s~%s',cninfo.options.startdate,cninfo.options.enddate);
+        bodydata += '&searchkey=&secid=&sortName=&sortType=&isHLtitle=true';
+        jstracer.trace('bodydata [%s]',bodydata);
+
+        return bodydata;
     };
 
-    cninfo.post_queue_url = function(stockcode) {
-        var urlret;
-        urlret = cninfo.format_url(stockcode);
-        grab.post_queue(urlret, {
+    cninfo.post_queue_url = function(stockcode,orgId,name) {
+        var bodydata;
+        bodydata = cninfo.format_url(stockcode,orgId);
+        grab.post_queue('http://www.cninfo.com.cn/new/hisAnnouncement/query', {
+            reqopt :  {
+                body : bodydata
+            },
             cninfomain: {
                 stockcode: stockcode,
+                orgid : orgId,
                 enddate: cninfo.options.enddate,
                 startdate: cninfo.options.startdate,
                 trycnt: 0,
