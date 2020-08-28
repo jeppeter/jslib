@@ -27,7 +27,6 @@ function createStockCode(maxcnt,callback) {
 	};
 
 	coderet.post_handler = function(err, worker,next) {
-		jstracer.trace('htmldata \n%s',worker.htmldata);
 		if (!baseop.is_non_null(worker.reqopt['stockcode'])) {
 			next(true,err);
 			return;
@@ -50,7 +49,6 @@ function createStockCode(maxcnt,callback) {
 	};
 
 	coderet.get_code = function() {
-		jstracer.trace('will get code');
 		grab.queue('http://www.cninfo.com.cn/new/data/szse_stock.json',{
 			priority: grabwork.MIN_PRIORITY,
 			stockcode :  {

@@ -104,12 +104,10 @@ grab.add_post(cninfomain);
 cninfoquery = cninfonewquery(args);
 grab.add_post(cninfoquery);
 
-
-stockcode = cninfostockcode(function(code) {
+callback_func = function(code) {
     try{
         var jdata;
         var codefmt;
-        jstracer.trace('html data %s',code);
         jdata = JSON.parse(code);
         codefmt = {};
         if (!baseop.is_non_null(jdata['stockList'])) {
@@ -145,7 +143,11 @@ stockcode = cninfostockcode(function(code) {
         trace_exit(3);
         return;
     }
-});
+};
+
+stockcode = cninfostockcode(5,callback_func);
+
+grab.add_post(stockcode);
 
 stockcode.get_code();
 
