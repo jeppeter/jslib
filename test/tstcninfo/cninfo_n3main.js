@@ -120,11 +120,11 @@ function createCninfoNewMain(options) {
                         }
                     }
                     fname = path.join(cninfo.options.baselocate,worker.reqopt['cninfomain'].stockcode, yearnum,util.format('%s_%s%s',elm['announcementId'],elm['announcementTitle'],pathext));
-                    fname = fname.replace('<','_');
-                    fname = fname.replace('>','_');
-                    fname = fname.replace('(','_');
-                    fname = fname.replace(')','_');
-                    fname = fname.replace(' ','_');
+                    fname = fname.replace(/\</g,'_');
+                    fname = fname.replace(/\>/g,'_');
+                    fname = fname.replace(/\(/g,'_');
+                    fname = fname.replace(/\)/g,'_');
+                    fname = fname.replace(/ /g,'_');
                     downreqopt.downloadoption = {};
                     downreqopt.downloadoption.downloadfile = fname;
                     //jstracer.trace('download [%s] => [%s]', downloadurl, fname);
