@@ -2,7 +2,6 @@ var jstracer = require('jstracer');
 var grabwork = require('../../grabwork');
 var baseop = require('../../baseop');
 var util = require('util');
-var grab = grabwork();
 var cninfonewmain = require('./cninfo_n3main');
 var cninfonewquery = require('./cninfo_n3query');
 var cninfostockcode = require('./cninfo_n3code');
@@ -97,6 +96,7 @@ process.on('exit', function (coderr) {
 
 args = parser.parse_command_line();
 jstracer.set_args(args);
+var grab = grabwork(args);
 
 grab.add_pre(random_delay());
 grab.add_pre(download_pre(args));
@@ -126,7 +126,7 @@ callback_func = function(code) {
                     depth: null
                 }));
             } else {
-                jstracer.trace('[%s] [%s]=[%s] [%s]',idx,elm['code'],elm['orgId'],elm['zwjc'])
+                //jstracer.trace('[%s] [%s]=[%s] [%s]',idx,elm['code'],elm['orgId'],elm['zwjc'])
                 codefmt[elm['code']] = {};
                 codefmt[elm['code']].orgId = elm['orgId'];
                 codefmt[elm['code']].name = elm['zwjc'];
