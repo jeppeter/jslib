@@ -220,6 +220,38 @@ module.exports.has_sub_string = has_sub_string;
 
 var monthday_least = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
+var is_valid_date_ex = function (datestr) {
+    'use strict';
+    var isvalid = false;
+    var isleap = false;
+    var year, month, day;
+    if (typeof datestr === 'string' && datestr.length === 10 && match_expr_i(datestr, '[0-9\\-]+')) {
+        year = parseInt(datestr.substring(0, 4));
+        month = parseInt(datestr.substring(5, 7));
+        day = parseInt(datestr.substring(9, 10));
+        if (month <= 12 && month > 0 && year >= 1900 && day <= 31 && day > 0) {
+            if (day <= monthday_least[month - 1]) {
+                isvalid = true;
+            } else if (month === 2) {
+                if ((year % 4) === 0) {
+                    isleap = true;
+                    if ((year % 100) === 0 && (year % 400) !== 0) {
+                        isleap = false;
+                    }
+                }
+
+                if (isleap && day <= 29) {
+                    isvalid = true;
+                }
+            }
+
+        }
+    }
+    return isvalid;
+};
+
+module.exports.is_valid_date_ex = is_valid_date_ex;
+
 var is_valid_date = function (datestr) {
     'use strict';
     var isvalid = false;

@@ -26,11 +26,11 @@ function createCninfoNewMain(options) {
     cninfo.options.pagesize = 30;
     cninfo.options.baselocate = '.';
 
-    if (baseop.is_valid_date(options.startdate)) {
+    if (baseop.is_valid_date_ex(options.startdate)) {
         cninfo.options.startdate = options.startdate;
     }
 
-    if (baseop.is_valid_date(options.enddate)) {
+    if (baseop.is_valid_date_ex(options.enddate)) {
         cninfo.options.enddate = options.enddate;
     }
 
