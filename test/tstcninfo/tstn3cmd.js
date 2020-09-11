@@ -126,7 +126,7 @@ callback_func = function(code) {
                     depth: null
                 }));
             } else {
-                //jstracer.trace('[%s] [%s]=[%s] [%s]',idx,elm['code'],elm['orgId'],elm['zwjc'])
+                jstracer.trace('[%s] [%s]=[%s] [%s]',idx,elm['code'],elm['orgId'],elm['zwjc'])
                 codefmt[elm['code']] = {};
                 codefmt[elm['code']].orgId = elm['orgId'];
                 codefmt[elm['code']].name = elm['zwjc'];
