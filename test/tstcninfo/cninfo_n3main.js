@@ -125,6 +125,9 @@ function createCninfoNewMain(options) {
                     fname = fname.replace(/\(/g,'_');
                     fname = fname.replace(/\)/g,'_');
                     fname = fname.replace(/ /g,'_');
+                    fname = fname.replace(/\*/g,'_');
+                    fname = fname.replace(/\"/g,'_');
+                    fname = fname.replace(/\'/g,'_');
                     downreqopt.downloadoption = {};
                     downreqopt.downloadoption.downloadfile = fname;
                     //jstracer.trace('download [%s] => [%s]', downloadurl, fname);

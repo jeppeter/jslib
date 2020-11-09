@@ -216,6 +216,8 @@ function createCninfoNewQuery(options) {
 				downfile = downfile.replace(/\</g, '_');
 				downfile = downfile.replace(/\>/g,'_');
 				downfile = downfile.replace(/\?/g,'_');
+				downfile = downfile.replace(/\*/g,'_');
+				downfile = downfile.replace(/\"/g, '_');
 
 
 				durl = util.format('http://static.cninfo.com.cn/%s', elm['adjunctUrl']);
