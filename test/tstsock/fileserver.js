@@ -1,25 +1,71 @@
 var directory = __dirname;
 var lport = 9000;
 var posix_dir;
-
-if (process.argv.length > 2) {
-    directory = process.argv[2];
-}
-
-if (process.argv.length > 3) {
-    lport = process.argv[3];
-}
-
+var extargsparse = require('extargsparse');
 var fs = require('fs');
 var path = require('path');
 var http = require('http');
+var https = require('https');
 var util = require('util');
 var qs = require('querystring');
+var jstracer = require('jstracer');
+var parser ;
+var args;
 
+var commandline_fmt = `
+{
+    "port|p" : 9000,
+    "secure|S" : false,
+    "certfile": "%s",
+    "keyfile" : "%s",
+    "$" : "*"
+}
+`;
+
+var curkeyfile = path.join(__dirname, 'selfsigned.key') ;
+var curcertfile = path.join(__dirname,'selfsigned.crt');
+
+const trace_exit = function(ec) {
+    jstracer.finish(err => {
+        if (err) {
+            return;
+        }
+        process.exit(ec);
+    });
+};
+
+process.on('uncaughtException', err => {
+    'use struct';
+    jstracer.error('error (%s) stack(%s)', err, err.stack);
+    trace_exit(3);
+});
+
+process.on('SIGINT', () => {
+    trace_exit(0);
+});
+
+curkeyfile = curkeyfile.replace(/\\/g,'\\\\');
+curcertfile = curcertfile.replace(/\\/g,'\\\\');
+
+var commandline = util.format(commandline_fmt, curcertfile,curkeyfile);
+
+
+
+
+parser = extargsparse.ExtArgsParse();
+parser.load_command_line_string(commandline);
+parser = jstracer.init_args(parser);
+args = parser.parse_command_line();
+jstracer.set_args(args);
+
+
+if (args.args.Length > 0) {
+    directory =  args.args[0];
+}
 directory = path.resolve(directory, '.');
 posix_dir = directory.split(path.sep).join('/');
 
-http.createServer(function (req, res) {
+var http_handler = function (req, res) {
     'use strict';
     var requrl;
     var outfile;
@@ -146,5 +192,19 @@ http.createServer(function (req, res) {
         });
         return;
     });
-}).listen(lport);
-console.log('listen on %d with dir %s', lport, directory);
+}; 
+
+
+if (args.secure) {
+    var options = {
+        key : fs.readFileSync(args.keyfile),
+        cert : fs.readFileSync(args.certfile)
+    }
+
+    https.createServer(options,http_handler).listen(args.port);
+    console.log('listen secure on %d with dir %s', args.port, directory);
+} else {
+    http.createServer(http_handler).listen(args.port);
+    console.log('listen on %d with dir %s', args.port, directory);
+}
+

@@ -7,14 +7,16 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "net": "latest",
-    "express": "latest",
-    "connect": "latest",
-    "tracer": "latest",
-    "formidable": "latest",
-    "ejs": "latest",
-    "emitter": "latest",
-    "variadic": "latest"
+    "net": "^1.0.2",
+    "express": "^4.17.1",
+    "connect": "^3.7.0",
+    "tracer": "^1.1.5",
+    "formidable": "^1.2.2",
+    "ejs": "^3.1.6",
+    "emitter": "^0.0.5",
+    "variadic": "^1.0.1",
+    "extargsparse": "^1.0.6",
+    "jstracer": "^1.2.0"
   },
   "keywords": [],
   "author": "",
