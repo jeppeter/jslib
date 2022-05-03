@@ -47,6 +47,12 @@ function createCninfoNewMain(options) {
             var bodydata;
             bodydata = cninfo.format_url(worker.reqopt.cninfo.stockcode,worker.reqopt.cninfomain.orgid,worker.reqopt.cninfomain.pagenum);
             worker.parent.post_queue(worker.url, {
+                reqopt :  {
+                    body : bodydata,
+                    headers : {
+                        "Content-Type" : "application/x-www-form-urlencoded"
+                    }
+                },
                 priority: grabwork.MIN_PRIORITY,
                 cninfomain: worker.reqopt.cninfomain,
                 });
