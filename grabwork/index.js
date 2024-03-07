@@ -148,11 +148,11 @@ function createGrabwork(options) {
         reqopt.url = url;
         reqopt.method = meth;
         self.reqworkqueue.push(worker);
-        if (false){
+        if (false) {
             jstracer.trace('worker (%s)', util.inspect(worker, {
                 showHidden: true,
                 depth: 3
-            }));            
+            }));
         }
         if (reqopt.timeout === null || reqopt.timeout === undefined) {
             reqopt.timeout = self.grabtimeout;
@@ -176,9 +176,9 @@ function createGrabwork(options) {
             }).pipe(worker.pipe);
         } else {
             request(reqopt, function (err, resp, body) {
-                if (false){
-                    jstracer.trace('[%s][%s]resp %s', worker.meth, worker.url, body);    
-                }                
+                if (false) {
+                    jstracer.trace('[%s][%s]resp %s', worker.meth, worker.url, body);
+                }
                 if (err === null) {
                     worker.response = resp;
                     worker.htmldata = body;
@@ -335,7 +335,7 @@ function createGrabwork(options) {
             }
         }
 
-        if (baseop.is_valid_string(reqopt.downloadoption,'downloadfile')) {
+        if (baseop.is_valid_string(reqopt.downloadoption, 'downloadfile')) {
             reqopt = reqopt;
         } else if (baseop.is_valid_string(reqopt.downloadoption, 'downloaddir')) {
             if (dir2 !== '' && dir2 !== reqopt.downloadoption.downloaddir) {
