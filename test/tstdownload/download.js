@@ -2,6 +2,8 @@ var jstracer = require('jstracer');
 var util = require('util');
 var extargsparse = require('extargsparse');
 var fs = require('fs');
+var downloadjob = require('./downloadjob');
+var http = require('http');
 
 
 var trace_exit = function (ec) {
@@ -19,6 +21,8 @@ var command_line_format = `
 {
     "input|i" : null,
     "output|o" : null,
+    "maxjobs" : 3,
+    "directory|d" : null,
     "download<download_handler>##to download files##" : {
         "$" : 0
     }
@@ -26,7 +30,6 @@ var command_line_format = `
 `;
 var command_line;
 var parser;
-var args;
 
 var download_file = function (url, file, callback) {
     'use strict';
@@ -51,44 +54,22 @@ var download_file = function (url, file, callback) {
     });
 };
 
-var download_process_data = function (data) {
+var download_end = function (err) {
     'use strict';
-    var sarr = data.split('\n');
-    var nl ;
-    var cfile;
-    var bfile;
-    var basedir = args.directory;
-    if (args.directory.length === 0) {
-        basedir = process.getcwd();
+    if (err) {
+        trace_exit(5);
+    } else {
+        trace_exit(0);
     }
-    sarr.each(function(elm) {
-        nl = elm.replace(/\r/,"");
-        needfiles.push(nl);
-    });
-    needfiles.each(function(url) {
-        bfile = path.basename(elem);
-        cfile = path.join(basedir,bfile);
-        download_file(url, cfile, download_callback);
-    });
-    return;
 };
+
 
 var download_handler = function (args) {
     'use strict';
     jstracer.set_args(args);
-    if (args.input.length > 0) {
-        fs.readFile(args.input, function(err, data) {
-            if (err) {
-                jstracer.error('can not read %s error [%s]', args.input, err);
-                return;
-            }
-            download_process_data(data);
-        });
-    } else {
-        fs.read(process.stdin.fd, function (data) {
-            download_process_data(data);
-        });
-    }
+    var djobs = downloadjob(args);
+    djobs.start_download(download_file, download_end);
+    return;
 };
 
 exports.download_handler = download_handler;
@@ -127,46 +108,7 @@ process.on('exit', function (coderr) {
     trace_exit(coderr);
 });
 
-var needfiles = [];
-var errorfiles = [];
-var handleidx = 0;
 
-var write_error_files = function (outfile) {
-    var outs = '';
-    errorfiles.each(function (elm) {
-        outs += util.format('%s\n', elm);
-    });
-    if (outfile.length > 0) {
-        fs.writeFile(outfile, outs, function (err) {
-            if (err) {
-                jstracer.error('write file [%s] error[%s]', outfile, err);
-            }
-            return;
-        });
-    } else {
-        console.log(outs);
-    }    
-}
-
-
-var download_callback = function(err, file, url) {
-    handleidx += 1;
-    if (err) {
-        errorfiles.push(file);
-        jstracer.error('download [%s] error [%s]', url, err);
-        if (handleidx >= needfiles.length) {
-            write_error_files(args.output);
-        }
-        return;
-    }
-
-    if (handleidx >= needfiles.length) {
-        write_error_files(args.output);
-    }
-    return;
-};
-
-
-args = parser.parse_command_line();
+parser.parse_command_line();
 
 
