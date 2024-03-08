@@ -113,9 +113,10 @@ function createDownloadJobs(args) {
         while (idx < sarr.length) {
             elm = sarr[idx];
             curl = elm.replace(/\r/, '');
-            self.downloadurls.push(curl);
+            if (curl.length > 0) {
+                self.downloadurls.push(curl);
+            }
             idx += 1;
-
         }
         var retval;
         while (true) {
