@@ -67,7 +67,8 @@ function createDownloadJobs(args) {
         }
         jstracer.info('download [%s] succ', url);
 
-        if (self.downloadidx >= self.downloadurls.length) {
+        if (self.downloadidx >= self.downloadurls.length && self.downloadjobs === 0) {
+            /*we need to make jobs over*/
             self.write_error_files();
         } else {
             self.download_one_file();
