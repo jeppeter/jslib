@@ -47,40 +47,36 @@ var download_file = function (url, file, callback) {
     var reqopt = {};
     reqopt.url = url;
     reqopt.method = 'GET';
-    try {
-        var res = request(reqopt);
-        //jstracer.info('res\n%s', util.inspect(res, {depth: 3}));
-        jstracer.info('will download [%s]', url);
-        res.on('response', function () {
-            if (res.req.res.statusCode !== 200) {
-                var err3 = util.format('statusCode %s', res.req.res.statusCode);
-                callback(err3, file, url);
-            }
-        });
-        res.on('error', function (err) {
-            wf.close();
-            callback(err, file, url);
-        });
-        res.on('data', function (chunk) {
-            wf.write(chunk);
-        });
-        res.on('end', function () {
-            wf.close();
-            callback(null, file, url);
-        });
-        res.on('timeout', function () {
-            var err2 = util.format('timed out');
-            wf.close();
-            callback(err2, file, url);
-        });
-        res.on('abort', function () {
-            var err2 = util.format('aborted');
-            wf.close();
-            callback(err2, file, url);
-        });
-    } catch (e) {
-        callback(e, file, url);
-    }
+    var res = request(reqopt);
+    //jstracer.info('res\n%s', util.inspect(res, {depth: 3}));
+    jstracer.info('will download [%s]', url);
+    res.on('response', function () {
+        if (res.req.res.statusCode !== 200) {
+            var err3 = util.format('statusCode %s', res.req.res.statusCode);
+            callback(err3, file, url);
+        }
+    });
+    res.on('error', function (err) {
+        wf.close();
+        callback(err, file, url);
+    });
+    res.on('data', function (chunk) {
+        wf.write(chunk);
+    });
+    res.on('end', function () {
+        wf.close();
+        callback(null, file, url);
+    });
+    res.on('timeout', function () {
+        var err2 = util.format('timed out');
+        wf.close();
+        callback(err2, file, url);
+    });
+    res.on('abort', function () {
+        var err2 = util.format('aborted');
+        wf.close();
+        callback(err2, file, url);
+    });
 };
 
 
