@@ -34,24 +34,39 @@ var parser;
 var download_file = function (url, file, callback) {
     'use strict';
     var wf = fs.createWriteStream(file);
-    http.get(url, function (res) {
-        if (res.statusCode !== 200) {
-            var err = util.format('statusCode %d', res.statusCode);
-            callback(err, file, url);
-            return;
-        }
-        res.on('error', function (err) {
-            wf.close();
-            callback(err, file, url);
+    try {
+        http.get(url, function (res) {
+            if (res.statusCode !== 200) {
+                var err = util.format('statusCode %d', res.statusCode);
+                callback(err, file, url);
+                return;
+            }
+            jstracer.info('will download [%s]', url);
+            res.on('error', function (err) {
+                wf.close();
+                callback(err, file, url);
+            });
+            res.on('data', function (chunk) {
+                wf.write(chunk);
+            });
+            res.on('end', function () {
+                wf.close();
+                callback(null, file, url);
+            });
+            res.on('timeout', function () {
+                var err2 = util.format('timed out');
+                wf.close();
+                callback(err2, file, url);
+            });
+            res.on('abort', function () {
+                var err2 = util.format('aborted');
+                wf.close();
+                callback(err2, file, url);
+            });
         });
-        res.on('data', function (chunk) {
-            wf.write(chunk);
-        });
-        res.on('end', function () {
-            wf.close();
-            callback(null, file, url);
-        });
-    });
+    } catch (e) {
+        callback(e, file, url);
+    }
 };
 
 var download_end = function (err) {

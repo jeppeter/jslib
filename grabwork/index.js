@@ -166,6 +166,16 @@ function createGrabwork(options) {
                 jstracer.error('(%s) error(%s)', worker.url, JSON.stringify(err));
                 worker.finish(err);
             });
+            worker.pipe.on('timeout', function () {
+                jstracer.error('(%s) timed out', worker.url);
+                var err3 = util.format('timed out');
+                worker.finish(err3);
+            });
+            worker.pipe.on('abort', function () {
+                jstracer.error('(%s) abort', worker.url);
+                var err3 = util.format('aborted');
+                worker.finish(err3);
+            });
 
             request(reqopt, function (err) {
                 if (err) {

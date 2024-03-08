@@ -35,9 +35,11 @@ function createDownloadJobs(args) {
     self.write_error_files = function () {
         var outs = '';
         if (self.errorfiles.length > 0) {
-            self.errorfiles.each(function (elm) {
-                outs += util.format('%s\n', elm);
-            });
+            var idx = 0;
+            while (idx < self.errorfiles.length) {
+                outs += util.format('%s\n', self.errorfiles[idx]);
+                idx += 1;
+            }
         }
         if (self.output.length > 0) {
             fs.writeFile(self.output, outs, function (err) {
@@ -63,6 +65,7 @@ function createDownloadJobs(args) {
             jstracer.error('download [%s] [%s] error [%s]', url, cfile, err);
             self.errorfiles.push(url);
         }
+        jstracer.info('download [%s] succ', url);
 
         if (self.downloadidx >= self.downloadurls.length) {
             self.write_error_files();
