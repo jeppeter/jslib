@@ -48,7 +48,13 @@ var download_file = function (url, file, callback) {
     reqopt.url = url;
     reqopt.method = 'GET';
     jstracer.info('will download [%s]', url);
-    var res = request(reqopt);
+    var res;
+    try {
+        res = request(reqopt);
+    } catch (e) {
+        callback(e, file, url);
+        return;
+    }
     //jstracer.info('res\n%s', util.inspect(res, {depth: 3}));
     res.on('response', function () {
         if (res.req.res.statusCode !== 200) {
