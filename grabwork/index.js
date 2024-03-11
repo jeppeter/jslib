@@ -167,13 +167,62 @@ function createGrabwork(options) {
                 worker.finish(err);
             });
 
-            request(reqopt, function (err) {
-                if (err) {
-                    jstracer.error('<%s::%s> error(%s)', worker.meth, worker.url, JSON.stringify(err));
-                    worker.finish(err);
-                    return;
+            var res;
+            try {
+                res = request(reqopt);
+            } catch (e) {
+                if (worker.pipe !== null) {
+                    worker.pipe.close();
                 }
-            }).pipe(worker.pipe);
+                worker.pipe = null;
+                worker.finish(e);
+                return;
+            }
+
+            res.on('response', function () {
+                if (res.req.res.statusCode !== 200) {
+                    var err3 = util.format('statusCode %s', res.req.res.statusCode);
+                    if (worker.pipe !== null) {
+                        worker.pipe.close();
+                    }
+                    worker.pipe = null;
+                    worker.finish(err3);
+                }
+            });
+            res.on('error', function (err) {
+                if (worker.pipe !== null) {
+                    worker.pipe.close();
+                }
+                worker.pipe = null;
+                worker.finish(err);
+            });
+            res.on('data', function (chunk) {
+                worker.pipe.write(chunk);
+            });
+            res.on('end', function () {
+                if (worker.pipe !== null) {
+                    worker.pipe.close();
+                }
+                worker.pipe = null;
+                worker.finish(null);
+            });
+            res.on('timeout', function () {
+                var err2 = util.format('timed out');
+                if (worker.pipe !== null) {
+                    worker.pipe.close();
+                }
+                worker.pipe = null;
+                worker.finish(err2);
+            });
+            res.on('abort', function () {
+                var err2 = util.format('aborted');
+                if (worker.pipe !== null) {
+                    worker.pipe.close();
+                }
+                worker.pipe = null;
+                worker.finish(err2);
+            });
+
         } else {
             request(reqopt, function (err, resp, body) {
                 if (false) {

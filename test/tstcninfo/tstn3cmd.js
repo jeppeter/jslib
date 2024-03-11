@@ -54,7 +54,7 @@ var command_line_format = `
 var command_line;
 var parser;
 var args;
-
+var grab = grabwork({});
 parser = extargsparse.ExtArgsParse({
     help_func: function (ec, s) {
         'use strict';
@@ -96,7 +96,7 @@ process.on('exit', function (coderr) {
 
 args = parser.parse_command_line();
 jstracer.set_args(args);
-var grab = grabwork(args);
+grab = grabwork(args);
 
 grab.add_pre(random_delay());
 grab.add_pre(download_pre(args));
@@ -105,50 +105,59 @@ grab.add_post(cninfomain);
 cninfoquery = cninfonewquery(args);
 grab.add_post(cninfoquery);
 
-callback_func = function(code) {
-    try{
+var callback_func = function (code) {
+    'use strict';
+    try {
         var jdata;
         var codefmt;
         jdata = JSON.parse(code);
         codefmt = {};
-        if (!baseop.is_non_null(jdata['stockList'])) {
-            jstracer.error('no stockList in\n%s',code);
+        //if (!baseop.is_non_null(jdata['stockList'])) {
+        if (!baseop.is_non_null(jdata.stockList)) {
+            jstracer.error('no stockList in\n%s', code);
             trace_exit(3);
             return;
         }
 
-        jdata['stockList'].forEach(function(elm,idx) {
-            if(!baseop.is_non_null(elm['orgId']) ||
-                !baseop.is_non_null(elm['code']) ||
-                !baseop.is_non_null(elm['zwjc'])) {
-                jstracer.warn('[%d] no orgId or code\n%s', idx,util.inspect(elm,{
+        //jdata['stockList'].forEach(function (elm) {
+        jdata.stockList.forEach(function (elm, idx) {
+            //if(!baseop.is_non_null(elm['orgId']) ||
+            //    !baseop.is_non_null(elm['code']) ||
+            //    !baseop.is_non_null(elm['zwjc'])) {
+            if (!baseop.is_non_null(elm.orgId) ||
+                    !baseop.is_non_null(elm.code) ||
+                    !baseop.is_non_null(elm.zwjc)) {
+                jstracer.warn('[%d] no orgId or code\n%s', idx, util.inspect(elm, {
                     showHidden: true,
                     depth: null
                 }));
             } else {
-                jstracer.trace('[%s] [%s]=[%s] [%s]',idx,elm['code'],elm['orgId'],elm['zwjc'])
-                codefmt[elm['code']] = {};
-                codefmt[elm['code']].orgId = elm['orgId'];
-                codefmt[elm['code']].name = elm['zwjc'];
+                //jstracer.trace('[%s] [%s]=[%s] [%s]',idx,elm['code'],elm['orgId'],elm['zwjc'])
+                //codefmt[elm['code']] = {};
+                //codefmt[elm['code']].orgId = elm['orgId'];
+                //codefmt[elm['code']].name = elm['zwjc'];
+                jstracer.trace('[%s] [%s]=[%s] [%s]', idx, elm.code, elm.orgId, elm.zwjc);
+                codefmt[elm.code] = {};
+                codefmt[elm.code].orgId = elm.orgId;
+                codefmt[elm.code].name = elm.zwjc;
             }
         });
 
-        args.args.forEach(function(elm,idx) {
+        args.args.forEach(function (elm) {
             if (!baseop.is_non_null(codefmt[elm])) {
-                jstracer.warn('stock code %s not find', elm);
+                jstracer.warn('stock code  %s not find', elm);
             } else {
-                cninfomain.post_queue_url(elm,codefmt[elm].orgId,codefmt[elm].name);
+                cninfomain.post_queue_url(elm, codefmt[elm].orgId, codefmt[elm].name);
             }
         });
-    }
-    catch(e) {
+    } catch (e) {
         jstracer.error('parse error %s\n%s', e, code);
         trace_exit(3);
         return;
     }
 };
 
-stockcode = cninfostockcode(args.maxcnt,callback_func);
+var stockcode = cninfostockcode(args.maxcnt, callback_func);
 
 grab.add_post(stockcode);
 
