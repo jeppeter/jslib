@@ -186,6 +186,7 @@ function createGrabwork(options) {
                         worker.pipe.close();
                     }
                     worker.pipe = null;
+                    jstracer.error('[%s] %s', worker.url, err3);
                     worker.finish(err3);
                 }
             });
@@ -197,7 +198,13 @@ function createGrabwork(options) {
                 worker.finish(err);
             });
             res.on('data', function (chunk) {
-                worker.pipe.write(chunk);
+                if (worker.pipe !== null) {
+                    worker.pipe.write(chunk);
+                } else {
+                    if (worker.url.length > 0 || chunk.length > 0) {
+                        jstracer.error('missing data for [%s] data[%s]', worker.url, chunk);
+                    }
+                }
             });
             res.on('end', function () {
                 if (worker.pipe !== null) {
