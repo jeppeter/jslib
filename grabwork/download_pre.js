@@ -11,6 +11,7 @@ function createDownloadPre(options) {
     downloadpre.workingfiles = [];
     downloadpre.pendingfiles = [];
     downloadpre.downloadmax = 30;
+    downloadpre.maxtries = 5;
     downloadpre.state = {};
     downloadpre.state.success_download = 0;
     downloadpre.state.start_download = 0;
@@ -21,6 +22,10 @@ function createDownloadPre(options) {
 
     if (baseop.is_non_null(options, 'downloadmax')) {
         downloadpre.downloadmax = options.downloadmax;
+    }
+
+    if (baseop.is_non_null(options, 'maxtries')) {
+        downloadpre.maxtries = options.maxtries;
     }
 
     downloadpre.inner_start_download = function (worker, next) {
@@ -41,7 +46,7 @@ function createDownloadPre(options) {
         worker.add_finish(downloadpre.finish_callback);
         jstracer.trace('downloadoption %s', util.inspect(worker.reqopt.downloadoption, {
             showHidden: true,
-            depth : 3
+            depth: 3
         }));
         if (baseop.is_non_null(worker.reqopt.downloadoption, 'downloadfile')) {
             fname = worker.reqopt.downloadoption.downloadfile;
@@ -95,7 +100,7 @@ function createDownloadPre(options) {
     downloadpre.finish_callback = function (worker, err, next) {
         var sendreqopt;
         var i;
-        if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || (!baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir') && !baseop.is_non_null(worker.reqopt.downloadoption,'downloadfile'))) {
+        if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || (!baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir') && !baseop.is_non_null(worker.reqopt.downloadoption, 'downloadfile'))) {
             next(err);
             return;
         }
@@ -117,7 +122,7 @@ function createDownloadPre(options) {
                 trytimes += 1;
                 sendreqopt = worker.reqopt;
                 sendreqopt.downloadoption.downloadtries = trytimes;
-                if (trytimes < 5) {
+                if (trytimes < downloadpre.maxtries) {
                     jstracer.warn('[%d]request (%s) again', trytimes, worker.url);
                     worker.parent.download_queue(worker.url, sendreqopt);
                 } else {
@@ -148,7 +153,7 @@ function createDownloadPre(options) {
 
     downloadpre.pre_handler = function (err, worker, next) {
         var curpending;
-        if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || (!baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir') && !baseop.is_non_null(worker.reqopt.downloadoption,'downloadfile'))) {
+        if (!baseop.is_non_null(worker.reqopt, 'downloadoption') || (!baseop.is_non_null(worker.reqopt.downloadoption, 'downloaddir') && !baseop.is_non_null(worker.reqopt.downloadoption, 'downloadfile'))) {
             /*if we do not handle news make*/
             next(true, err);
             return;
