@@ -25,7 +25,8 @@
     "request": "^2.2.0",
     "tape": "^4.0.0",
     "tracer": "^1.0.0",
-    "stack-trace": "^0.0.9"
+    "stack-trace": "^0.0.9",
+    "crypto-js": "^4.2.0"
   },
   "keywords": [],
   "author": "",
