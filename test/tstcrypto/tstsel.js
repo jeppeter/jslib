@@ -75,6 +75,21 @@ process.on('exit', function (coderr) {
     trace_exit(coderr);
 });
 
+var get_url_pdf = function (htmldata) {
+    'use strict';
+    var dv = JSON.parse(htmldata);
+    var retarr = [];
+    if (baseop.is_non_null(dv, 'records')) {
+        dv.records.forEach(function (cv) {
+            if (baseop.is_non_null(cv, 'F003V')) {
+                retarr.push(cv.F003V);
+            }
+        });
+    }
+    return retarr;
+};
+
+
 var selpdf_handler = function (args) {
     'use strict';
     var connval = 0;
@@ -88,8 +103,13 @@ var selpdf_handler = function (args) {
                 trace_exit(3);
                 return;
             }
-            var dv = JSON.parse(data);
-            jstracer.info('dv %s', dv);
+            var retarr = get_url_pdf(data);
+            retarr.forEach(function (cv) {
+                var cc = cv.split('/');
+                var llen = cc.length;
+                jstracer.trace('%s', cc[llen - 2]);
+            });
+            //jstracer.trace('retarr \n%s', retarr);
             connval -= 1;
             if (connval === 0) {
                 trace_exit(0);
