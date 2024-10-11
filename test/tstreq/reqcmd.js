@@ -6,24 +6,29 @@ var URL = require('url');
 var path = require('path');
 var baseop = require('../../baseop');
 var fs = require('fs');
+var CryptoJS = require('crypto-js');
+var zlib = require('zlib');
 var parser;
 
 var command_line = `
-    {
-        "timeout|t" : 5000,
-        "jsonfile|j" : "",
-        "get<get_command>## urls... : to get url by request ##" : {
-            "$" : "+"
-        },
-        "pipe<pipe_command>## url [file] : to download url to file ##" : {
-            "$" : "+"
-        },
-        "post<post_command>## urls... : to post data to urls ##" : {
-            "$" : "+",
-            "data" : "",
-            "file" : ""
-        }
+{
+    "timeout|t" : 5000,
+    "jsonfile|j" : "",
+    "get<get_command>## urls... : to get url by request ##" : {
+        "$" : "+"
+    },
+    "pipe<pipe_command>## url [file] : to download url to file ##" : {
+        "$" : "+"
+    },
+    "post<post_command>## urls... : to post data to urls ##" : {
+        "$" : "+",
+        "data" : "",
+        "file" : ""
+    },
+    "reqcninfo4<reqcninfo4_command>##stockcode ... : to get stock code value##" : {
+        "$" : "+"
     }
+}
 `;
 
 
@@ -202,6 +207,109 @@ var post_command = function (args) {
 };
 exports.post_command = post_command;
 
+var get_cninfo_scode = function () {
+    'use strict';
+    var dtime = (new Date().getTime() / 1000);
+    var stime = CryptoJS.enc.Utf8.parse(Math.floor(dtime));
+    var keystr = CryptoJS.enc.Utf8.parse('1234567887654321');
+    var encdata = CryptoJS.AES.encrypt(stime, keystr, {iv: keystr, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7});
+    return CryptoJS.enc.Base64.stringify(encdata.ciphertext);
+};
+
+var get_cninfo_headers = function () {
+    'use strict';
+    var headers = {};
+    headers.Accept = '*/*';
+    headers['Accept-EncKey'] = get_cninfo_scode();
+    jstracer.trace('Accept-EncKey %s', headers['Accept-EncKey']);
+    headers['Accept-Encoding'] = 'gzip, deflate';
+    headers['Accept-Language'] = 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7';
+    headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+    headers.Host = 'webapi.cninfo.com.cn';
+    headers.Origin = 'http://webapi.cninfo.com.cn';
+    headers.Referer = 'http://webapi.cninfo.com.cn/';
+    headers['X-Requested-With'] = 'XMLHttpRequest';
+    return headers;
+};
+
+var reqcninfo4_command = function (args) {
+    'use strict';
+    var conncnt = 0;
+    var errmet = 0;
+    jstracer.set_args(args);
+    args.subnargs.forEach(function (elm) {
+        conncnt += 1;
+        var reqopt = {};
+        reqopt.url = util.format('http://webapi.cninfo.com.cn/api/info/p_info3085?scode=%s', elm);
+        reqopt.timeout = args.timeout;
+        reqopt.method = 'GET';
+        reqopt.headers = get_cninfo_headers();
+        request(reqopt, function (err, resp, body) {
+            resp = resp;
+            if (baseop.is_non_null(err)) {
+                conncnt -= 1;
+                errmet = 1;
+                if (conncnt === 0) {
+                    trace_exit(4);
+                }
+                return;
+            }
+
+            if (false) {
+                zlib.gunzip(body, function (err2, unzipdata) {
+                    if (baseop.is_non_null(err2)) {
+                        jstracer.error('err2 %s', err2);
+                        conncnt -= 1;
+                        errmet = 1;
+                        if (conncnt === 0) {
+                            trace_exit(4);
+                        }
+                        return;
+                    }
+                    jstracer.trace('%s content\n%s', reqopt.url, unzipdata);
+                    conncnt -= 1;
+                    if (conncnt === 0) {
+                        if (errmet === 0) {
+                            trace_exit(0);
+                        } else {
+                            trace_exit(4);
+                        }
+                    }
+                    return;
+                });
+            } else {
+                fs.writeFile('out.data', body, function (err3) {
+                    if (baseop.is_non_null(err3)) {
+                        conncnt -= 1;
+                        errmet = 1;
+                        jstracer.error('err3 %s', err3);
+                        if (conncnt === 0) {
+                            trace_exit(4);
+                        }
+                        return;
+                    }
+                    conncnt -= 1;
+                    if (conncnt === 0) {
+                        if (errmet === 0) {
+                            trace_exit(0);
+                        } else {
+                            trace_exit(4);
+                        }
+                    }
+                    return;
+                });
+            }
+
+        });
+    });
+
+    if (conncnt === 0) {
+        trace_exit(0);
+    }
+    return;
+};
+
+exports.reqcninfo4_command = reqcninfo4_command;
 
 
 parser = extargsparse.ExtArgsParse({
