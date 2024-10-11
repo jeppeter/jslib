@@ -10,9 +10,11 @@ var CryptoJS = require('crypto-js');
 var zlib = require('zlib');
 var parser;
 
-var command_line = `
+var command_line_fmt = `
 {
     "timeout|t" : 5000,
+    "sdate" : "2000-01-01",
+    "edate" : "%s",
     "jsonfile|j" : "",
     "get<get_command>## urls... : to get url by request ##" : {
         "$" : "+"
@@ -30,6 +32,18 @@ var command_line = `
     }
 }
 `;
+var d = new Date();
+var curdate;
+
+curdate = '';
+curdate += baseop.number_format_length(4, d.getFullYear());
+curdate += '-';
+curdate += baseop.number_format_length(2, d.getMonth() + 1);
+curdate += '-';
+curdate += baseop.number_format_length(2, d.getDate());
+
+
+var command_line = util.format(command_line_fmt, curdate);
 
 
 var trace_exit = function (ec) {
@@ -232,6 +246,51 @@ var get_cninfo_headers = function () {
     return headers;
 };
 
+var hyfein_date_to_value = function (hdate) {
+    'use strict';
+    var retval = 0;
+    var sarr = hdate.split('-');
+    if (sarr.length >= 3) {
+        retval += parseInt(sarr[0], 10) * 10000;
+        retval += parseInt(sarr[1], 10) * 100;
+        retval += parseInt(sarr[2], 10);
+    }
+    return retval;
+};
+
+var filter_cninfo_url = function (body, sdate, edate) {
+    'use strict';
+    var svalue = hyfein_date_to_value(sdate);
+    var evalue = hyfein_date_to_value(edate);
+    var returls = [];
+    var dv;
+    //jstracer.info('body\n%s', body);
+    try {
+        dv = JSON.parse(body);
+        if (baseop.is_non_null(dv, 'records')) {
+            dv.records.forEach(function (cv) {
+                if (baseop.is_non_null(cv, 'F003V')) {
+                    var ccarr = cv.F003V.split('/');
+                    if (ccarr.length >= 2) {
+                        var cval = hyfein_date_to_value(ccarr[ccarr.length - 2]);
+                        if (cval >= svalue && cval <= evalue) {
+                            returls.push(cv.F003V);
+                        }
+                    }
+                } else {
+                    jstracer.info('no F003V');
+                }
+            });
+        } else {
+            jstracer.info('no records');
+        }
+    } catch (e) {
+        jstracer.error('e %s', e);
+    }
+
+    return returls;
+};
+
 var reqcninfo4_command = function (args) {
     'use strict';
     var conncnt = 0;
@@ -254,7 +313,9 @@ var reqcninfo4_command = function (args) {
                 }
                 return;
             }
-            jstracer.info('%s \n%s', elm, body);
+            //jstracer.info('%s \n%s', elm, body);
+            var urls = filter_cninfo_url(body, args.sdate, args.edate);
+            jstracer.info('urls\n%s', urls);
             conncnt -= 1;
             if (conncnt === 0) {
                 if (errmet === 0) {
