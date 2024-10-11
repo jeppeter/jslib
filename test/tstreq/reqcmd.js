@@ -222,7 +222,7 @@ var get_cninfo_headers = function () {
     headers.Accept = '*/*';
     headers['Accept-EncKey'] = get_cninfo_scode();
     jstracer.trace('Accept-EncKey %s', headers['Accept-EncKey']);
-    headers['Accept-Encoding'] = 'gzip, deflate';
+    //headers['Accept-Encoding'] = 'gzip, deflate';
     headers['Accept-Language'] = 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7';
     headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
     headers.Host = 'webapi.cninfo.com.cn';
@@ -254,52 +254,17 @@ var reqcninfo4_command = function (args) {
                 }
                 return;
             }
-
-            if (false) {
-                zlib.gunzip(body, function (err2, unzipdata) {
-                    if (baseop.is_non_null(err2)) {
-                        jstracer.error('err2 %s', err2);
-                        conncnt -= 1;
-                        errmet = 1;
-                        if (conncnt === 0) {
-                            trace_exit(4);
-                        }
-                        return;
-                    }
-                    jstracer.trace('%s content\n%s', reqopt.url, unzipdata);
-                    conncnt -= 1;
-                    if (conncnt === 0) {
-                        if (errmet === 0) {
-                            trace_exit(0);
-                        } else {
-                            trace_exit(4);
-                        }
-                    }
-                    return;
-                });
-            } else {
-                fs.writeFile('out.data', body, function (err3) {
-                    if (baseop.is_non_null(err3)) {
-                        conncnt -= 1;
-                        errmet = 1;
-                        jstracer.error('err3 %s', err3);
-                        if (conncnt === 0) {
-                            trace_exit(4);
-                        }
-                        return;
-                    }
-                    conncnt -= 1;
-                    if (conncnt === 0) {
-                        if (errmet === 0) {
-                            trace_exit(0);
-                        } else {
-                            trace_exit(4);
-                        }
-                    }
-                    return;
-                });
+            jstracer.info('%s \n%s', elm, body);
+            conncnt -= 1;
+            if (conncnt === 0) {
+                if (errmet === 0) {
+                    trace_exit(0);
+                } else {
+                    trace_exit(4);
+                }
+                return;
             }
-
+            return;
         });
     });
 
