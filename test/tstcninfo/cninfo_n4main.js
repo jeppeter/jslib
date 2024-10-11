@@ -67,6 +67,30 @@ function createCninfoNewMain(options) {
         return;
     };
 
+    cninfo.parse_urls = function (dv) {
+        var returls = [];
+        var svalue = cninfo.hyfein_date_to_value(cninfo.options.startdate);
+        var evalue = cninfo.hyfein_date_to_value(cninfo.options.enddate);
+        if (baseop.is_non_null(dv, 'records')) {
+            dv.records.forEach(function (cv) {
+                if (baseop.is_non_null(cv, 'F003V')) {
+                    var ccarr = cv.F003V.split('/');
+                    if (ccarr.length >= 2) {
+                        var cval = cninfo.hyfein_date_to_value(ccarr[ccarr.length - 2]);
+                        if (cval >= svalue && cval <= evalue) {
+                            returls.push(cv.F003V);
+                        }
+                    }
+                } else {
+                    jstracer.info('no F003V');
+                }
+            });
+        } else {
+            jstracer.info('no records');
+        }
+        return returls;
+    };
+
     cninfo.post_handler = function (err, worker, next) {
 
 
