@@ -144,7 +144,7 @@ var callback_func = function (code) {
             if (!baseop.is_non_null(codefmt[elm])) {
                 jstracer.warn('stock code  %s not find', elm);
             } else {
-                cninfomain.post_queue_url(elm, codefmt[elm].orgId, codefmt[elm].name);
+                cninfomain.post_queue_url(elm);
             }
         });
     } catch (e) {

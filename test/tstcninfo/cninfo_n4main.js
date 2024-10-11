@@ -4,6 +4,7 @@ var util = require('util');
 var grabwork = require('../../grabwork');
 var grab = grabwork();
 var path = require('path');
+var CryptoJS = require('crypto-js');
 
 
 
@@ -25,6 +26,7 @@ function createCninfoNewMain(options) {
     cninfo.options.maxcnt = 5;
     cninfo.options.pagesize = 30;
     cninfo.options.baselocate = '.';
+    cninfo.options.timeout = 5000;
 
     if (baseop.is_valid_date_ex(options.startdate)) {
         cninfo.options.startdate = options.startdate;
@@ -34,27 +36,31 @@ function createCninfoNewMain(options) {
         cninfo.options.enddate = options.enddate;
     }
 
-    if (baseop.is_valid_string(options,'topdir',1)) {
+    if (baseop.is_valid_string(options, 'topdir', 1)) {
         cninfo.options.baselocate = options.topdir;
+    }
+
+    if (baseop.is_valid_number(options.timeout, false)) {
+        cninfo.options.timeout = options.timeout;
     }
 
 
 
-    cninfo.post_next_error = function(err, worker, next) {
+    cninfo.post_next_error = function (err, worker, next) {
         jstracer.error('<GET::%s> error %s', worker.url, err);
         worker.reqopt.cninfomain.trycnt += 1;
         if (worker.reqopt.cninfomain.trycnt < worker.reqopt.cninfomain.maxcnt) {
-            var bodydata;
-            bodydata = cninfo.format_url(worker.reqopt.cninfo.stockcode,worker.reqopt.cninfomain.orgid,worker.reqopt.cninfomain.pagenum);
-            worker.parent.post_queue(worker.url, {
-                reqopt :  {
-                    body : bodydata,
-                    headers : {
-                        "Content-Type" : "application/x-www-form-urlencoded"
-                    }
+            var url;
+            var headers = {};
+            url = cninfo.format_url(worker.reqopt.cninfo.stockcode);
+            headers = cninfo.get_headers();
+            worker.parent.queue(url, {
+                reqopt: {
+                    timeout: cninfo.options.timeout,
+                    headers: headers
                 },
                 priority: grabwork.MIN_PRIORITY,
-                cninfomain: worker.reqopt.cninfomain,
+                cninfomain: worker.reqopt.cninfomain
             });
         }
         next(false, err);
@@ -62,165 +68,77 @@ function createCninfoNewMain(options) {
     };
 
     cninfo.post_handler = function (err, worker, next) {
-        var jdata;
 
 
-        if (!baseop.is_non_null(worker.reqopt['cninfomain'])) {
+        if (!baseop.is_non_null(worker.reqopt.cninfomain)) {
             next(true, err);
             return;
         }
 
         if (err) {
             /*we should query again*/
-            cninfo.post_next_error(err,worker,next);
+            cninfo.post_next_error(err, worker, next);
             return;
         }
-
-        /*now it is ok ,so we should calculate the query */
-        try{
-            var arr;
-            //jstracer.trace('htmldata %s', worker.htmldata);
-            jdata = JSON.parse(worker.htmldata);
-            if (!baseop.is_non_null(jdata['announcements'])) {
-                cninfo.post_next_error(new Error('no announcements'),worker,next);
-                return;
-            }
-
-            arr = jdata['announcements'];
-            if (! Array.isArray(arr)) {
-                cninfo.post_next_error(new Error('announcements not array type'), worker, next);
-                return;
-            }
-
-            arr.forEach(function(elm,idx) {
-                'use strict';
-                var fname;
-                var downloadurl;
-                var yearnum='2020';
-                var pathext;
-                var sarr;
-                var downreqopt = {};
-                var ok = true;
-                if (!baseop.is_non_null(elm['announcementTitle'])) {
-                    jstracer.warn('[%s] %s no announcementTitle',idx , util.inspect(elm,{showHidden: True}));
-                    ok = false;
-                }
-                if (ok && !baseop.is_non_null(elm['adjunctUrl'])) {
-                    jstracer.warn('[%s] %s no adjunctUrl', idx, util.inspect(elm,{showHidden: True}));
-                    ok = false;
-                }
-
-                if ( ok && !baseop.is_non_null(elm['announcementId'])) {
-                    jstracer.warn('[%s] %s no announcementId', idx, util.inspect(elm,{showHidden: True}));
-                    ok = false;
-                }
-
-                if (ok) {
-                    downloadurl = util.format('http://static.cninfo.com.cn/%s',elm['adjunctUrl']);
-                    pathext = path.extname(downloadurl);
-                    sarr = elm['adjunctUrl'].split('/');
-                    if (sarr.length > 0) {
-                        sarr = sarr[1].split('-');
-                        if (sarr.length > 0) {
-                            yearnum = sarr[0];
-                        }
-                    }
-                    fname = path.join(cninfo.options.baselocate,worker.reqopt['cninfomain'].stockcode, yearnum,util.format('%s_%s%s',elm['announcementId'],elm['announcementTitle'],pathext));
-                    fname = fname.replace(/\</g,'_');
-                    fname = fname.replace(/\>/g,'_');
-                    fname = fname.replace(/\(/g,'_');
-                    fname = fname.replace(/\)/g,'_');
-                    fname = fname.replace(/ /g,'_');
-                    fname = fname.replace(/\*/g,'_');
-                    fname = fname.replace(/\"/g,'_');
-                    fname = fname.replace(/\'/g,'_');
-                    downreqopt.downloadoption = {};
-                    downreqopt.downloadoption.downloadfile = fname;
-                    //jstracer.trace('download [%s] => [%s]', downloadurl, fname);
-                    grab.download_queue(downloadurl,downreqopt);
-                }
-            });
-
-            if (baseop.is_non_null(jdata['totalpages'])) {
-                if (worker.reqopt.cninfomain.pagenum < jdata['totalpages']) {
-                    'use strict';
-                    var bodydata;
-                    var pagenumset =  worker.reqopt.cninfomain.pagenum + 1; 
-                    bodydata = cninfo.format_url(worker.reqopt.cninfomain.stockcode, 
-                            worker.reqopt.cninfomain.orgid,
-                            pagenumset);
-                    grab.post_queue('http://www.cninfo.com.cn/new/hisAnnouncement/query', {
-                        reqopt :  {
-                            body : bodydata,
-                            headers : {
-                                "Content-Type" : "application/x-www-form-urlencoded"
-                            }
-                        },
-                        cninfomain: {
-                            stockcode: worker.reqopt.cninfomain.stockcode,
-                            orgid : worker.reqopt.cninfomain.orgid,
-                            enddate: cninfo.options.enddate,
-                            startdate: cninfo.options.startdate,
-                            trycnt: 0,
-                            maxcnt: cninfo.options.maxcnt,
-                            pagenum: pagenumset
-                        }
-                    });
-                }
-            }
-
-        }
-        catch(e) {
+        /*to parse data*/
+        try {
+            var dv = JSON.parse(worker.htmldata);
+        } catch (e) {
+            jstracer.error('e %s', e);
             cninfo.post_next_error(e, worker, next);
             return;
         }
+
 
         /*ok ,we should have this*/
         next(false, null);
         return;
     };
 
-    cninfo.format_url = function(stockcode,orgId,pagenum) {
-        'use strict';
-        var bodydata;
 
-        bodydata = '';
-        bodydata += util.format('stock=%s', stockcode);
-        bodydata += '%2C';
-        bodydata += util.format('%s',orgId);
-        bodydata += util.format('&tabName=fulltext&pageSize=%s', cninfo.options.pagesize);
-        bodydata += util.format('&pageNum=%s',pagenum);
-        if (stockcode.startsWith('6')) {
-            bodydata += '&column=sse&category=&plate=sh';
-        } else {
-            bodydata += '&column=szse&category=&plate=sz';
-        }
-
-        bodydata += util.format('&seDate=%s~%s',cninfo.options.startdate,cninfo.options.enddate);
-        bodydata += '&searchkey=&secid=&sortName=&sortType=&isHLtitle=true';
-        jstracer.trace('bodydata [%s]',bodydata);
-
-        return bodydata;
+    cninfo.format_url = function (stockcode) {
+        return util.format('http://webapi.cninfo.com.cn/api/info/p_info3085?scode=%s', stockcode);
     };
 
-    cninfo.post_queue_url = function(stockcode,orgId,name) {
-        var bodydata;
-        bodydata = cninfo.format_url(stockcode,orgId,1);
-        grab.post_queue('http://www.cninfo.com.cn/new/hisAnnouncement/query', {
-            reqopt :  {
-                body : bodydata,
-                headers : {
-                    "Content-Type" : "application/x-www-form-urlencoded"
-                }
+    cninfo.get_cninfo_scode = function () {
+        var dtime = (new Date().getTime() / 1000);
+        var stime = CryptoJS.enc.Utf8.parse(Math.floor(dtime));
+        var keystr = CryptoJS.enc.Utf8.parse('1234567887654321');
+        var encdata = CryptoJS.AES.encrypt(stime, keystr, {iv: keystr, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7});
+        return CryptoJS.enc.Base64.stringify(encdata.ciphertext);
+    };
+
+    cninfo.get_headers = function () {
+        var headers = {};
+        headers.Accept = '*/*';
+        headers['Accept-EncKey'] = cninfo.get_cninfo_scode();
+        jstracer.trace('Accept-EncKey %s', headers['Accept-EncKey']);
+        //headers['Accept-Encoding'] = 'gzip, deflate';
+        headers['Accept-Language'] = 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7';
+        headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+        headers.Host = 'webapi.cninfo.com.cn';
+        headers.Origin = 'http://webapi.cninfo.com.cn';
+        headers.Referer = 'http://webapi.cninfo.com.cn/';
+        headers['X-Requested-With'] = 'XMLHttpRequest';
+        return headers;
+    };
+
+    cninfo.post_queue_url = function (stockcode) {
+        var url;
+        var headers = {};
+        url = cninfo.format_url(stockcode);
+        headers = cninfo.get_headers();
+        grab.queue(url, {
+            reqopt: {
+                timeout: cninfo.options.timeout,
+                headers: headers
             },
             cninfomain: {
                 stockcode: stockcode,
-                orgid : orgId,
                 enddate: cninfo.options.enddate,
                 startdate: cninfo.options.startdate,
                 trycnt: 0,
-                maxcnt: cninfo.options.maxcnt,
-                pagenum: 1
+                maxcnt: cninfo.options.maxcnt
             }
         });
     };
