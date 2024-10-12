@@ -67,6 +67,17 @@ function createCninfoNewMain(options) {
         return;
     };
 
+    cninfo.hyfein_date_to_value = function (hdate) {
+        var retval = 0;
+        var sarr = hdate.split('-');
+        if (sarr.length >= 3) {
+            retval += parseInt(sarr[0], 10) * 10000;
+            retval += parseInt(sarr[1], 10) * 100;
+            retval += parseInt(sarr[2], 10);
+        }
+        return retval;
+    };
+
     cninfo.parse_urls = function (dv) {
         var returls = [];
         var svalue = cninfo.hyfein_date_to_value(cninfo.options.startdate);
@@ -107,6 +118,30 @@ function createCninfoNewMain(options) {
         /*to parse data*/
         try {
             var dv = JSON.parse(worker.htmldata);
+            var returls = cninfo.parse_urls(dv);
+            returls.forEach(function (cv) {
+                /*to get the date*/
+                var downloadurl;
+                var downloadreqopt = {};
+                var yearnum = '2020';
+                var fname;
+                var sarr;
+                downloadurl = cv;
+                sarr = downloadurl.split('/');
+                if (sarr.length >= 2) {
+                    var carr = sarr[sarr.length - 2].split('-');
+                    if (carr.length > 0) {
+                        yearnum = carr[0];
+                    }
+                }
+
+                fname = path.join(cninfo.options.baselocate, worker.reqopt.cninfomain.stockcode, yearnum, sarr[sarr.length - 1]);
+                downloadreqopt.downloadoption = {};
+                downloadreqopt.downloadoption.downloadfile = fname;
+                grab.download_queue(downloadurl, downloadreqopt);
+            });
+
+
         } catch (e) {
             jstracer.error('e %s', e);
             cninfo.post_next_error(e, worker, next);

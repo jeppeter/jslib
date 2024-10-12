@@ -33,22 +33,22 @@ var trace_exit = function (ec) {
 };
 
 var command_line_format = `
-    {
-        "grabmaxsock|m" : 50,
-        "grabtimeout|t" : 5000,
-        "startdate|S" : "2000-01-01",
-        "pagenum|N" : 1,
-        "pagesize|Z" : 30,
-        "maxcnt|C" : 5,
-        "randommin" : 0,
-        "randommax" : 1000,
-        "enddate|E" : "%s",
-        "topdir|P" : "%s",
-        "downloadmax|M" : 30,
-        "watermark|w" : 50,
-        "url|U" : "http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/",
-        "$" : "+"
-    }
+{
+    "grabmaxsock|m" : 50,
+    "grabtimeout|t" : 5000,
+    "startdate|S" : "2000-01-01",
+    "pagenum|N" : 1,
+    "pagesize|Z" : 30,
+    "maxcnt|C" : 5,
+    "randommin" : 0,
+    "randommax" : 1000,
+    "enddate|E" : "%s",
+    "topdir|P" : "%s",
+    "downloadmax|M" : 30,
+    "watermark|w" : 50,
+    "url|U" : "http://www.cninfo.com.cn/cninfo-new/disclosure/szse/showFulltext/",
+    "$" : "+"
+}
 `;
 var command_line;
 var parser;
@@ -109,18 +109,13 @@ var callback_func = function (code) {
         var codefmt;
         jdata = JSON.parse(code);
         codefmt = {};
-        //if (!baseop.is_non_null(jdata['stockList'])) {
         if (!baseop.is_non_null(jdata.stockList)) {
             jstracer.error('no stockList in\n%s', code);
             trace_exit(3);
             return;
         }
 
-        //jdata['stockList'].forEach(function (elm) {
         jdata.stockList.forEach(function (elm, idx) {
-            //if(!baseop.is_non_null(elm['orgId']) ||
-            //    !baseop.is_non_null(elm['code']) ||
-            //    !baseop.is_non_null(elm['zwjc'])) {
             if (!baseop.is_non_null(elm.orgId) ||
                     !baseop.is_non_null(elm.code) ||
                     !baseop.is_non_null(elm.zwjc)) {
@@ -129,10 +124,6 @@ var callback_func = function (code) {
                     depth: null
                 }));
             } else {
-                //jstracer.trace('[%s] [%s]=[%s] [%s]',idx,elm['code'],elm['orgId'],elm['zwjc'])
-                //codefmt[elm['code']] = {};
-                //codefmt[elm['code']].orgId = elm['orgId'];
-                //codefmt[elm['code']].name = elm['zwjc'];
                 jstracer.trace('[%s] [%s]=[%s] [%s]', idx, elm.code, elm.orgId, elm.zwjc);
                 codefmt[elm.code] = {};
                 codefmt[elm.code].orgId = elm.orgId;
@@ -154,9 +145,13 @@ var callback_func = function (code) {
     }
 };
 
-var stockcode = cninfostockcode(args.maxcnt, callback_func);
+//var stockcode = cninfostockcode(args.maxcnt, callback_func);
 
-grab.add_post(stockcode);
+//grab.add_post(stockcode);
 
-stockcode.get_code();
+//stockcode.get_code();
+args.args.forEach(function (elm) {
+    'use strict';
+    cninfomain.post_queue_url(elm);
+});
 
