@@ -6,19 +6,19 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository" : "github.com/jeppeter/jslib",
-  "dependencies" : {
-    "express" : "latest",
-    "body-parser" : "latest",
-    "express-session" : "latest",
-    "crypto" : "latest" ,
-    "ejs" : "latest" ,
-    "morgan" : "latest" ,
-    "jade" : "latest" ,
-    "cookie-parser" : "latest",
-    "extargsparse" : "latest",
-    "tracer" : "latest"
-    },
+  "repository": "github.com/jeppeter/jslib",
+  "dependencies": {
+    "express": "latest",
+    "body-parser": "latest",
+    "express-session": "latest",
+    "crypto": "latest",
+    "ejs": "latest",
+    "morgan": "latest",
+    "jade": "latest",
+    "cookie-parser": "latest",
+    "extargsparse": "latest",
+    "tracer": "latest"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC"
