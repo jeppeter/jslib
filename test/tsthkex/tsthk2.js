@@ -1,3 +1,18 @@
+/*
+GET https://www1.hkexnews.hk/search/prefix.do?=&callback=callback&lang=EN&type=A&name=01024&market=SEHK
+return 
+callback({"more":"1","stockInfo":[{"stockId":1000077859,"code":"01024","name":"KUAISHOU-W"}]});
+
+POST https://www1.hkexnews.hk/search/titlesearch.xhtml
+with data 
+lang=EN&market=SEHK&searchType=0&documentType=&t1code=&t2Gcode=&t2code=&stockId=1000077859&from=19990401&to=20250421&category=0&title=
+
+return value list of file
+
+
+*/
+
+
 var jstracer = require('jstracer');
 var grabwork = require('../../grabwork');
 var baseop = require('../../baseop');
