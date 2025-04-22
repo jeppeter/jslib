@@ -2,7 +2,7 @@ var jstracer = require('jstracer');
 var baseop = require('../../baseop');
 var grabwork = require('../../grabwork');
 var util = require('util');
-//var hk2list = require('./hk2_list');
+var hk2list = require('./hk2_list');
 var grab = grabwork();
 
 var callback = function (args) {
@@ -35,6 +35,7 @@ function createHk2StockId(options) {
     hk2stockid.options.enddate += baseop.number_format_length(4, d.getFullYear());
     hk2stockid.options.enddate += baseop.number_format_length(2, d.getMonth() + 1);
     hk2stockid.options.enddate += baseop.number_format_length(2, d.getDate());
+    hk2stockid.list = hk2list(options);
 
 
     if (baseop.is_valid_date_ex(options.startdate)) {
@@ -104,6 +105,7 @@ function createHk2StockId(options) {
             }
             //hk2list.start_url(retval);
             jstracer.info('get retval %s', retval);
+            hk2stockid.list.start_fetch(retval, worker.reqopt.hk2stockidopt.stockcode);
         } catch (e) {
             jstracer.error('e %s', e);
             hk2stockid.post_next_error(e, worker, next);

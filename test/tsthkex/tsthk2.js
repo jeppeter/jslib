@@ -23,6 +23,7 @@ var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('../../grabwork/random_delay');
 var extargsparse = require('extargsparse');
 var hk2stockid = require('./hk2_stockid');
+var hk2list = require('./hk2_list');
 var curdate;
 var d = new Date();
 
@@ -50,6 +51,7 @@ var command_line_format = `
         "grabmaxsock|m" : 10,
         "grabtimeout|t" : 10000,
         "startdate|S" : "19990101",
+        "downloadmax|M" : 5,
         "enddate|E" : "%s",
         "stockcode|s" : "02010",
         "topdir|P" : "%s",
@@ -99,7 +101,9 @@ jstracer.set_args(args);
 grab.add_pre(random_delay(args));
 grab.add_pre(download_pre(args));
 var idproc = hk2stockid(args);
+var hk2proc = hk2list(args);
 grab.add_post(idproc);
+grab.add_post(hk2proc);
 
 
 args.args.forEach(function (elm) {
