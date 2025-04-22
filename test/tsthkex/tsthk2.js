@@ -1,10 +1,10 @@
 /*
 GET https://www1.hkexnews.hk/search/prefix.do?=&callback=callback&lang=EN&type=A&name=01024&market=SEHK
-return 
+return
 callback({"more":"1","stockInfo":[{"stockId":1000077859,"code":"01024","name":"KUAISHOU-W"}]});
 
 POST https://www1.hkexnews.hk/search/titlesearch.xhtml
-with data 
+with data
 lang=EN&market=SEHK&searchType=0&documentType=&t1code=&t2Gcode=&t2code=&stockId=1000077859&from=19990401&to=20250421&category=0&title=
 
 return value list of file
@@ -22,6 +22,7 @@ var grab = grabwork();
 var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('../../grabwork/random_delay');
 var extargsparse = require('extargsparse');
+var hk2stockid = require('./hk2_stockid');
 var curdate;
 var d = new Date();
 
@@ -97,11 +98,11 @@ jstracer.set_args(args);
 
 grab.add_pre(random_delay(args));
 grab.add_pre(download_pre(args));
+var idproc = hk2stockid(args);
+grab.add_post(idproc);
 
 
-grab.queue(args.url, {
-    hkexnewsmainoption: {},
-    reqopt: {
-        timeout: args.grabtimeout
-    }
+args.args.forEach(function (elm) {
+    'use strict';
+    idproc.start_code(elm);
 });
