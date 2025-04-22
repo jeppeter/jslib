@@ -28,6 +28,7 @@ function createHk2StockId(options) {
     hk2stockid = {};
     hk2stockid = {};
     hk2stockid.options = {};
+    hk2stockid.options.maxcnt = 5;
     hk2stockid.options.startdate = '20000101';
     d = new Date();
     hk2stockid.options.enddate = '';
@@ -50,6 +51,10 @@ function createHk2StockId(options) {
 
     if (baseop.is_valid_number(options.timeout, false)) {
         hk2stockid.options.timeout = options.timeout;
+    }
+
+    if (baseop.is_valid_number(options.maxcnt, false)) {
+        hk2stockid.options.maxcnt = options.maxcnt;
     }
 
 
@@ -115,7 +120,7 @@ function createHk2StockId(options) {
         var url = hk2stockid.format_url(stockcode);
         var hk2stockidopt = {};
         hk2stockidopt.trycnt = 0;
-        hk2stockidopt.maxcnt = hk2stockid.maxcnt;
+        hk2stockidopt.maxcnt = hk2stockid.options.maxcnt;
         hk2stockidopt.stockcode = stockcode;
         grab.queue(url, {
             reqopt: {
