@@ -199,6 +199,7 @@ var post_command = function (args) {
             if (postdata.length > 0) {
                 opt.body = postdata;
             }
+            jstracer.info('opt %s', util.inspect(opt));
             urls.forEach(function (elm, idx) {
                 request.post(elm, opt, function (err4, resp4, body4) {
                     if (err4) {

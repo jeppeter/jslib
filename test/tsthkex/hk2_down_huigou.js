@@ -103,6 +103,7 @@ function createHk2DownHuiGou(options) {
             return;
         }
         /*to parse data*/
+        jstracer.info('htmldata\n%s', worker.htmldata);
         call_cheerparser_data(worker.htmldata, "div[class='day-grid'] a", function (parser, content) {
             content.each(function () {
                 var val = parser(this).attr('href');
