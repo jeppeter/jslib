@@ -189,7 +189,7 @@ htmlfile like
 </div>
 
 
-get "div[class='day-grid'] a" attribute href will get the file
+get cheerio "div[class='day-grid'] a" attribute href will get the file
 
 
 */
@@ -204,8 +204,7 @@ var grab = grabwork();
 var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('../../grabwork/random_delay');
 var extargsparse = require('extargsparse');
-var hk2stockid = require('./hk2_stockid');
-var hk2list = require('./hk2_list');
+var hk2downhuigou = require('./hk2_down_huigou');
 var curdate;
 var d = new Date();
 
@@ -227,6 +226,49 @@ var trace_exit = function (ec) {
     return;
 };
 
+var get_year_value = function (ds) {
+    'use strict';
+    return ds.substr(0, 4);
+};
+
+var get_mon_value = function (ds) {
+    'use strict';
+    return ds.substr(4, 2);
+
+};
+
+var split_date = function (startdate, enddate) {
+    'use strict';
+    var retv = [];
+    var cury;
+    var curm;
+    var endy;
+    var endm;
+    var s;
+    s = get_year_value(startdate);
+    cury = baseop.parse_number(s);
+    s = get_mon_value(startdate);
+    curm = baseop.parse_number(s);
+    s = get_year_value(enddate);
+    endy = baseop.parse_number(s);
+    s = get_mon_value(enddate);
+    endm = baseop.parse_number(s);
+    while (true) {
+        retv.push([cury, curm]);
+        if (cury === endy && curm === endm) {
+            break;
+        }
+        curm += 1;
+        if (curm > 12) {
+            curm = 1;
+            cury += 1;
+        }
+    }
+
+    return retv;
+};
+
+
 
 var command_line_format = `
     {
@@ -238,7 +280,7 @@ var command_line_format = `
         "stockcode|s" : "02010",
         "topdir|P" : "%s",
         "watermark|w" : 20,
-        "url|U" : "http://www.hkexnews.hk/listedco/listconews/advancedsearch/search_active_main_c.aspx"
+        "$" : 0
     }
 `;
 var command_line;
@@ -282,13 +324,12 @@ jstracer.set_args(args);
 
 grab.add_pre(random_delay(args));
 grab.add_pre(download_pre(args));
-var idproc = hk2stockid(args);
-var hk2proc = hk2list(args);
-grab.add_post(idproc);
-grab.add_post(hk2proc);
+var cdown = hk2downhuigou(args);
+grab.add_post(cdown);
 
+var ymval = split_date(args.startdate, args.enddate);
 
-args.args.forEach(function (elm) {
+ymval.forEach(function (elm) {
     'use strict';
-    idproc.start_code(elm);
+    cdown.start_code(elm);
 });

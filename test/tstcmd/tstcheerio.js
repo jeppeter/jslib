@@ -89,25 +89,30 @@ process.on('SIGINT', function () {
     trace_exit(0);
 });
 
+var call_cheerparser_data = function (data, selector, callback) {
+    'use strict';
+    var parser;
+    var content;
+    parser = cheerio.load(data, {
+        xmlMode: true,
+        ignoreWhitespace: true
+    });
+    content = parser(selector);
+    callback(parser, content, function (ec) {
+        trace_exit(ec);
+    });
+
+};
+
 var call_cheerparser = function (fname, selector, callback) {
     'use strict';
     fs.readFile(fname, function (err, data) {
-        var parser;
-        var content;
         if (err) {
             jstracer.error('get (%s) error (%s)', fname, JSON.stringify(err));
             trace_exit(4);
             return;
         }
-
-        parser = cheerio.load(data, {
-            xmlMode: true,
-            ignoreWhitespace: true
-        });
-        content = parser(selector);
-        callback(parser, content, function (ec) {
-            trace_exit(ec);
-        });
+        call_cheerparser_data(data, selector, callback);
         return;
     });
 };
@@ -240,37 +245,37 @@ var output_traverse = function (parser, tabs, pathname, idx, curchild, travers_s
 };
 
 var command_line = `
-    {
-        "selector|s" : "",
-        "nextselector|n" : [],
-        "text<text_command>## htmlfile : get text from selector ##" : {
-            "$" : 1
-        },
-        "parent<parent_command>## htmlfile : get parent from selector ##" : {
-            "$" : 1
-        },
-        "each<each_command>## htmlfile : get each from selector ##" : {
-            "$" : 1
-        },
-        "find<find_command>## htmlfile : get children on the selector ##" : {
-            "$" : 1,
-            "children" : ""
-        },
-        "attr<attr_command>## htmlfile : get attr on the selector ##" : {
-            "$" : 1,
-            "attr" : ""
-        },
-        "traverse<traverse_command>## htmlfile : get all tree on the selector##" : {
-            "$" : 1
-        },
-        "childrens<childrens_command>## htmlfile : get all childrens ##" : {
-            "$" : 1
-        },
-        "childselect<childselect_command>## htmlfile : get child select ##" : {
-            "$" : 1
-        }
-
+{
+    "selector|s" : "",
+    "nextselector|n" : [],
+    "text<text_command>## htmlfile : get text from selector ##" : {
+        "$" : 1
+    },
+    "parent<parent_command>## htmlfile : get parent from selector ##" : {
+        "$" : 1
+    },
+    "each<each_command>## htmlfile : get each from selector ##" : {
+        "$" : 1
+    },
+    "find<find_command>## htmlfile : get children on the selector ##" : {
+        "$" : 1,
+        "children" : ""
+    },
+    "attr<attr_command>## htmlfile : get attr on the selector ##" : {
+        "$" : 1,
+        "attr" : ""
+    },
+    "traverse<traverse_command>## htmlfile : get all tree on the selector##" : {
+        "$" : 1
+    },
+    "childrens<childrens_command>## htmlfile : get all childrens ##" : {
+        "$" : 1
+    },
+    "childselect<childselect_command>## htmlfile : get child select ##" : {
+        "$" : 1
     }
+
+}
 `;
 
 var parser;
