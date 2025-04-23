@@ -79,9 +79,15 @@ function createHk2DownHuiGou(options) {
                 reqopt: {
                     timeout: hk2downhuigou.options.timeout,
                     hk2downhuigouopt: worker.reqopt.hk2downhuigouopt,
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
                     body: postdata
                 },
                 priority: grabwork.MIN_PRIORITY,
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
                 hk2downhuigouopt: worker.reqopt.hk2downhuigouopt
             });
         }
@@ -129,7 +135,13 @@ function createHk2DownHuiGou(options) {
         grab.post_queue(url, {
             reqopt: {
                 body: postdata,
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
                 hk2downhuigouopt: hk2downhuigouopt
+            },
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
             },
             hk2downhuigouopt: hk2downhuigouopt
         });
