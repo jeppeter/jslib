@@ -4,6 +4,7 @@ var grabwork = require('../../grabwork');
 var util = require('util');
 var grab = grabwork();
 var cheerio = require('cheerio');
+var path = require('path');
 
 var call_cheerparser_data = function (data, selector, callback) {
     'use strict';
@@ -114,6 +115,16 @@ function createHk2DownHuiGou(options) {
             content.each(function () {
                 var val = parser(this).attr('href');
                 jstracer.info('href [%s]', val);
+                if (val.startsWith('http://') || val.startsWith('https://')) {
+                    var curpath = hk2downhuigou.options.baselocate;
+                    curpath += path.sep;
+                    curpath += util.format('%d', worker.reqopt.hk2downhuigouopt.year);
+                    var cururl = val;
+                    worker.parent.download_queue(cururl, curpath, {
+                        priority: grabwork.MAX_PRIORITY
+                    });
+                }
+
             });
             next(false, err);
         });
