@@ -39,7 +39,7 @@ var httpscfg = {
 };
 
 
-var write_sock_process = function (sock, rstream, endcallback) {
+var write_sock_process = function (fname ,sock, rstream, endcallback) {
     'use strict';
     var writed = 0;
     sock.paused = false;
@@ -55,7 +55,7 @@ var write_sock_process = function (sock, rstream, endcallback) {
         }
     });
     rstream.on('error', function (err) {
-        jstracer.error('can not read %s error(%s)', args.files[0], err);
+        jstracer.error('can not read %s error(%s)', fname, err);
         if (endcallback !== null) {
             endcallback(err);
         }
@@ -93,8 +93,18 @@ var write_sock_process = function (sock, rstream, endcallback) {
 var get_call_back = function (req, rsp) {
     'use strict';
     jstracer.info('req path [%s]', util.inspect(req));
-    rsp.write('hello world');
-    rsp.end();
+    var cfile = getmapfiles[req.url];
+    jstracer.info('cfile [%s]', cfile);
+    if (cfile !== undefined && cfile !== null) {
+        var rstream = fs.createReadStream(cfile);
+        write_sock_process(cfile, rsp, rstream, function(err) {
+            rstream.close();
+            rsp.end();
+        });
+    } else {
+        rsp.write('hello world');
+        rsp.end();
+    }
 };
 
 var post_call_back = function (req, rsp) {
@@ -107,8 +117,19 @@ var post_call_back = function (req, rsp) {
     });
     req.on('end', function() {
         jstracer.info('alldata\n%s', alldata);
-        rsp.write('hello world');
-        rsp.end();
+        jstracer.info('url %s', req.url);
+        var cfile = postmapfiles[req.url];
+        jstracer.info('cfile [%s]', cfile);
+        if (cfile !== undefined && cfile !== null) {
+            var rstream = fs.createReadStream(cfile);
+            write_sock_process(cfile, rsp, rstream, function(err) {
+                rstream.close();
+                rsp.end();
+            });
+        } else {
+            rsp.write('hello world');
+            rsp.end();
+        }
     })
 };
 
@@ -117,6 +138,7 @@ args.getkey.forEach(function (elm) {
     'use strict';
     var sarr = elm.split('=', 2);
     if (sarr.length > 1) {
+        getmapfiles[sarr[0]] = sarr[1];
         app.get(sarr[0],get_call_back);
     }
 });
@@ -126,6 +148,7 @@ args.postkey.forEach(function (elm) {
     var sarr = elm.split('=', 2);
     if (sarr.length > 1) {
         jstracer.info('set post[%s]', sarr[0]);
+        postmapfiles[sarr[0]] = sarr[1];
         app.post(sarr[0],post_call_back);
     }
 });
