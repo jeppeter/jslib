@@ -37,6 +37,8 @@ var command_line_format = `
     "grabmaxsock|m" : 50,
     "grabtimeout|t" : 5000,
     "startdate|S" : "2000-01-01",
+    "listoutput" : null,
+    "listinput" : null,
     "pagenum|N" : 1,
     "pagesize|Z" : 30,
     "maxcnt|C" : 5,
