@@ -110,9 +110,8 @@ function createCninfoNewMain(options) {
         if (baseop.is_valid_string(cninfo.options, 'listoutput', 1)) {
             if (!baseop.is_non_null(cninfo.options, 'listouthd')) {
                 cninfo.options.listouthd = fs.createWriteStream(cninfo.options.listoutput);
-                jstracer.error('open %s listouthd %s', cninfo.options.listoutput, util.inspect(cninfo.options.listouthd));
             }
-            cninfo.options.listouthd.write(util.format('%s\n', downloadurl));
+            cninfo.options.listouthd.write(util.format('%s|%s\n', stockcode, downloadurl));
         } else {
             downloadreqopt.downloadoption = {};
             downloadreqopt.downloadoption.downloadfile = fname;
@@ -218,7 +217,10 @@ function createCninfoNewMain(options) {
                 var cc = util.format('%s', data2);
                 var returls = cc.split('\n');
                 returls.forEach(function (cv) {
-                    cninfo.download_next(cv, stockcode);
+                    var carr = cv.split('|');
+                    if (carr.length >= 2) {
+                        cninfo.download_next(carr[1], carr[0]);
+                    }
                 });
             });
         } else {

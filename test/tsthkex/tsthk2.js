@@ -54,6 +54,8 @@ var command_line_format = `
         "downloadmax|M" : 5,
         "enddate|E" : "%s",
         "stockcode|s" : "02010",
+        "listoutput" : null,
+        "listinput" : null,
         "topdir|P" : "%s",
         "watermark|w" : 20,
         "url|U" : "http://www.hkexnews.hk/listedco/listconews/advancedsearch/search_active_main_c.aspx"

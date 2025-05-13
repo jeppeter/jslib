@@ -4,6 +4,7 @@ var util = require('util');
 var grabwork = require('../../grabwork');
 var path = require('path');
 var grab = grabwork();
+var fs = require('fs');
 
 var parse_json = function (data) {
     'use strict';
@@ -45,6 +46,9 @@ function createHk2List(options) {
     hk2list.options.maxcnt = 5;
     hk2list.options.startdate = '20000101';
     hk2list.options.baselocate = '.';
+    hk2list.options.listoutput = null;
+    hk2list.options.listouthd = null;
+    hk2list.options.listinput = null;
     d = new Date();
     hk2list.options.enddate = '';
     hk2list.options.enddate += baseop.number_format_length(4, d.getFullYear());
@@ -72,6 +76,14 @@ function createHk2List(options) {
         hk2list.options.maxcnt = options.maxcnt;
     }
 
+    if (baseop.is_valid_string(options, 'listoutput', 1)) {
+        hk2list.options.listoutput = options.listoutput;
+    }
+
+    if (baseop.is_valid_string(options, 'listinput', 1)) {
+        hk2list.options.listinput = options.listinput;
+    }
+
 
     hk2list.format_url = function (stockid, rowrange) {
         return util.format('https://www1.hkexnews.hk/search/titleSearchServlet.do?sortDir=0&sortByOptions=DateTime&category=0&market=SEHK&stockId=%s&documentType=-1&fromDate=%s&toDate=%s&title=&searchType=0&t1code=-2&t2Gcode=-2&t2code=-2&rowRange=%s&lang=zh', stockid, hk2list.options.startdate, hk2list.options.enddate, rowrange);
@@ -95,6 +107,33 @@ function createHk2List(options) {
         }
         next(false, err);
         return;
+    };
+
+    hk2list.download_next = function (filelink, datetime, stockcode) {
+        var cururl;
+        var curpath;
+        cururl = util.format('https://www1.hkexnews.hk');
+        cururl += filelink;
+        curpath = hk2list.options.baselocate;
+        curpath += path.sep;
+        curpath += stockcode;
+        curpath += path.sep;
+        var y = get_year_value(datetime);
+        if (y !== undefined) {
+            curpath += y;
+            //curpath += path.sep;
+            //curpath += path.basename(elm.FILE_LINK);
+            if (baseop.is_valid_string(hk2list.options, 'listoutput', 1)) {
+                if (hk2list.options.listouthd === null) {
+                    hk2list.options.listouthd = fs.createWriteStream(hk2list.options.listoutput);
+                }
+                hk2list.options.listouthd.write(util.format('%s|%s|%s\n', stockcode, datetime, filelink));
+            } else {
+                grab.download_queue(cururl, curpath, {
+                    priority: grabwork.MAX_PRIORITY
+                });
+            }
+        }
     };
 
     hk2list.post_handler = function (err, worker, next) {
@@ -132,28 +171,8 @@ function createHk2List(options) {
                 });
             } else {
                 rdict.result.forEach(function (elm) {
-                    var cururl;
-                    var curpath;
-                    cururl = util.format('https://www1.hkexnews.hk');
-                    if (baseop.is_valid_string(elm, 'FILE_LINK', 1)) {
-                        cururl += elm.FILE_LINK;
-                        curpath = hk2list.options.baselocate;
-                        curpath += path.sep;
-                        curpath += worker.reqopt.hk2listopt.realstockid;
-                        curpath += path.sep;
-                        if (baseop.is_valid_string(elm, 'DATE_TIME', 1)) {
-                            var y = get_year_value(elm.DATE_TIME);
-                            if (y !== undefined) {
-                                curpath += y;
-                                //curpath += path.sep;
-                                //curpath += path.basename(elm.FILE_LINK);
-                                worker.parent.download_queue(cururl, curpath, {
-                                    priority: grabwork.MAX_PRIORITY
-                                });
-                            }
-                        } else {
-                            jstracer.error('DATE_TIME not valid');
-                        }
+                    if (baseop.is_valid_string(elm, 'FILE_LINK', 1) && baseop.is_valid_string(elm, 'DATE_TIME', 1)) {
+                        hk2list.download_next(elm.FILE_LINK, elm.DATE_TIME, worker.reqopt.hk2listopt.realstockid);
                     } else {
                         jstracer.error('FILE_LINK not has\n%s', util.inspect(elm));
                     }
@@ -172,18 +191,36 @@ function createHk2List(options) {
     };
 
     hk2list.start_fetch = function (stockid, realstockid) {
-        var hk2listopt = {};
-        var url = hk2list.format_url(stockid, 100);
-        hk2listopt.trycnt = 0;
-        hk2listopt.maxcnt = hk2list.options.maxcnt;
-        hk2listopt.realstockid = realstockid;
-        hk2listopt.stockid = stockid;
-        grab.queue(url, {
-            reqopt: {
+
+        if (baseop.is_valid_string(hk2list.options, 'listinput', 1)) {
+            fs.readFile(hk2list.options.listinput, function (err2, data2) {
+                if (err2 !== null && err2 !== undefined) {
+                    jstracer.error('read [%s] error %s', hk2list.options.listinput, err2);
+                    process.exit(5);
+                }
+                var cc = util.format('%s', data2);
+                var returls = cc.split('\n');
+                returls.forEach(function (cv) {
+                    var carr = cv.split('|');
+                    if (carr.length >= 3) {
+                        hk2list.download_next(carr[2], carr[1], carr[0]);
+                    }
+                });
+            });
+        } else {
+            var hk2listopt = {};
+            var url = hk2list.format_url(stockid, 100);
+            hk2listopt.trycnt = 0;
+            hk2listopt.maxcnt = hk2list.options.maxcnt;
+            hk2listopt.realstockid = realstockid;
+            hk2listopt.stockid = stockid;
+            grab.queue(url, {
+                reqopt: {
+                    hk2listopt: hk2listopt
+                },
                 hk2listopt: hk2listopt
-            },
-            hk2listopt: hk2listopt
-        });
+            });
+        }
         return;
     };
 
