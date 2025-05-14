@@ -110,6 +110,7 @@ function createCninfoNewMain(options) {
         if (baseop.is_valid_string(cninfo.options, 'listoutput', 1)) {
             if (!baseop.is_non_null(cninfo.options, 'listouthd')) {
                 cninfo.options.listouthd = fs.createWriteStream(cninfo.options.listoutput);
+                cninfo.options.listouthd.write(util.format('# format the year|url format\n'));
             }
             cninfo.options.listouthd.write(util.format('%s|%s\n', stockcode, downloadurl));
         } else {
@@ -217,9 +218,11 @@ function createCninfoNewMain(options) {
                 var cc = util.format('%s', data2);
                 var returls = cc.split('\n');
                 returls.forEach(function (cv) {
-                    var carr = cv.split('|');
-                    if (carr.length >= 2) {
-                        cninfo.download_next(carr[1], carr[0]);
+                    if (cv.length > 0 && !cv.startsWith('#')) {
+                        var carr = cv.split('|');
+                        if (carr.length >= 2) {
+                            cninfo.download_next(carr[1], carr[0]);
+                        }
                     }
                 });
             });

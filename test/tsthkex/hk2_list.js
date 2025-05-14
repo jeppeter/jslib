@@ -126,6 +126,7 @@ function createHk2List(options) {
             if (baseop.is_valid_string(hk2list.options, 'listoutput', 1)) {
                 if (hk2list.options.listouthd === null) {
                     hk2list.options.listouthd = fs.createWriteStream(hk2list.options.listoutput);
+                    hk2list.options.listouthd.write(util.format('# format stockcode|datetime|filelink\n'));
                 }
                 hk2list.options.listouthd.write(util.format('%s|%s|%s\n', stockcode, datetime, filelink));
             } else {
@@ -201,9 +202,11 @@ function createHk2List(options) {
                 var cc = util.format('%s', data2);
                 var returls = cc.split('\n');
                 returls.forEach(function (cv) {
-                    var carr = cv.split('|');
-                    if (carr.length >= 3) {
-                        hk2list.download_next(carr[2], carr[1], carr[0]);
+                    if (cv.length > 0 && !cv.startsWith('#')) {
+                        var carr = cv.split('|');
+                        if (carr.length >= 3) {
+                            hk2list.download_next(carr[2], carr[1], carr[0]);
+                        }
                     }
                 });
             });
