@@ -2,13 +2,11 @@ var jstracer = require('jstracer');
 var grabwork = require('../../grabwork');
 var baseop = require('../../baseop');
 var util = require('util');
-var ggzjc = require('./ggzjc');
+var createGgzjc = require('./ggzjc');
 var download_pre = require('../../grabwork/download_pre');
 var random_delay = require('../../grabwork/random_delay');
 var extargsparse = require('extargsparse');
 var curdate;
-var cninfomain;
-var cninfoquery;
 var d = new Date();
 
 curdate = '';
@@ -105,54 +103,7 @@ grab = grabwork(args);
 
 grab.add_pre(random_delay());
 grab.add_pre(download_pre(args));
-cninfomain = cninfonewmain(args);
-grab.add_post(cninfomain);
+ggzjc = createGgzjc(args);
+grab.add_post(ggzjc);
 
-var callback_func = function (code) {
-    'use strict';
-    try {
-        var jdata;
-        var codefmt;
-        jdata = JSON.parse(code);
-        codefmt = {};
-        if (!baseop.is_non_null(jdata.stockList)) {
-            jstracer.error('no stockList in\n%s', code);
-            trace_exit(3);
-            return;
-        }
-
-        jdata.stockList.forEach(function (elm, idx) {
-            if (!baseop.is_non_null(elm.orgId) ||
-                    !baseop.is_non_null(elm.code) ||
-                    !baseop.is_non_null(elm.zwjc)) {
-                jstracer.warn('[%d] no orgId or code\n%s', idx, util.inspect(elm, {
-                    showHidden: true,
-                    depth: null
-                }));
-            } else {
-                jstracer.trace('[%s] [%s]=[%s] [%s]', idx, elm.code, elm.orgId, elm.zwjc);
-                codefmt[elm.code] = {};
-                codefmt[elm.code].orgId = elm.orgId;
-                codefmt[elm.code].name = elm.zwjc;
-            }
-        });
-
-        args.args.forEach(function (elm) {
-            if (!baseop.is_non_null(codefmt[elm])) {
-                jstracer.warn('stock code  %s not find', elm);
-            } else {
-                cninfomain.post_queue_url(elm);
-            }
-        });
-    } catch (e) {
-        jstracer.error('parse error %s\n%s', e, code);
-        trace_exit(3);
-        return;
-    }
-};
-
-args.args.forEach(function (elm) {
-    'use strict';
-    cninfomain.post_queue_url(elm);
-});
-
+ggzjc.post_url(1);
