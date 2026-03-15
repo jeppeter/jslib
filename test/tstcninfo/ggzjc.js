@@ -105,6 +105,35 @@ function createGgzjc(options) {
             jstracer.info('htmldata\n%s\njsondata\n%s', worker.htmldata,jsondata);
             var rdict = JSON.parse(jsondata);
             console.log('rdict\n%s',rdict);
+            if (baseop.is_non_null(rdict,'result') && baseop.is_non_null(rdict['result'],'data')) {
+                var iname = util.format('%d.txt',worker.reqopt.ggzjc.index);
+                while(iname.length < 9) {
+                    iname = util.format('0%s',iname);
+                }
+                var tpath = path.join(ggzjc.options.baselocate,'ggzjc',iname);
+                var wcon = JSON.stringify(rdict['result']);
+                var wdata = Buffer.from(wcon,'utf8');
+                jstracer.trace('tpath\n%s\nwcon\n%s\nwdata %d',tpath,wcon,wdata.length);
+                var tdirname = path.dirname(tpath);
+                var curidx = worker.reqopt.ggzjc.index;
+                jstracer.trace('curidx %d', curidx);
+                baseop.mkdir_safe(tdirname,(err) => {
+                    if (err) {
+                        jstracer.error('can not create %s error %s', tdirname, err);
+                        next(false,err);
+                        return;
+                    }
+                    var cfile = fs.createWriteStream(tpath);
+                    cfile.write(wdata);
+                    cfile.close();
+                    jstracer.trace('pages %d', rdict['result']['pages']);
+                    jstracer.trace('index %d', curidx);
+                    if (rdict['result']['pages'] > curidx) {
+                        ggzjc.post_url(curidx + 1);                      
+                    }
+                    next(false,null);
+                });
+            }
 
         } catch (e) {
             jstracer.error('e %s', e);
