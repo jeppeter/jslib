@@ -10,7 +10,7 @@ var callback = function (args) {
     var retval = undefined;
     if (args.stockInfo !== undefined) {
         var cval = args.stockInfo;
-        if (cval.length === 1) {
+        if (cval.length >= 1) {
             if (cval[0].stockId !== undefined) {
                 retval = cval[0].stockId;
             }
