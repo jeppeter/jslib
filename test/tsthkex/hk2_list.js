@@ -36,6 +36,23 @@ var get_year_value = function (s) {
 };
 
 
+var get_date_time = function(c) {
+    var retv = "";
+    var sarr;
+    sarr = c.split(" ");
+    if (sarr.length >= 2) {
+        var n = sarr[0];
+        sarr = n.split("/");
+        if (sarr.length >= 3) {
+            retv += sarr[2];
+            retv += sarr[1];
+            retv += sarr[0];
+        }
+    }
+    return retv;
+};
+
+
 function createHk2List(options) {
     'use strict';
     var hk2list;
@@ -56,11 +73,11 @@ function createHk2List(options) {
     hk2list.options.enddate += baseop.number_format_length(2, d.getDate());
 
 
-    if (baseop.is_valid_date_ex(options.startdate)) {
+    if (baseop.is_valid_date(options.startdate)) {
         hk2list.options.startdate = options.startdate;
     }
 
-    if (baseop.is_valid_date_ex(options.enddate)) {
+    if (baseop.is_valid_date(options.enddate)) {
         hk2list.options.enddate = options.enddate;
     }
 
@@ -137,6 +154,22 @@ function createHk2List(options) {
         }
     };
 
+    hk2list.check_valid_date = function(elm) {
+        var retval = false;
+        if (baseop.is_valid_string(elm,"DATE_TIME")) {
+            var ntime = get_date_time(elm["DATE_TIME"]);
+            var curi = parseInt(ntime,10);
+            var lval = parseInt(hk2list.options.startdate,10);
+            var hval = parseInt(hk2list.options.enddate,10);
+            if (curi >= lval && curi <= hval) {
+                retval = true;
+            }
+        }
+
+        jstracer.info("elm %s retval %s", elm,retval);
+        return retval;
+    };
+
     hk2list.post_handler = function (err, worker, next) {
         if (!baseop.is_non_null(worker.reqopt.hk2listopt)) {
             next(true, err);
@@ -172,10 +205,13 @@ function createHk2List(options) {
                 });
             } else {
                 rdict.result.forEach(function (elm) {
-                    if (baseop.is_valid_string(elm, 'FILE_LINK', 1) && baseop.is_valid_string(elm, 'DATE_TIME', 1)) {
-                        hk2list.download_next(elm.FILE_LINK, elm.DATE_TIME, worker.reqopt.hk2listopt.realstockid);
-                    } else {
-                        jstracer.error('FILE_LINK not has\n%s', util.inspect(elm));
+                    jstracer.info('elem\n%s', JSON.stringify(elm));
+                    if (hk2list.check_valid_date(elm)) {
+                        if (baseop.is_valid_string(elm, 'FILE_LINK', 1) && baseop.is_valid_string(elm, 'DATE_TIME', 1)) {
+                            hk2list.download_next(elm.FILE_LINK, elm.DATE_TIME, worker.reqopt.hk2listopt.realstockid);
+                        } else {
+                            jstracer.error('FILE_LINK not has\n%s', util.inspect(elm));
+                        }                        
                     }
                 });
             }
