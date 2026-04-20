@@ -137,6 +137,15 @@ function createDownloadPre(options) {
                     for (i = 0; i < downloadpre.output_str.length; i += 1) {
                         process.stdout.write('\b');
                     }
+
+                    for (i = 0; i < downloadpre.output_str.length; i += 1) {
+                        process.stdout.write(' ');
+                    }
+
+                    for (i = 0; i < downloadpre.output_str.length; i += 1) {
+                        process.stdout.write('\b');
+                    }
+
                 }
                 downloadpre.output_str = util.format('[%d]%s', downloadpre.state.success_download, worker.reqopt.downloadoption.downloadfile);
                 process.stdout.write(downloadpre.output_str);
