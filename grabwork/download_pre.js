@@ -1,6 +1,7 @@
 var jstracer = require('jstracer');
 var path = require('path');
 var fs = require('fs');
+var urlparser = require('url');
 var baseop = require('../baseop');
 var util = require('util');
 
@@ -32,7 +33,8 @@ function createDownloadPre(options) {
         var fname;
         var fdir;
         /*now it is time ,we handle ,so we should no more to handle out*/
-        getdir = URL.parse(worker.url);
+        getdir = urlparser.parse(worker.url);
+        //getdir = URL.parse(worker.url);
         getfilename = path.basename(getdir.pathname);
 
         if (getfilename.length === 0) {
