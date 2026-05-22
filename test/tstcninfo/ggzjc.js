@@ -34,6 +34,7 @@ function createGgzjc(options) {
     ggzjc.options.workindex = [];
     ggzjc.options.ggcmax = 10;
     ggzjc.options.getindex = 0;
+    ggzjc.options.verbose = 0;
 
     if (baseop.is_valid_date_ex(options.startdate)) {
         ggzjc.options.startdate = options.startdate;
@@ -61,6 +62,10 @@ function createGgzjc(options) {
 
     if (baseop.is_valid_number(options.ggcmax,false)) {
         ggzjc.options.ggcmax = options.ggcmax;
+    }
+
+    if (baseop.is_valid_number(options.verbose,false)) {
+        ggzjc.options.verbose = options.verbose;
     }
 
 
@@ -186,8 +191,17 @@ function createGgzjc(options) {
             ggzjc.options.setindex.push(index);
             ggzjc.options.workindex.push(index);
             if ((ggzjc.options.setindex.length % 100) == 0) {
-                jstracer.info('setindex %d', ggzjc.options.setindex.length);
+                if (ggzjc.options.verbose == 0) {
+                    process.stdout.write('.');
+                }
             }
+
+            if ((ggzjc.options.setindex.length % 1000) == 0) {
+                if (ggzjc.options.verbose == 0) {
+                    process.stdout.write('\n');
+                }
+            }
+
         }
         return;
     };
