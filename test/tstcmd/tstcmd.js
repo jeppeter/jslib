@@ -42,6 +42,12 @@ var command_line = `
         },
         "parseurl<parseurl_command>## urls : to parse url ##" :{
             "$" : "+"
+        },
+        "arrtest<arrtest_command>## arrs lastarr to check lastarr whether in arrs##" : {
+            "$" : "+"
+        },
+        "rmarr<rmarr_command>##arrs rmidx to remove index##" : {
+            "$" : "+"
         }
     }
 `;
@@ -461,6 +467,66 @@ var parseurl_command = function (args, parser) {
 };
 
 exports.parseurl_command = parseurl_command;
+
+var arrtest_command = function(args,parser) {
+    'use strict';
+    var arrs ;
+    var chkinv ;
+    var idx;
+    jstracer.set_args(args);
+    parser = parser;
+
+    arrs = [];
+
+    for(idx=0;idx < (args.subnargs.length - 1);idx+=1) {
+        arrs.push(parseInt(args.subnargs[idx]));
+    }
+
+    chkinv = parseInt(args.subnargs[args.subnargs.length-1]);
+
+    if (arrs.includes(chkinv)) {
+        console.log('%s in %s', chkinv,arrs);
+    } else {
+        console.log('%s not in %s',chkinv,arrs);
+    }
+    return;
+};
+
+exports.arrtest_command = arrtest_command;
+
+var rmarr_command = function(args,parser) {
+    'use strict';
+    var arrs ;
+    var chkinv ;
+    var idx;
+    jstracer.set_args(args);
+    parser = parser;
+
+    arrs = [];
+
+    for(idx=0;idx < (args.subnargs.length - 1);idx+=1) {
+        arrs.push(parseInt(args.subnargs[idx]));
+    }
+
+    chkinv = parseInt(args.subnargs[args.subnargs.length-1]);
+
+    var sidx = arrs.indexOf(chkinv);
+    if (sidx >= 0) {
+        arrs = arrs.filter(function(e) {
+            if (e == chkinv) {
+                return false;
+            }
+            return true;
+        });
+    }
+
+    console.log('sidx %d arrs %s chkinv %d', sidx , arrs, chkinv);
+
+    return;
+};
+
+exports.rmarr_command = rmarr_command;
+
 
 jstracer.init_args(parser);
 parser.parse_command_line();

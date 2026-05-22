@@ -45,6 +45,7 @@ var command_line_format = `
     "topdir|P" : "%s",
     "downloadmax|M" : 30,
     "watermark|w" : 50,
+    "ggcmax|G" : 20,
     "url|U" : "https://datacenter-web.eastmoney.com/api/data/v1/",
     "$" : "?"
 }
