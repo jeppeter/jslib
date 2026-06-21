@@ -233,7 +233,7 @@ function createGrabwork(options) {
         } else {
             jstracer.info('reqopt\n%s', util.inspect(reqopt));
             request(reqopt, function (err, resp, body) {
-                if (false) {
+                if (true) {
                     jstracer.trace('[%s][%s]resp %s', worker.meth, worker.url, body);
                 }
                 if (err === null) {

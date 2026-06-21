@@ -102,7 +102,13 @@ function createCninfoNewMain(options) {
         if (sarr.length >= 2) {
             var carr = sarr[sarr.length - 2].split('-');
             if (carr.length > 0) {
-                yearnum = carr[0];
+                if (carr[0].length <= 4) {
+                    yearnum = carr[0];    
+                } else {
+                    yearnum = carr[0].substring(0,4);
+                }
+                jstracer.info('yearnum %s', yearnum);
+                
             }
         }
 
@@ -126,9 +132,20 @@ function createCninfoNewMain(options) {
         var evalue = cninfo.hyfein_date_to_value(cninfo.options.enddate);
         if (baseop.is_non_null(dv, 'records')) {
             dv.records.forEach(function (cv) {
-                if (baseop.is_non_null(cv, 'F003V')) {
+                if (baseop.is_non_null(cv,'RECTIME') && baseop.is_non_null(cv,'F003V')) {
+                    var ccarr = cv.RECTIME.split(' ');
+                    if (ccarr.length >= 2) {
+                        jstracer.info('ccarr[%d] = [%s]', 0, ccarr[0]);
+                        var cval = cninfo.hyfein_date_to_value(ccarr[0]);
+                        if (cval >= svalue && cval <= evalue) {
+                            returls.push(cv.F003V);
+                        }
+                    }
+
+                } else if (baseop.is_non_null(cv, 'F003V')) {
                     var ccarr = cv.F003V.split('/');
                     if (ccarr.length >= 2) {
+                        jstracer.info('ccarr[%d] = [%s]', ccarr.length - 2, ccarr[ccarr.length - 2]);
                         var cval = cninfo.hyfein_date_to_value(ccarr[ccarr.length - 2]);
                         if (cval >= svalue && cval <= evalue) {
                             returls.push(cv.F003V);
