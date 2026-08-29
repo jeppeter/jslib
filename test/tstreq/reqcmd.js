@@ -16,6 +16,11 @@ var command_line_fmt = `
     "sdate" : "2000-01-01",
     "edate" : "%s",
     "jsonfile|j" : "",
+    "proxy" : "",
+    "method" : "GET",
+    "postdata" : "",
+    "postdatafile" : "",
+    "headers" : [],
     "get<get_command>## urls... : to get url by request ##" : {
         "$" : "+"
     },
@@ -28,6 +33,9 @@ var command_line_fmt = `
         "file" : ""
     },
     "reqcninfo4<reqcninfo4_command>##stockcode ... : to get stock code value##" : {
+        "$" : "+"
+    },
+    "reqopt<reqopt_command>##url ... : to get the request with option with proxy and method##" : {
         "$" : "+"
     }
 }
@@ -337,6 +345,55 @@ var reqcninfo4_command = function (args) {
 };
 
 exports.reqcninfo4_command = reqcninfo4_command;
+
+
+var reqopt_command = function (args) {
+    'use strict';
+    var conncnt = 0;
+    var errmet = 0;
+    jstracer.set_args(args);
+    args.subnargs.forEach(function (elm) {
+        conncnt += 1;
+        var reqopt = {};
+        reqopt.url = elm;
+        reqopt.timeout = args.timeout;
+        reqopt.method = args.method;
+        if (args.method == 'POST') {
+
+        }
+        request(reqopt, function (err, resp, body) {
+            resp = resp;
+            if (baseop.is_non_null(err)) {
+                conncnt -= 1;
+                errmet = 1;
+                if (conncnt === 0) {
+                    trace_exit(4);
+                }
+                return;
+            }
+            //jstracer.info('%s \n%s', elm, body);
+            var urls = filter_cninfo_url(body, args.sdate, args.edate);
+            jstracer.info('urls\n%s', urls);
+            conncnt -= 1;
+            if (conncnt === 0) {
+                if (errmet === 0) {
+                    trace_exit(0);
+                } else {
+                    trace_exit(4);
+                }
+                return;
+            }
+            return;
+        });
+    });
+
+    if (conncnt === 0) {
+        trace_exit(0);
+    }
+    return;
+};
+
+exports.reqopt_command = reqopt_command;
 
 
 parser = extargsparse.ExtArgsParse({
