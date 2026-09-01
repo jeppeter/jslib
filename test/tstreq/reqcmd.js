@@ -355,40 +355,94 @@ var reqopt_command = function (args) {
     args.subnargs.forEach(function (elm) {
         conncnt += 1;
         var reqopt = {};
+        var cont = 1;
         reqopt.url = elm;
         reqopt.timeout = args.timeout;
         reqopt.method = args.method;
-        if (args.method == 'POST') {
-
+        if (args.proxy.length > 0) {
+            reqopt.proxy = args.proxy;    
         }
-        request(reqopt, function (err, resp, body) {
-            resp = resp;
-            if (baseop.is_non_null(err)) {
+        
+        if (args.method == 'POST') {
+            if (args.postdatafile.length > 0 ) {
+                cont = 0;
+                fs.readFile(args.postdatafile,function(err2, data) {
+                    if (!baseop.is_non_null(err2)) {
+                        conncnt -= 1;
+                        errmet = 1;
+                        jstracer.error('can not readfile [%s] error [%s]', args.postdatafile,err2);
+                        if (conncnt == 0) {
+                            trace_exit(3);    
+                        }                        
+                        return;
+                    }
+
+                    /*now to give the post*/
+                    reqopt.data = data;
+                    jstracer.info('reqopt %s', util.inspect(reqopt));
+                    request(reqopt,function(err3,resp,body) {
+                        if (!baseop.is_non_null(err3)) {
+                            conncnt -= 1;
+                            errmet = 1;
+                            jstracer.error('request [%s] error [%s]', reqopt.url,err3);
+                            if (conncnt == 0) {
+                                trace_exit(3);
+                            }
+                            return;
+                        }
+
+                        jstracer.info('%s \n%s', elm, body);
+                        conncnt -= 1;
+                        if (conncnt === 0) {
+                            if (errmet === 0) {
+                                trace_exit(0);
+                            } else {
+                                trace_exit(4);
+                            }
+                            return;
+                        }
+                        return;
+                    });
+                });
+            } else if (args.postdata.length > 0) {
+                reqopt.data = args.postdata;
+            }
+        }
+
+        if (cont != 0) {
+            jstracer.info('reqopt %s', util.inspect(reqopt));
+            request(reqopt, function (err5, resp, body) {
+                resp = resp;
+                if (baseop.is_non_null(err5)) {
+                    conncnt -= 1;
+                    errmet = 1;
+                    jstracer.error('request [%s] error [%s]', reqopt.url,err5);
+                    if (conncnt === 0) {
+                        trace_exit(4);
+                    }
+                    return;
+                }
+                jstracer.info('%s \n%s', elm, body);
                 conncnt -= 1;
-                errmet = 1;
                 if (conncnt === 0) {
-                    trace_exit(4);
+                    if (errmet === 0) {
+                        trace_exit(0);
+                    } else {
+                        trace_exit(4);
+                    }
+                    return;
                 }
                 return;
-            }
-            //jstracer.info('%s \n%s', elm, body);
-            var urls = filter_cninfo_url(body, args.sdate, args.edate);
-            jstracer.info('urls\n%s', urls);
-            conncnt -= 1;
-            if (conncnt === 0) {
-                if (errmet === 0) {
-                    trace_exit(0);
-                } else {
-                    trace_exit(4);
-                }
-                return;
-            }
-            return;
-        });
+            });            
+        }
     });
 
     if (conncnt === 0) {
-        trace_exit(0);
+        if (errmet === 0) {
+            trace_exit(4);
+        } else {
+            trace_exit(0);
+        }
     }
     return;
 };
